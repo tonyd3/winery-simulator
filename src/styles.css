@@ -2867,3 +2867,33 @@ h1 {
 .plot-inspector {
   scroll-margin-top: 16px;
 }
+
+.estate-closure {
+  max-width: 660px;
+  margin: 12vh auto;
+  padding: 28px;
+}
+.estate-closure h1 {
+  font: 400 clamp(32px, 5vw, 48px)/1.15 var(--serif);
+  margin: 20px 0;
+}
+.estate-closure p {
+  line-height: 1.8;
+}
+.estate-closure dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  border-block: 1px solid var(--line);
+  padding: 24px 0;
+  margin: 28px 0;
+}
+.estate-closure dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.closure-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
