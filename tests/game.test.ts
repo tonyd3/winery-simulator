@@ -366,3 +366,26 @@ test('legacy achievement metadata and payouts survive loading without affecting 
   assert.deepEqual(migrated.ledger, legacy.ledger);
   assert.equal(migrated.cash, legacy.cash);
 });
+
+test('fermentation starts maturation automatically and reserves stop the clock', () => {
+  let s = tick(ferment(), 2);
+  assert.equal(s.batches[0].stage, 'aging');
+  assert.equal(s.batches[0].age, 0);
+  s = tick(s, 3);
+  assert.equal(s.batches[0].age, 3);
+  s = act(s, { type: 'reserve', id: s.batches[0].id });
+  const parts = structuredClone(s.reserves[0].components);
+  assert.equal(parts[0].maturation?.weeks, 3);
+  s = tick(s, 4);
+  assert.deepEqual(s.reserves[0].components, parts);
+});
+
+test('old ready batches start maturing on the next week without retroactive aging', () => {
+  let s = tick(ferment(), 2);
+  s.batches[0].stage = 'ready';
+  s = deserialize(serialize(s));
+  assert.equal(s.batches[0].age, 0);
+  s = tick(s);
+  assert.equal(s.batches[0].stage, 'aging');
+  assert.equal(s.batches[0].age, 1);
+});
