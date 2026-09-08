@@ -41,7 +41,7 @@ The current catalog has 67 projects: 33 techniques and 34 individual grape field
 | Commerce & discovery | Estate storytelling → Cellar-door membership / Export trade. Experimental viticulture opens rare grape studies. Field notebooks adds 4 weekly knowledge. Research institute unlocks the lab. |
 | Individual grapes | Classic grapes require Vine science; heritage grapes require Nursery propagation; rare grapes require Experimental viticulture. Each variety has a separate duration and price based on rarity, planting cost, and finesse. Home-region favorites cost 20% less cash and require two fewer study weeks. Visiting or buying a different region does not change these study terms. |
 
-Technique studies cost $1,200–$140,000 and take 6–60 weeks; 12 weeks equal one game year. The field-study catalog adds ten base weeks, eight per rarity tier, and two per positive finesse point. Its cash and knowledge costs also increase by rarity and finesse. Local discounts apply before lab acceleration. Investment purchases remain separately priced, with their full ongoing operating costs.
+Technique studies cost $1,200–$180,000 and take 6–72 weeks; 12 weeks equal one game year. The field-study catalog adds ten base weeks, eight per rarity tier, and two per positive finesse point. Its cash and knowledge costs also increase by rarity and finesse. Local discounts apply before lab acceleration. Investment purchases remain separately priced, with their full ongoing operating costs.
 
 Each estate collection starts with one study slot. Under **Research**, **Add study slot** permanently increases shared research capacity up to eight simultaneous studies. The second slot costs $5,000, the third $10,000, and each later slot costs $5,000 more, up to $35,000 for the eighth. No research prerequisite, knowledge payment, or weekly upkeep applies to slot purchases. The current occupancy, next price, affordability, and limit remain visible across the research, grape-library, and nursery tabs.
 
@@ -79,4 +79,4 @@ The saved project stores its contracted duration, remaining study weeks, and pau
 
 The expanded [34-grape library](grape-library.md) adds ten individual studies and new blending options. Legacy collection rewards are frozen to their original 24-grape catalog; all ten additions need individual studies in older estates too. Current saves retain their licenses, completed studies, and active projects.
 
-The introductory breeding chain plus a trial totals $9,000 and 28 study/trial weeks. The mixed red/white blending chain totals $8,000 and 20 study weeks. These totals exclude upkeep, planting and waits for resources. Previously paid studies and trials retain their saved durations and remaining weeks.
+Previously paid studies and trials retain their saved durations and remaining weeks when catalog pacing changes.
