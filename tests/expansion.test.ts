@@ -1,3 +1,4 @@
+import { BREEDING } from '../src/catalog.ts';
 import { learn } from './helpers.ts';
 import { researchTerms } from '../src/researchProgression.ts';
 import { bottleBatch } from './helpers.ts';
@@ -170,15 +171,15 @@ test('individual grape studies unlock one grape and adaptation improves difficul
 test('breeding saves its outcome upfront, survives reload and completes once', () => {
   const ready = nursery(),
     s = crossing(ready);
-  assert.equal(s.cash, ready.cash - 7500);
-  assert.equal(s.knowledge, ready.knowledge - 160);
+  assert.equal(s.cash, ready.cash - BREEDING.cost);
+  assert.equal(s.knowledge, ready.knowledge - BREEDING.knowledge);
   assert.throws(() => crossing(s), /in progress/);
-  assert.equal(tick(s, 23).hybrids.length, 0);
-  const complete = tick(s, 24);
+  assert.equal(tick(s, BREEDING.weeks - 1).hybrids.length, 0);
+  const complete = tick(s, BREEDING.weeks);
   assert.equal(complete.hybrids.length, 1);
   assert.equal(complete.breedingProject, null);
   assert.equal(tick(complete).hybrids.length, 1);
-  assert.deepEqual(tick(deserialize(serialize(s)), 24), complete);
+  assert.deepEqual(tick(deserialize(serialize(s)), BREEDING.weeks), complete);
   assert.deepEqual(complete.hybrids[0].parents, ['riesling', 'cabernet']);
   assert.ok(
     suitability(complete, complete.hybrids[0].id).mismatch <
@@ -194,7 +195,10 @@ test('breeding traits trade yield, resilience, and finesse; field selection shor
   assert.ok(fine.finesse > hardy.finesse);
   assert.ok(fine.yieldFactor < hardy.yieldFactor);
   const selected = learn(structuredClone(s), 'selection');
-  assert.equal(crossing(selected).breedingProject!.remaining, 18);
+  assert.equal(
+    crossing(selected).breedingProject!.remaining,
+    BREEDING.selectedWeeks,
+  );
   const control = structuredClone(s);
   control.week = 16;
   control.plots[0].variety = 'pinot';
@@ -276,7 +280,7 @@ test('custom grape completes the full estate loop and can be a parent again', ()
     trait: 'resilience',
     name: 'Second generation',
   });
-  s = tick(s, 24);
+  s = tick(s, BREEDING.weeks);
   assert.equal(s.hybrids.length, 2);
   assert.equal(getVariety(s, 'cross-2').name, 'Second generation');
   assert.deepEqual(deserialize(serialize(s)), s);

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { Empty } from './components';
-import { calendar, getVariety } from './game';
+import { calendar, getVariety, releaseCount } from './game';
 import type { GameState, Wine } from './game';
 import { matchesSearch } from './search';
 import { vintage } from './winemaking';
@@ -164,7 +164,8 @@ export function WineLines({
           </h2>
           <p>
             Your house labels, at a glance. Open a wine line to explore its
-            releases, tasting notes, and sales, including sold-out vintages.
+            releases, tasting notes, and sales. Older sold-out releases are
+            summarized as the archive grows.
           </p>
         </div>
       </div>
@@ -172,7 +173,7 @@ export function WineLines({
         <dl className="history-totals">
           <div>
             <dt>Releases in the archive</dt>
-            <dd>{state.wines.length.toLocaleString()}</dd>
+            <dd>{releaseCount(state).toLocaleString()}</dd>
           </div>
           <div>
             <dt>Bottles sold · all time</dt>
@@ -241,6 +242,8 @@ export function WineLines({
             const releases = [...(releasesByLine.get(line.id) ?? [])].sort(
               (a, b) => b.release - a.release,
             );
+            const totalReleases =
+              releases.length + (line.archive?.releases ?? 0);
             const latest = releases[0];
             const stock = releases.reduce((n, wine) => n + wine.bottles, 0);
             return (
@@ -257,7 +260,7 @@ export function WineLines({
                           ? vintage(latest.components)
                           : `Year ${line.founded}`
                       }
-                      release={releases.length}
+                      release={totalReleases}
                       white={
                         latest &&
                         getVariety(state, latest.variety).wineType === 'White'
@@ -266,11 +269,11 @@ export function WineLines({
                     <div>
                       <h3>{line.name}</h3>
                       <p>
-                        {releases.length}{' '}
-                        {releases.length === 1 ? 'release' : 'releases'}
+                        {totalReleases}{' '}
+                        {totalReleases === 1 ? 'release' : 'releases'}
                         {' · Est. year '}
                         {line.founded}
-                        {stock === 0 && releases.length > 0 && ' · Sold out'}
+                        {stock === 0 && totalReleases > 0 && ' · Sold out'}
                       </p>
                     </div>
                   </div>
@@ -281,7 +284,7 @@ export function WineLines({
                     </span>
                     <span>
                       <strong>
-                        <SalesCount wines={releases} />
+                        <SalesCount wines={releases} archive={line.archive} />
                       </strong>
                       <small>Bottles sold</small>
                     </span>
@@ -292,6 +295,16 @@ export function WineLines({
                     <ChevronDown size={18} aria-hidden="true" />
                   </span>
                 </summary>
+                {line.archive && (
+                  <p className="history-note">
+                    {line.archive.releases.toLocaleString()} earlier sold-out
+                    releases summarized ·{' '}
+                    {line.archive.produced.toLocaleString()}
+                    {line.archive.complete ? '' : '+'} bottles produced · best{' '}
+                    {line.archive.best}/100. Individual tasting records were
+                    compacted.
+                  </p>
+                )}
                 <ReleaseHistory releases={releases} state={state} />
               </details>
             );

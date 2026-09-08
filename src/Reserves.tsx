@@ -100,7 +100,9 @@ function BottlingForm({
               year={vintage(reserve.components)}
               release={
                 line
-                  ? state.wines.filter((w) => w.lineId === line.id).length + 1
+                  ? state.wines.filter((w) => w.lineId === line.id).length +
+                    (line.archive?.releases ?? 0) +
+                    1
                   : 1
               }
               white={
@@ -148,9 +150,11 @@ function BottlingForm({
           {line ? (
             <p className="line-inheritance">
               Release{' '}
-              {state.wines.filter((w) => w.lineId === line.id).length + 1} will
-              carry this line’s original bottle and label. Earlier releases stay
-              in its history.
+              {state.wines.filter((w) => w.lineId === line.id).length +
+                (line.archive?.releases ?? 0) +
+                1}{' '}
+              will carry this line’s original bottle and label. Earlier releases
+              stay in its history.
             </p>
           ) : (
             <>

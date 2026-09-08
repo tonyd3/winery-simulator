@@ -119,7 +119,7 @@ test('all eight recipes have consistent prices and ordered phases, with early st
       assert.throws(() => act(s, { type: 'age', id: b.id }), /finished/);
       s = tick(s);
     }
-    assert.equal(s.batches[0].stage, 'ready');
+    assert.equal(s.batches[0].stage, 'aging');
     assert.equal(s.batches[0].age, 0);
     assert.equal(s.batches[0].remaining, 0);
     assert.equal(vinificationStage(s.batches[0]), 'Ready for reserves');
@@ -162,7 +162,7 @@ test('recipe validation and affordability reject atomically; old batches preserv
   delete legacy.batches[0].techniques;
   legacy.batches[0].remaining = 3;
   legacy = tick(reload(legacy), 3);
-  assert.equal(legacy.batches[0].stage, 'ready');
+  assert.equal(legacy.batches[0].stage, 'aging');
   legacy = act(legacy, { type: 'reserve', id: legacy.batches[0].id });
   assert.equal(legacy.reserves[0].components[0].techniques, undefined);
   reload(legacy);

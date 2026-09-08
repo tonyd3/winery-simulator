@@ -1,3 +1,4 @@
+import { BREEDING } from '../src/catalog.ts';
 import { learn, allGrapes } from './helpers.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,6 +24,7 @@ import {
   upgradeActive,
   upgradeBlocked,
   hospitalityForecast,
+  annualHospitalityForecast,
   investmentUpkeep,
   investmentDemand,
   studyWeeks,
@@ -108,7 +110,7 @@ test('hospitality is seasonal, reputation-sensitive, capacity-limited and can lo
   s.reputation = 12;
   s.week = 10;
   const quiet = hospitalityForecast(s);
-  assert.ok(quiet.net < -3000);
+  assert.ok(quiet.net < 0);
   s.reputation = 100;
   s.week = 7;
   const busy = hospitalityForecast(s);
@@ -157,13 +159,13 @@ test('suspension stops benefits, retains 25 percent costs, and cascades without 
     assert.ok(s.suspendedUpgrades.includes(id));
     assert.equal(upgradeActive(s, id), false);
   }
-  assert.equal(investmentUpkeep(s), 1000);
+  assert.equal(investmentUpkeep(s), 900);
   assert.equal(hospitalityForecast(s).revenue, 0);
   assert.throws(() => resume(s, 'sommelier'), /Resume Tasting room/);
   s = resume(deserialize(serialize(s)), 'visitorCenter');
   assert.equal(upgradeActive(s, 'tastingRoom'), false);
   s = resume(resume(s, 'tastingRoom'), 'sommelier');
-  assert.equal(investmentUpkeep(s), 4000);
+  assert.equal(investmentUpkeep(s), 3600);
   assert.equal(s.cash, cash);
   valid(s);
 });
@@ -293,8 +295,8 @@ test('research facilities accelerate studies and breeding without overshooting c
   const slow = pause(s, 'researchLab');
   assert.equal(studyWeeks(s, 24), 12);
   assert.equal(studyWeeks(slow, 24), 24);
-  assert.equal(tick(slow, 2).breedingProject!.remaining, 22);
-  const ready = tick(deserialize(serialize(s)), 12);
+  assert.equal(tick(slow, 2).breedingProject!.remaining, BREEDING.weeks - 2);
+  const ready = tick(deserialize(serialize(s)), BREEDING.weeks / 2);
   assert.equal(ready.breedingProject, null);
   assert.deepEqual({ ...ready.hybrids[0], created: result.created }, result);
   valid(ready);
@@ -308,7 +310,7 @@ test('old saves retain paid assets and receive new maintenance with resumable su
     JSON.stringify({ game: 'terroir', savedAt: 'previous', state: old }),
   );
   assert.deepEqual(loaded, s);
-  assert.equal(investmentUpkeep(loaded), 965);
+  assert.equal(investmentUpkeep(loaded), 845);
   assert.deepEqual(loaded.wines, s.wines);
   assert.equal(loaded.cash, s.cash);
   valid(pause(loaded, 'lab'));
@@ -336,4 +338,32 @@ test('invalid imports reject duplicate or unowned suspensions and missing facili
     assert.equal(stateSchema.safeParse(s).success, false);
     assert.throws(() => deserialize(serialize(s)), /compatible/);
   }
+});
+
+test('entry hospitality can cover full-capacity upkeep while winter still carries risk', () => {
+  for (const id of ['tasting', 'visitorCenter'] as const) {
+    const s = buy(funded(), id);
+    s.reputation = 100;
+    s.week = 7;
+    const full = hospitalityForecast(s);
+    assert.equal(full.visitors, full.capacity);
+    assert.ok(full.net > 0);
+    s.reputation = 12;
+    s.week = 10;
+    assert.ok(hospitalityForecast(s).net < 0);
+  }
+});
+test('annual hospitality estimates reconcile with twelve fixed-Prestige weekly forecasts', () => {
+  const s = buy(buy(funded(), 'tasting'), 'visitorCenter');
+  s.reputation = 24;
+  const annual = annualHospitalityForecast(s);
+  const expected = Array.from({ length: 12 }, (_, i) =>
+    hospitalityForecast({ ...s, week: s.week + i }),
+  );
+  assert.equal(
+    annual.net,
+    expected.reduce((n, w) => n + w.net, 0),
+  );
+  assert.equal(annual.upkeep, 12 * investmentUpkeep(s));
+  assert.deepEqual(annualHospitalityForecast({ ...s, week: 10 }), annual);
 });

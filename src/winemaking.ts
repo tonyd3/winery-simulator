@@ -1,3 +1,4 @@
+import { centsSchema, archivedAccountsSchema } from './finance';
 import { z } from 'zod';
 import { cellarTechniquesSchema, techniqueKey } from './cellarTechniques';
 import { grapeCompatibility } from './blendCompatibility';
@@ -41,6 +42,7 @@ export const componentSchema = z
     quality: z.number().finite().min(0).max(100),
     techniques: cellarTechniquesSchema.optional(),
     harvest: harvestCharacterSchema.optional(),
+    directCostCents: centsSchema.optional(),
     maturation: z
       .object({
         vessel: z.enum(['oak', 'steel']),
@@ -60,12 +62,25 @@ export const reserveSchema = z
     score: count(100).nullable(),
   })
   .strict();
+export const archiveSummarySchema = z
+  .object({
+    accounts: archivedAccountsSchema.optional(),
+    releases: count(),
+    lastRelease: count(),
+    sold: count(),
+    produced: count(),
+    complete: z.boolean(),
+    best: count(100),
+  })
+  .strict();
+export type ArchiveSummary = z.infer<typeof archiveSummarySchema>;
 export const wineLineSchema = z
   .object({
     id: count(),
     name: z.string().trim().min(1).max(40),
     founded: count(10000),
     design: labelDesignSchema,
+    archive: archiveSummarySchema.optional(),
   })
   .strict();
 export type LabelDesign = z.infer<typeof labelDesignSchema>;
@@ -166,8 +181,15 @@ export function combine(parts: WineComponent[]): WineComponent[] {
     const harvest = part.harvest;
     const key = `${part.variety}:${part.year}:${part.quality}:${part.estateId ?? 1}:${aging ? `${aging.vessel}:${aging.weeks}` : 'unrecorded'}:${part.techniques ? techniqueKey(part.techniques) : 'unrecorded'}:${harvest ? `${harvest.ripeness}:${harvest.health}:${harvest.sunExposure}` : 'unrecorded'}`;
     const existing = grouped.get(key);
-    if (existing) existing.ml += part.ml;
-    else grouped.set(key, { ...part });
+    if (existing) {
+      existing.ml += part.ml;
+      if (
+        existing.directCostCents !== undefined &&
+        part.directCostCents !== undefined
+      )
+        existing.directCostCents += part.directCostCents;
+      else delete existing.directCostCents;
+    } else grouped.set(key, { ...part });
   }
   return [...grouped.values()].sort(
     (a, b) =>
@@ -189,12 +211,42 @@ export function portion(parts: WineComponent[], ml: number): WineComponent[] {
     .map((p, i) => ({ i, remainder: (p.ml * ml) % total }))
     .sort((a, b) => b.remainder - a.remainder);
   for (const { i } of order) if (left-- > 0) allocated[i].ml++;
+  for (const [i, part] of allocated.entries()) {
+    if (parts[i].directCostCents !== undefined)
+      part.directCostCents = Math.round(
+        (parts[i].directCostCents! * part.ml) / parts[i].ml,
+      );
+  }
   return allocated;
 }
 export function take(reserve: Reserve, ml: number): WineComponent[] {
   const taken = portion(reserve.components, ml);
   reserve.components = reserve.components
-    .map((p, i) => ({ ...p, ml: p.ml - taken[i].ml }))
+    .map((p, i) => ({
+      ...p,
+      ml: p.ml - taken[i].ml,
+      ...(p.directCostCents !== undefined
+        ? { directCostCents: p.directCostCents - taken[i].directCostCents! }
+        : {}),
+    }))
     .filter((p) => p.ml > 0);
   return taken.filter((p) => p.ml > 0);
+}
+
+export function productionCost(parts: WineComponent[]): number | null {
+  return parts.every((p) => p.directCostCents !== undefined)
+    ? parts.reduce((n, p) => n + p.directCostCents!, 0)
+    : null;
+}
+export function addProductionCost(parts: WineComponent[], cents: number) {
+  const total = volume(parts);
+  let allocated = 0;
+  for (const [i, part] of parts.entries()) {
+    const cost =
+      i === parts.length - 1
+        ? cents - allocated
+        : Math.floor((cents * part.ml) / total);
+    allocated += cost;
+    if (part.directCostCents !== undefined) part.directCostCents += cost;
+  }
 }

@@ -127,3 +127,25 @@
     font-size: 10px;
   }
 }
+
+.quality-prestige-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-variant-numeric: tabular-nums;
+}
+.quality-prestige-table caption {
+  text-align: left;
+  margin-bottom: 12px;
+}
+.quality-prestige-table th,
+.quality-prestige-table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 400;
+}
+.quality-record {
+  margin-bottom: 24px;
+  line-height: 1.7;
+}
