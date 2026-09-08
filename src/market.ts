@@ -31,13 +31,16 @@ export function releaseInterest(weeksSinceBottling: number) {
   return 0.2 + 0.8 * 2 ** (-Math.max(0, weeksSinceBottling) / 36);
 }
 
+// Labels, line IDs and bottling splits cannot create another set of customers.
+export const customerGroup = (wine: Wine) => `${wine.variety}:${wine.year}`;
+
 export function weeklyDemandMultiplier(wine: Wine, s: GameState) {
   return (
     WEEKLY_DEMAND.min +
     (WEEKLY_DEMAND.max - WEEKLY_DEMAND.min) *
       noise(
         s.marketSeed ?? MARKET_SEED,
-        `release:${wine.id}:${wine.bottled}`,
+        `wine:${customerGroup(wine)}`,
         s.week + 1,
       )
   );
