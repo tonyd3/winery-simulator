@@ -1,4 +1,5 @@
 import type { ResearchId } from './catalog';
+import { matchesSearch } from './search';
 import {
   ResearchProjects,
   CurrentStudy,
@@ -132,7 +133,8 @@ export default function Research({
           <div className="research-section-heading">
             <div>
               <span className="eyebrow">
-                24 CLASSICS. YOUR OWN POSSIBILITIES.
+                {Object.keys(VARIETIES).length} VARIETIES. YOUR OWN
+                POSSIBILITIES.
               </span>
               <h2>A world of grapes.</h2>
             </div>
@@ -162,14 +164,15 @@ export default function Research({
               .filter(
                 ([id, v]) =>
                   (!onlyAvailable || unlocked.has(id)) &&
-                  `${v.name} ${
-                    state.hybrids
-                      .find((h) => h.id === id)
-                      ?.parents.map((p) => getVariety(state, p).name)
-                      .join(' ') || ''
-                  }`
-                    .toLowerCase()
-                    .includes(query.toLowerCase()),
+                  matchesSearch(
+                    `${v.name} ${
+                      state.hybrids
+                        .find((h) => h.id === id)
+                        ?.parents.map((p) => getVariety(state, p).name)
+                        .join(' ') || ''
+                    }`,
+                    query,
+                  ),
               )
               .map(([id, v]) => {
                 const fit = suitability(state, id),

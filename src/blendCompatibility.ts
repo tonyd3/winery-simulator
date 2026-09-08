@@ -13,8 +13,15 @@ const powerful = new Set([
   'petit_verdot',
   'zinfandel',
   'mourvedre',
+  'petite_sirah',
+  'carmenere',
 ]);
-const aromatic = new Set(['riesling', 'gewurztraminer', 'torrontes']);
+const aromatic = new Set([
+  'riesling',
+  'gewurztraminer',
+  'torrontes',
+  'viognier',
+]);
 const pairKey = (a: string, b: string) => [a, b].sort().join(':');
 const partners = new Map<string, Rule>([
   [
@@ -45,9 +52,104 @@ const partners = new Map<string, Rule>([
       reason: 'Savory structure gains generous fruit and warmth.',
     },
   ],
+  [
+    pairKey('gamay', 'pinot'),
+    {
+      affinity: 3,
+      reason: 'Light berry fruit complements Pinot Noir’s delicate character.',
+    },
+  ],
+  [
+    pairKey('carmenere', 'merlot'),
+    {
+      affinity: 3,
+      reason: 'Herbal spice gains softer, rounded fruit from Merlot.',
+    },
+  ],
+  [
+    pairKey('carmenere', 'cabernet'),
+    {
+      affinity: 3,
+      reason: 'Dark fruit and herbal detail meet Cabernet’s firm structure.',
+    },
+  ],
+  [
+    pairKey('graciano', 'tempranillo'),
+    {
+      affinity: 4,
+      reason:
+        'Graciano brings freshness and aromatic detail to Tempranillo’s savory fruit.',
+    },
+  ],
+  [
+    pairKey('graciano', 'grenache'),
+    {
+      affinity: 3,
+      reason: 'Lively acidity balances Grenache’s generous fruit.',
+    },
+  ],
+  [
+    pairKey('petite_sirah', 'zinfandel'),
+    {
+      affinity: 3,
+      reason:
+        'Firm tannins and deep color support Zinfandel’s exuberant fruit.',
+    },
+  ],
+  [
+    pairKey('pinot_gris', 'chardonnay'),
+    {
+      affinity: 2,
+      reason: 'Orchard fruit and rounded textures form a gentle white blend.',
+    },
+  ],
+  [
+    pairKey('albarino', 'vermentino'),
+    {
+      affinity: 2,
+      reason:
+        'Citrus character and fresh acidity keep this white blend lively.',
+    },
+  ],
+  [
+    pairKey('gruner_veltliner', 'riesling'),
+    {
+      affinity: 2,
+      reason:
+        'Peppery orchard fruit adds detail to Riesling’s bright aromatics.',
+    },
+  ],
+  [
+    pairKey('marsanne', 'roussanne'),
+    {
+      affinity: 4,
+      reason:
+        'Marsanne supplies body while Roussanne adds fragrance and finesse.',
+    },
+  ],
+  [
+    pairKey('marsanne', 'viognier'),
+    {
+      affinity: 3,
+      reason:
+        'Rounded texture carries Viognier’s floral and stone-fruit perfume.',
+    },
+  ],
+  [
+    pairKey('roussanne', 'viognier'),
+    {
+      affinity: 3,
+      reason: 'Fragrant Rhône whites combine floral lift with finer texture.',
+    },
+  ],
 ]);
 
-function pairing(a: string, b: string, petitVerdotShare: number): Rule {
+function pairing(
+  a: string,
+  b: string,
+  petitVerdotShare: number,
+  viognierShare: number,
+): Rule {
   if (a === b)
     return {
       affinity: 0,
@@ -75,8 +177,22 @@ function pairing(a: string, b: string, petitVerdotShare: number): Rule {
       reason:
         'A Rhône pairing: generous fruit, spice, and structure work together.',
     };
+  if (pairKey(a, b) === pairKey('syrah', 'viognier'))
+    return {
+      affinity: Math.max(-6, 3 - Math.max(0, viognierShare - 0.15) * 20),
+      reason:
+        viognierShare <= 0.15
+          ? 'Viognier adds floral lift as an accent to Syrah. Above 15% of the recipe, its perfume starts to dominate.'
+          : 'Viognier’s perfume is dominating this recipe. Reduce its share toward 15% or less to support Syrah.',
+    };
   const known = partners.get(pairKey(a, b));
   if (known) return known;
+  if ((a === 'gamay' && powerful.has(b)) || (b === 'gamay' && powerful.has(a)))
+    return {
+      affinity: -3,
+      reason:
+        'Firm, powerful reds can overwhelm Gamay’s light berry character. Smaller additions soften the clash.',
+    };
   if ((a === 'pinot' && powerful.has(b)) || (b === 'pinot' && powerful.has(a)))
     return {
       affinity: -4,
@@ -130,10 +246,13 @@ export function grapeCompatibility(
     memo.set(id, result);
     return result;
   }
-  const petitVerdotShare = grapes.reduce(
-    (n, [id, ml]) => n + ((ancestry(id).get('petit_verdot') ?? 0) * ml) / total,
-    0,
-  );
+  const shareOf = (variety: string) =>
+    grapes.reduce(
+      (n, [id, ml]) => n + ((ancestry(id).get(variety) ?? 0) * ml) / total,
+      0,
+    );
+  const petitVerdotShare = shareOf('petit_verdot');
+  const viognierShare = shareOf('viognier');
   const pairs: {
     grapes: [string, string];
     affinity: number;
@@ -148,7 +267,8 @@ export function grapeCompatibility(
       for (const [parentA, shareA] of ancestry(a))
         for (const [parentB, shareB] of ancestry(b))
           affinity +=
-            pairing(parentA, parentB, petitVerdotShare).affinity *
+            pairing(parentA, parentB, petitVerdotShare, viognierShare)
+              .affinity *
             shareA *
             shareB;
       pairs.push({
@@ -158,7 +278,7 @@ export function grapeCompatibility(
         reason:
           lineage.has(a) || lineage.has(b)
             ? 'This cross inherits its parents’ pairing tendencies, weighted through its ancestry. Shared ancestry adds no extra bonus.'
-            : pairing(a, b, petitVerdotShare).reason,
+            : pairing(a, b, petitVerdotShare, viognierShare).reason,
       });
     }
   }

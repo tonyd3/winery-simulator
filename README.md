@@ -42,7 +42,9 @@ The year has 12 game weeks: spring 1–3, summer 4–6, autumn 7–9, winter 10�
 
 Choose Bordeaux, Burgundy, Napa Valley, Mosel, Tuscany, Rioja, Mendoza, or Barossa. New estates know only their region’s **two founding grapes**. Every other grape has an individual field study. Regional favorites keep their growing advantages and 15% planting discount, and their studies cost 20% less cash and take two fewer study weeks. Buying another estate does not unlock grapes.
 
-**Research** contains **54 studies**: 30 techniques across vineyard science, cellar techniques, tourism/hospitality, and commerce/discovery, plus 24 individual grape studies. Search by technique, grape, or unlock; follow clickable prerequisites; filter by availability. Studies range from **6–72 weeks** and **$1,200–$180,000**. A game year has 12 weeks. Research costs are separate from buildings, teams, and planting.
+**Research** contains **64 studies**: 30 techniques across vineyard science, cellar techniques, tourism/hospitality, and commerce/discovery, plus 34 individual grape studies. Search by technique, grape, or unlock; follow clickable prerequisites; filter by availability. Studies range from **6–72 weeks** and **$1,200–$180,000**. A game year has 12 weeks. Research costs are separate from buildings, teams, and planting.
+
+The 34-grape library includes Gamay, Carménère, Graciano, Petite Sirah / Durif, Pinot Gris / Pinot Grigio, Viognier, Albariño, Grüner Veltliner, Marsanne, and Roussanne. Each has its own field study, growing traits, and blending affinities. Search accepts names without accents. See the [grape expansion guide](docs/grape-library.md) for costs and recipe ideas.
 
 Knowledge comes from weekly observation (+6; +2 after Vine science; +4 after Field notebooks), harvesting (+12), and bottling (+1 per 40 bottles). One prepaid study and one breeding trial can run concurrently. Studies can pause or be abandoned without a refund; restarting pays the full cost again. An operating research lab doubles progress and adds 10 knowledge per week.
 
@@ -196,7 +198,7 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `src/blendCompatibility.ts`: grape pairings, proportion effects, and inherited hybrid affinities.
 - `tests/compatibility.test.ts`: complementary and conflicting recipes, proportions, ancestry, bounds, and preview-to-bottle consistency.
 - `tests/quality.test.ts`: quality distribution, exceptional-wine progression, legacy maturation, and nonlinear pricing.
-- `src/catalog.ts`: 24 grape definitions, eight regions, and 54 research projects.
+- `src/catalog.ts`: 34 grape definitions, eight regions, and 64 research projects.
 - `src/Regions.tsx`: new-estate region selection.
 - `src/RegionLandscape.tsx`: distinct SVG postcards for all eight regions.
 - `src/Research.tsx` and `src/ResearchProjects.tsx`: research ledger, grape library, active studies, and breeding nursery.

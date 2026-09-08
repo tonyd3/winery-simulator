@@ -43,7 +43,7 @@ const crossing = (
 ) => act(s, { type: 'breed', parents: ['riesling', 'cabernet'], trait, name });
 
 test('all eight regions start with local vines, distinct soils, and equal capital', () => {
-  assert.equal(Object.keys(VARIETIES).length, 24);
+  assert.equal(Object.keys(VARIETIES).length, 34);
   for (const id of REGION_IDS) {
     const s = newGame(id, 'Regional estate');
     assert.equal(s.cash, 12500);

@@ -82,8 +82,8 @@ export default function RegionSetup({
           </div>
           <p className="setup-fine">
             Every region starts with $12,500, three parcels, and two planted
-            varieties. Every other grape needs its own research project. All 24
-            can be studied in any region.
+            varieties. Every other grape needs its own research project. All{' '}
+            {Object.keys(VARIETIES).length} can be studied in any region.
           </p>
         </section>
         <section className="region-preview" aria-live="polite">

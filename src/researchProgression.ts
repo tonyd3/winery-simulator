@@ -1,4 +1,10 @@
-import { RESEARCH, VARIETIES, REGIONS, BREEDING } from './catalog';
+import {
+  RESEARCH,
+  VARIETIES,
+  REGIONS,
+  BREEDING,
+  LEGACY_VARIETY_IDS,
+} from './catalog';
 import type { ResearchId } from './catalog';
 import type { GameState } from './game';
 import type { WineComponent } from './winemaking';
@@ -7,6 +13,7 @@ function legacyGrapeAccess(s: GameState, id: string) {
   const v = VARIETIES[id];
   return (
     v &&
+    LEGACY_VARIETY_IDS.includes(id) &&
     (v.collection === 'classic' ||
       s.estates.some((e) => REGIONS[e.region].signature.includes(id)) ||
       s.research.includes('discovery') ||

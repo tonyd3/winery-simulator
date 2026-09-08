@@ -94,6 +94,7 @@ export const money = (n: number) =>
   }).format(n);
 import {
   VARIETIES,
+  LEGACY_VARIETY_IDS,
   REGIONS,
   REGION_IDS,
   RESEARCH,
@@ -314,7 +315,7 @@ export const stateSchema = z
     research: z.array(z.enum(RESEARCH_IDS)).max(RESEARCH_IDS.length),
     grapeLicenses: z
       .array(z.string().refine((id) => Object.hasOwn(VARIETIES, id)))
-      .max(24),
+      .max(Object.keys(VARIETIES).length),
     researchProject: z
       .object({
         id: z.enum(RESEARCH_IDS),
@@ -2393,22 +2394,21 @@ export function deserialize(raw: string): GameState {
     const regional = new Set(
       old.estates.flatMap((e) => REGIONS[e.region].signature),
     );
-    const grapeLicenses = Object.entries(VARIETIES)
-      .filter(
-        ([id, v]) =>
-          v.collection === 'classic' ||
-          regional.has(id) ||
-          old.research.includes('discovery') ||
-          (v.collection === 'heritage' && old.research.includes('heritage')),
-      )
-      .map(([id]) => id);
+    const grapeLicenses = LEGACY_VARIETY_IDS.filter(
+      (id) =>
+        VARIETIES[id].collection === 'classic' ||
+        regional.has(id) ||
+        old.research.includes('discovery') ||
+        (VARIETIES[id].collection === 'heritage' &&
+          old.research.includes('heritage')),
+    );
     const legacyGrapes =
       project?.id === 'discovery'
-        ? Object.keys(VARIETIES)
+        ? [...LEGACY_VARIETY_IDS]
         : project?.id === 'heritage'
-          ? Object.entries(VARIETIES)
-              .filter(([, v]) => v.collection === 'heritage')
-              .map(([id]) => id)
+          ? LEGACY_VARIETY_IDS.filter(
+              (id) => VARIETIES[id].collection === 'heritage',
+            )
           : [];
     data = {
       ...legacyResearch.data,

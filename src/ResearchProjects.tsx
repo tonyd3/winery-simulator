@@ -20,6 +20,7 @@ import {
 } from './researchProgression';
 import { studyWeeks } from './investments';
 import './research.css';
+import { matchesSearch } from './search';
 
 export function StudyAction({
   state,
@@ -188,9 +189,10 @@ export function ResearchProjects({
     const r = RESEARCH[id],
       done = researchComplete(state, id);
     const matches = query.trim()
-      ? `${r.name} ${r.text} ${r.requires.map((p) => RESEARCH[p].name).join(' ')}`
-          .toLowerCase()
-          .includes(query.trim().toLowerCase())
+      ? matchesSearch(
+          `${r.name} ${r.text} ${r.requires.map((p) => RESEARCH[p].name).join(' ')}`,
+          query,
+        )
       : r.department === department;
     return (
       matches &&

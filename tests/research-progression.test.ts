@@ -19,6 +19,7 @@ import {
   REGION_IDS,
   VARIETIES,
   BREEDING,
+  LEGACY_VARIETY_IDS,
 } from '../src/catalog.ts';
 import {
   researchTerms,
@@ -71,8 +72,8 @@ const blend = (s: GameState) =>
     ],
   });
 
-test('54 studies form an acyclic graph and every capital investment has a research prerequisite', () => {
-  assert.equal(RESEARCH_IDS.length, 54);
+test('64 studies form an acyclic graph and every capital investment has a research prerequisite', () => {
+  assert.equal(RESEARCH_IDS.length, 64);
   assert.equal(TECHNIQUE_IDS.length, 30);
   const walk = (id: ResearchId, path: ResearchId[]) => {
     assert.ok(RESEARCH[id]);
@@ -239,6 +240,25 @@ test('nested recipes cannot hide restricted components, but legacy blends remain
   valid(bottled);
 });
 
+test('the Syrah and Viognier accent pairing still requires red and white blending research', () => {
+  const s = learn(reserves(), 'assemblage');
+  s.reserves[0].components[0].variety = 'syrah';
+  s.reserves[1].components[0].variety = 'viognier';
+  const action = {
+    type: 'blend' as const,
+    name: 'Floral lift',
+    portions: [
+      { id: 1, ml: 27000 },
+      { id: 2, ml: 3000 },
+    ],
+  };
+  const before = structuredClone(s);
+  assert.throws(() => act(s, action), /Red & white/);
+  assert.deepEqual(s, before);
+  learn(s, 'rose_trials');
+  valid(act(s, action));
+});
+
 test('poor research actions cannot spend money, knowledge or alter RNG and unknown grapes cannot be studied', () => {
   const s = newGame(),
     before = structuredClone(s);
@@ -272,8 +292,8 @@ test('legacy research keeps original grape access, paid collection rewards and r
   assert.equal(s.researchProject?.duration, 3);
   s = tick(deserialize(serialize(s)), 2);
   assert.ok(s.research.includes('heritage'));
-  for (const [id, v] of Object.entries(VARIETIES))
-    if (v.collection === 'heritage')
+  for (const id of LEGACY_VARIETY_IDS)
+    if (VARIETIES[id].collection === 'heritage')
       assert.ok(researchComplete(s, `grape_${id}`));
   assert.ok(!researchComplete(s, 'grape_nebbiolo'));
   valid(s);

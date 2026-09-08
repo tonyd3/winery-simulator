@@ -68,6 +68,43 @@ test('Petit Verdot supports a Bordeaux blend as an accent but can dominate it', 
   assert.ok(Math.abs(below.compatibility - above.compatibility) < 0.01);
 });
 
+test('new grapes offer complementary recipes without erasing delicate-style clashes', () => {
+  for (const [a, b] of [
+    ['gamay', 'pinot'],
+    ['carmenere', 'merlot'],
+    ['graciano', 'tempranillo'],
+    ['petite_sirah', 'zinfandel'],
+    ['pinot_gris', 'chardonnay'],
+    ['albarino', 'vermentino'],
+    ['gruner_veltliner', 'riesling'],
+    ['marsanne', 'roussanne'],
+    ['viognier', 'roussanne'],
+  ])
+    assert.ok(assess(recipe(a, b)).compatibility > 0, `${a} / ${b}`);
+  assert.ok(assess(recipe('gamay', 'petite_sirah')).compatibility < 0);
+  assert.ok(assess(recipe('pinot', 'petite_sirah')).compatibility < 0);
+  assert.ok(blendProfile(recipe('marsanne', 'roussanne', 50, 75)).high < 90);
+});
+
+test('Viognier lifts Syrah in small proportions, dominates larger blends, and passes its accent through ancestry', () => {
+  const accent = assess(recipe('syrah', 'viognier', 90));
+  close(accent.compatibility, 1.08);
+  assert.match(accent.pairs[0].reason, /accent/);
+  assert.ok(assess(recipe('syrah', 'viognier', 50)).compatibility < 0);
+  assert.ok(
+    Math.abs(
+      assess(recipe('syrah', 'viognier', 85.01)).compatibility -
+        assess(recipe('syrah', 'viognier', 84.99)).compatibility,
+    ) < 0.01,
+  );
+  const hybrids: GrapeLineage[] = [
+    { id: 'cross-1', parents: ['viognier', 'syrah'] },
+  ];
+  // A 20% share of this cross contributes 10% Viognier ancestry.
+  close(assess(recipe('syrah', 'cross-1', 80), hybrids).compatibility, 0.96);
+  assert.ok(assess(recipe('syrah', 'cross-1', 10), hybrids).compatibility < 0);
+});
+
 test('recipe order, vintage splits, volume scale and recombination preserve pairing effects', () => {
   const parts = recipe('merlot', 'cabernet', 60);
   const baseline = assess(parts);
