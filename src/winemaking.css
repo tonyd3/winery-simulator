@@ -38,6 +38,78 @@
   gap: 34px;
   align-items: start;
 }
+.reserve-leftovers {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 0;
+  margin-bottom: 24px;
+  border-block: 1px solid var(--line);
+}
+.reserve-leftovers strong {
+  font-weight: 500;
+}
+.reserve-leftovers p,
+.reserve-clear-review p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.reserve-leftover-actions,
+.reserve-clear-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.reserve-leftover-actions {
+  flex-shrink: 0;
+}
+.reserve-clear-lots {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  max-height: 35vh;
+  overflow-y: auto;
+  border-top: 1px solid var(--line);
+}
+.reserve-clear-lots li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.reserve-clear-lots span,
+.reserve-clear-lots small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.reserve-clear-lots small {
+  margin-bottom: 4px;
+}
+.reserve-clear-lots strong {
+  white-space: nowrap;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.reserve-clear-actions {
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+@media (max-width: 950px) {
+  .reserve-leftovers {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .reserve-leftover-actions .text-button {
+    min-height: 44px;
+  }
+}
 .reserve-row {
   border-top: 1px solid #deded2;
   padding: 24px 0;

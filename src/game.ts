@@ -45,6 +45,8 @@ import {
   take,
   portion,
   volume,
+  isSmallReserve,
+  liters,
   DEFAULT_DESIGN,
   labelDesignSchema,
   compositionSchema,
@@ -650,6 +652,7 @@ export type Action =
   | { type: 'age'; id: number }
   | { type: 'reserve'; id: number }
   | { type: 'tasteReserve'; id: number }
+  | { type: 'discardSmallReserves'; lots: { id: number; ml: number }[] }
   | { type: 'blend'; name: string; portions: { id: number; ml: number }[] }
   | {
       type: 'bottle';
@@ -1728,7 +1731,7 @@ export function act(current: GameState, action: Action): GameState {
         throw new Error('Let fermentation finish before storing wine.');
       if (s.reserves.length >= ESTATE_LIMITS.reserves)
         throw new Error(
-          'Your 256 reserve spaces are full. Blend or bottle a lot to make room.',
+          'Your 256 reserve spaces are full. Blend, bottle, or clear small leftovers to make room.',
         );
       s.reserves.push({
         id: s.nextId++,
@@ -1754,6 +1757,34 @@ export function act(current: GameState, action: Action): GameState {
         s,
         `${b.liters} L moved into reserves. ${b.tankIds.length} tank${b.tankIds.length === 1 ? ' is' : 's are'} free for your next harvest.`,
         'good',
+      );
+      break;
+    }
+    case 'discardSmallReserves': {
+      const ids = new Set(action.lots.map((lot) => lot.id));
+      if (
+        !action.lots.length ||
+        action.lots.length > ESTATE_LIMITS.reserves ||
+        ids.size !== action.lots.length
+      )
+        throw new Error('Choose different small reserve lots to clear.');
+      let total = 0;
+      for (const { id, ml } of action.lots) {
+        const lot = s.reserves.find((r) => r.id === id);
+        if (!lot || volume(lot.components) !== ml)
+          throw new Error(
+            'These reserves have changed. Review the leftovers again.',
+          );
+        if (!isSmallReserve(lot))
+          throw new Error(
+            'Only leftovers smaller than one 750 mL bottle can be cleared.',
+          );
+        total += ml;
+      }
+      s.reserves = s.reserves.filter((r) => !ids.has(r.id));
+      note(
+        s,
+        `Discarded ${liters(total)} L of small leftovers, freeing ${ids.size} reserve ${ids.size === 1 ? 'space' : 'spaces'}.`,
       );
       break;
     }

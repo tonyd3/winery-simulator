@@ -2,12 +2,12 @@ import type { ResearchId } from './catalog';
 import { blendResearchMissing } from './researchProgression';
 import { RESEARCH } from './catalog';
 import { ESTATE_LIMITS } from './estates';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowRight, Plus, Shuffle, X } from 'lucide-react';
 import { generateBlendName } from './blendNames';
 import { BlendAnalysis, BlendTasting } from './BlendAnalysis';
 import { JudgingStatus } from './WinePromotion';
-import { Empty, Icon } from './components';
+import { Empty, Icon, Modal } from './components';
 import { calendar, getVariety } from './game';
 import type { GameState } from './game';
 import type { Dispatch } from './Panels';
@@ -17,6 +17,7 @@ import {
   combine,
   DEFAULT_DESIGN,
   LABEL_COLORS,
+  isSmallReserve,
   liters,
   portion,
   vintage,
@@ -274,6 +275,16 @@ export default function Reserves({
   const [blendName, setBlendName] = useState('');
   const [bottling, setBottling] = useState<number | null>(null);
   const [tasting, setTasting] = useState<number | null>(null);
+  const [clearing, setClearing] = useState<Reserve[] | null>(null);
+  const closeClearing = useCallback(() => setClearing(null), []);
+  const reserveHeading = useRef<HTMLHeadingElement>(null);
+  const smallReserves = state.reserves.filter(isSmallReserve);
+  const smallVolume = smallReserves.reduce(
+    (n, r) => n + volume(r.components),
+    0,
+  );
+  const clearingVolume =
+    clearing?.reduce((n, r) => n + volume(r.components), 0) ?? 0;
   const selected = state.reserves.filter((r) => amounts[r.id] !== undefined);
   const portions = selected.map((r) => ({
     id: r.id,
@@ -302,7 +313,9 @@ export default function Reserves({
       <div className="section-intro">
         <div>
           <span className="eyebrow">THE RESERVE COLLECTION</span>
-          <h2>Keep a little. Create something new.</h2>
+          <h2 ref={reserveHeading} tabIndex={-1}>
+            Keep a little. Create something new.
+          </h2>
           <p>
             Store finished wine, blend grapes and vintages, or bottle a single
             reserve.
@@ -323,6 +336,43 @@ export default function Reserves({
         </Empty>
       ) : (
         <>
+          {smallReserves.length > 0 && (
+            <div className="reserve-leftovers">
+              <div>
+                <strong>Small leftovers · {liters(smallVolume)} L</strong>
+                <p>
+                  {smallReserves.length}{' '}
+                  {smallReserves.length === 1 ? 'lot holds' : 'lots hold'} less
+                  than a 750 mL bottle each. Blend them into another wine, or
+                  clear them to free reserve spaces.
+                </p>
+              </div>
+              <div className="reserve-leftover-actions">
+                <button
+                  className="text-button"
+                  onClick={() => {
+                    setBottling(null);
+                    setAmounts(
+                      Object.fromEntries(
+                        smallReserves.map((r) => [
+                          r.id,
+                          String(volume(r.components) / 1000),
+                        ]),
+                      ),
+                    );
+                  }}
+                >
+                  Select for blending
+                </button>
+                <button
+                  className="button secondary"
+                  onClick={() => setClearing(smallReserves)}
+                >
+                  Clear small leftovers
+                </button>
+              </div>
+            </div>
+          )}
           <div className="reserve-workspace">
             <div className="reserve-list">
               {state.reserves.map((r) => {
@@ -399,6 +449,11 @@ export default function Reserves({
                         <button
                           className="text-button"
                           disabled={total < 750}
+                          title={
+                            total < 750
+                              ? 'A bottle needs 750 mL. Blend this lot or clear small leftovers.'
+                              : undefined
+                          }
                           onClick={() => {
                             setAmounts({});
                             setBottling(r.id);
@@ -531,6 +586,70 @@ export default function Reserves({
             />
           )}
         </>
+      )}
+      {clearing && (
+        <Modal title="Clear small leftovers?" onClose={closeClearing}>
+          <div className="reserve-clear-review">
+            <p>
+              Free {clearing.length} reserve{' '}
+              {clearing.length === 1 ? 'space' : 'spaces'} by discarding these
+              lots. Each contains less than one 750 mL bottle.
+            </p>
+            <ul
+              className="reserve-clear-lots"
+              aria-label="Lots to discard"
+              tabIndex={0}
+            >
+              {clearing.map((r) => (
+                <li key={r.id}>
+                  <div>
+                    <small>
+                      Lot {String(r.id).padStart(2, '0')} ·{' '}
+                      {vintage(r.components)}
+                    </small>
+                    <span>{r.name}</span>
+                  </div>
+                  <strong>{liters(volume(r.components))} L</strong>
+                </li>
+              ))}
+            </ul>
+            <p>
+              The listed wine will be permanently discarded. No cash or
+              knowledge is earned. Cancel to keep it for blending.
+            </p>
+            <div className="reserve-clear-actions">
+              <button className="button secondary" onClick={closeClearing}>
+                Cancel
+              </button>
+              <button
+                className="button primary"
+                onClick={() => {
+                  if (
+                    dispatch({
+                      type: 'discardSmallReserves',
+                      lots: clearing.map((r) => ({
+                        id: r.id,
+                        ml: volume(r.components),
+                      })),
+                    })
+                  ) {
+                    setAmounts((previous) =>
+                      Object.fromEntries(
+                        Object.entries(previous).filter(
+                          ([id]) => !clearing.some((r) => r.id === Number(id)),
+                        ),
+                      ),
+                    );
+                    closeClearing();
+                    reserveHeading.current?.focus({ preventScroll: true });
+                  }
+                }}
+              >
+                Discard {liters(clearingVolume)} L
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );
