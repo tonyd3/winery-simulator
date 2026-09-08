@@ -1,3 +1,4 @@
+import { parcelLabel } from './parcelProvenance';
 import { demandContext, type DemandContext } from './game';
 import { FinanceReport } from './FinanceReport';
 import { qualityResponse, signedPrestige } from './prestige';
@@ -688,6 +689,11 @@ function Fermentation({
               {b ? (
                 <>
                   <h3>{getVariety(state, b.variety).name}</h3>
+                  <small className="parcel-source">
+                    {state.estates.length > 1 &&
+                      `${getEstate(state, b.estateId ?? 1).name} · `}
+                    {parcelLabel(b.parcel)}
+                  </small>
                   <p className="tank-detail">
                     Year {b.year} · {b.liters} / {capacity} L ·{' '}
                     {b.maturationPlan
