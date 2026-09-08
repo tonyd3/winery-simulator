@@ -4,8 +4,9 @@ import {
   RESEARCH_GOAL_IDS,
   VARIETIES,
   BREEDING,
+  grapeResearchId,
 } from './catalog';
-import type { ResearchGoalId, ResearchId } from './catalog';
+import type { ResearchGoalId, ResearchId, RegionId } from './catalog';
 import type { GameState } from './game';
 import {
   UPGRADES,
@@ -26,6 +27,7 @@ export const RESEARCH_GOALS: Record<
   ResearchGoalId,
   { name: string; study: ResearchId; investment?: Upgrade }
 > = {
+  first_blend: { name: 'Make my first two-grape blend', study: 'oenology' },
   first_cross: { name: 'Create my first grape', study: 'ampelography' },
   tasting_room: {
     name: 'Open a tasting room',
@@ -42,6 +44,26 @@ export const RESEARCH_GOALS: Record<
   fine_grapes: { name: 'Breed for wine quality', study: 'genomics' },
 };
 export { RESEARCH_GOAL_IDS };
+
+const FIRST_BLENDS: Record<RegionId, [string, string]> = {
+  bordeaux: ['merlot', 'cabernet'],
+  burgundy: ['pinot', 'gamay'],
+  napa: ['cabernet', 'merlot'],
+  mosel: ['pinot', 'gamay'],
+  tuscany: ['sangiovese', 'merlot'],
+  rioja: ['tempranillo', 'grenache'],
+  mendoza: ['malbec', 'cabernet'],
+  barossa: ['syrah', 'grenache'],
+};
+
+export function firstBlendRecipe(s: GameState) {
+  return FIRST_BLENDS[s.region].map((id) => ({
+    id,
+    name: VARIETIES[id].name,
+    study: grapeResearchId(id),
+    available: researchComplete(s, grapeResearchId(id)),
+  }));
+}
 
 export function investmentPath(
   id: Upgrade,
@@ -72,6 +94,11 @@ export function researchPlan(s: GameState, goalId: ResearchGoalId) {
   const firstCrossDone = goalId === 'first_cross' && s.hybrids.length > 0;
   const path = researchPath([
     goal.study,
+    ...(goalId === 'first_blend'
+      ? firstBlendRecipe(s)
+          .filter((grape) => !grape.available)
+          .map((grape) => grape.study)
+      : []),
     ...investments.flatMap((id) =>
       UPGRADES[id].research ? [UPGRADES[id].research!] : [],
     ),

@@ -1247,6 +1247,7 @@ export const BREEDING = {
   selectedWeeks: 18,
 };
 export const RESEARCH_GOAL_IDS = [
+  'first_blend',
   'first_cross',
   'tasting_room',
   'vintages',

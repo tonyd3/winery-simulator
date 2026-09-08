@@ -10,6 +10,8 @@ import {
   goalDestination,
   studyInvestments,
   investmentPath,
+  firstBlendRecipe,
+  researchPath,
 } from './researchPlanning';
 import type { ResearchDestination } from './researchPlanning';
 import {
@@ -145,7 +147,16 @@ export function OutcomePlanner({
                 </li>
               ))}
             </ol>
-            {plan.ready && <p>Ready to use.</p>}
+            {selected === 'first_blend' && (
+              <FirstBlendGuide state={state} onDestination={onDestination} />
+            )}
+            {plan.ready && (
+              <p>
+                {selected === 'first_blend'
+                  ? 'Research ready. Plant and harvest the ingredients before blending.'
+                  : 'Ready to use.'}
+              </p>
+            )}
             <button
               className="button secondary"
               onClick={() => onDestination(goalDestination(selected!))}
@@ -271,6 +282,74 @@ export function StudyShortlist({
   );
 }
 
+function FirstBlendGuide({
+  state,
+  onDestination,
+}: {
+  state: GameState;
+  onDestination: ResearchNavigation['onDestination'];
+}) {
+  const recipe = firstBlendRecipe(state);
+  return (
+    <div className="study-payoff first-blend-guide">
+      <strong>
+        A first blend: 50% {recipe[0].name} + 50% {recipe[1].name}
+      </strong>
+      <p>
+        This same-color pairing earns a harmony bonus. Cellar foundations allows
+        it when both grapes come from the same estate and harvest year.
+      </p>
+      {recipe.map((grape) => {
+        const path = researchPath([grape.study]).filter(
+          (id) => !researchComplete(state, id),
+        );
+        return (
+          <div key={grape.id}>
+            <strong>{grape.name}</strong>
+            <p>
+              {grape.available
+                ? 'Available to plant.'
+                : `Study ${path.map((id) => RESEARCH[id].name).join(' → ')}.`}{' '}
+              Planting from {money(plantingCost(state, grape.id))} per
+              unexpanded parcel in your home region. Land and any vine removal
+              cost extra.
+            </p>
+            <button
+              className="text-button"
+              onClick={() =>
+                onDestination(
+                  grape.available
+                    ? {
+                        view: 'estate',
+                        label: 'Choose a parcel',
+                        grape: grape.id,
+                      }
+                    : {
+                        view: 'research',
+                        label: 'View next study',
+                        study: path[0],
+                      },
+                )
+              }
+            >
+              {grape.available
+                ? `Choose a parcel for ${grape.name}`
+                : 'View next study'}{' '}
+              <ArrowRight size={13} />
+            </button>
+          </div>
+        );
+      })}
+      <p>
+        Grow both grapes, harvest in the same year, then ferment each separately
+        and transfer to reserves. Keep some of each wine unbottled. Select equal
+        volumes in Reserves & blending. Growing and harvest time, planting, and
+        winemaking costs are additional to research estimates.
+      </p>
+    </div>
+  );
+}
+
 export function StudyPayoff({
   state,
   id,
@@ -282,6 +361,8 @@ export function StudyPayoff({
 }) {
   const investments = studyInvestments(id),
     grape = RESEARCH[id].grape;
+  if (id === 'oenology')
+    return <FirstBlendGuide state={state} onDestination={onDestination} />;
   if (grape)
     return (
       <p className="study-payoff">
