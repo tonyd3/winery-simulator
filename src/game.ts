@@ -55,6 +55,7 @@ import {
 } from './winemaking';
 import type { LabelDesign, Reserve } from './winemaking';
 import {
+  customerGroup,
   MARKET_SEED,
   WEEKLY_DEMAND,
   marketConditions,
@@ -1018,18 +1019,50 @@ function demandOutlook(wine: Wine, s: GameState) {
 const demandCount = (wine: Wine, rate: number) =>
   Math.min(wine.bottles, Math.max(0, Math.floor(rate)));
 
+function sharedDemand(wine: Wine, s: GameState) {
+  const peers = s.wines.filter(
+    (w) =>
+      w.id !== wine.id &&
+      w.listed &&
+      w.bottles > 0 &&
+      customerGroup(w) === customerGroup(wine),
+  );
+  peers.push(wine);
+  peers.sort((a, b) => a.id - b.id);
+  const stock = peers.reduce((sum, w) => sum + w.bottles, 0);
+  let preceding = 0;
+  let rate = 0;
+  for (const peer of peers) {
+    const share = stock ? peer.bottles / stock : 0;
+    const contribution = demandOutlook(peer, s).rate * share;
+    if (peer.id < wine.id) preceding += contribution;
+    if (peer.id === wine.id) rate = contribution;
+  }
+  return { rate, preceding };
+}
+
 export function demandForecast(wine: Wine, s: GameState) {
-  const { rate, market } = demandOutlook(wine, s);
+  const { market } = demandOutlook(wine, s);
+  const { rate } = sharedDemand(wine, s);
   return {
     low: demandCount(wine, rate * WEEKLY_DEMAND.min),
-    high: demandCount(wine, rate * WEEKLY_DEMAND.max),
+    high: Math.min(wine.bottles, Math.ceil(rate * WEEKLY_DEMAND.max)),
     outlook: market.outlook,
   };
 }
 
 export function demand(wine: Wine, s: GameState) {
-  const { rate } = demandOutlook(wine, s);
-  return demandCount(wine, rate * weeklyDemandMultiplier(wine, s));
+  const { rate, preceding } = sharedDemand(wine, s);
+  const roll = weeklyDemandMultiplier(wine, s);
+  // Cumulative rounding preserves the group's total even for one-bottle releases.
+  return Math.min(
+    wine.bottles,
+    Math.max(
+      0,
+      Math.floor((preceding + rate) * roll + 1e-9) -
+        Math.floor(preceding * roll + 1e-9),
+    ),
+  );
 }
 export const quality = (b: Batch) => {
   const gain =
@@ -1370,9 +1403,12 @@ export function act(current: GameState, action: Action): GameState {
             award ? 'good' : 'info',
           );
         }
+      }
+      const sellingState = { ...current, wines: structuredClone(s.wines) };
+      for (const w of s.wines) {
         // Use the forecast's starting week for the same market and shopper roll.
         // Newly resolved judging still applies to this sale as before.
-        const count = demand(w, current);
+        const count = demand(w, sellingState);
         if (w.produced === null)
           w.salesSinceTracking = (w.salesSinceTracking ?? 0) + count;
         w.bottles -= count;

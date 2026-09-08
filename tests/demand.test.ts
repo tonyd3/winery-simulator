@@ -123,7 +123,7 @@ test('aged demand respects pricing, stock, promotions and the tasting terrace', 
   assert.equal(marketed.wines[0].bottled, w.bottled);
 });
 
-test('new releases have their own age and shopper roll within an established line', () => {
+test('new releases keep their age but share shoppers for the same grape and vintage', () => {
   let s = stocked();
   s.week += 144;
   const old = s.wines[0];
@@ -153,7 +153,7 @@ test('new releases have their own age and shopper roll within an established lin
   assert.equal(releaseInterest(s.week - s.wines[0].bottled), 0.25);
   assert.equal(releaseInterest(s.week - s.wines[1].bottled), 1);
   assert.ok(demand(s.wines[1], s) > demand(s.wines[0], s));
-  assert.notEqual(
+  assert.equal(
     weeklyDemandMultiplier(s.wines[0], s),
     weeklyDemandMultiplier(s.wines[1], s),
   );
@@ -310,6 +310,34 @@ test('old saves acquire a reproducible market seed and invalid market seeds are 
         Number.isInteger(count) && count >= range.low && count <= range.high,
       );
       assert.ok(range.low >= 0 && range.high <= s.wines[0].bottles);
+    }
+  }
+});
+
+test('splitting the same stock across releases or labels cannot multiply sales', () => {
+  const base = stocked();
+  base.wines[0].bottles = 336;
+  base.wines[0].produced = 336;
+  const expected = demand(base.wines[0], base);
+  for (const pieces of [1, 12, 336]) {
+    const s = structuredClone(base);
+    const wine = s.wines[0];
+    s.wines = Array.from({ length: pieces }, (_, i) => ({
+      ...structuredClone(wine),
+      id: s.nextId++,
+      label: `Split ${i}`,
+      bottles: 336 / pieces,
+      produced: 336 / pieces,
+      release: i + 1,
+    }));
+    const sum = s.wines.reduce((n, w) => n + demand(w, s), 0);
+    assert.equal(sum, expected);
+    const next = act(s, { type: 'advance' });
+    assert.equal(next.stats.sold - s.stats.sold, expected);
+    assert.equal(next.stats.revenue - s.stats.revenue, expected * wine.price);
+    for (const w of s.wines) {
+      const range = demandForecast(w, s);
+      assert.ok(demand(w, s) >= range.low && demand(w, s) <= range.high);
     }
   }
 });
