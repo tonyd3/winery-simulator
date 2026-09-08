@@ -1,3 +1,4 @@
+import { qualityResponse, signedPrestige } from './prestige';
 import { releaseCount, harvestAdvice } from './game';
 import type { ResearchId } from './catalog';
 import { Investments } from './EstateInvestments';
@@ -874,6 +875,13 @@ function WineCard({
           <p className="wine-sales">
             <SalesCount wines={[w]} /> sold
           </p>
+          <p className="fine-print">
+            <strong>{qualityResponse(w.quality).name}.</strong>{' '}
+            {qualityResponse(w.quality).text}{' '}
+            {signedPrestige(qualityResponse(w.quality).retail)} Prestige per
+            shop sale · {signedPrestige(qualityResponse(w.quality).wholesale)}{' '}
+            wholesale.
+          </p>
           <details className="wine-recipe">
             <summary>Tasting notes & provenance</summary>
             <Composition parts={w.components} state={state} />
@@ -1178,6 +1186,17 @@ export function Journal({ state }: Props) {
           </strong>
         </div>
       </div>
+      <p className="quality-record">
+        Average wine sold:{' '}
+        <strong>
+          {state.stats.qualitySold
+            ? (state.stats.qualityPoints / state.stats.qualitySold).toFixed(1)
+            : '—'}
+          /100
+        </strong>{' '}
+        · {(state.stats.qualitySold ?? 0).toLocaleString()} bottles since
+        quality tracking began. Older sales are not reconstructed.
+      </p>
       <section className="event-history" aria-label="Estate event history">
         <div className="section-line">
           <h3>Estate events</h3>
