@@ -39,6 +39,7 @@ import {
 } from './promotion';
 import {
   assess,
+  blendProfile,
   CELLAR_TASTING,
   combine,
   take,
@@ -60,6 +61,7 @@ import {
 } from './market';
 
 import { PRESTIGE_EARNINGS, prestigeInfluence } from './prestige';
+import { tastingProfile, tastingNotesSchema } from './wineSensory';
 
 export const SAVE_KEY = 'terroir.save.v1';
 export const BACKUP_KEY = 'terroir.backup.v1';
@@ -264,6 +266,7 @@ const wineSchema = legacyWineSchema.extend({
   judging: judgingSchema.nullable().default(null),
   bottled: integer(100000),
   components: compositionSchema,
+  tasting: tastingNotesSchema.optional(),
   design: labelDesignSchema,
   estate: z.string().trim().min(1).max(32),
   founded: integer(10000),
@@ -1741,6 +1744,7 @@ export function act(current: GameState, action: Action): GameState {
             year: b.year,
             ml: b.liters * 1000,
             quality: quality(b),
+            maturation: { vessel: b.oak ? 'oak' : 'steel', weeks: b.age },
             ...(b.estateId !== undefined ? { estateId: b.estateId } : {}),
           },
         ],
@@ -1878,7 +1882,7 @@ export function act(current: GameState, action: Action): GameState {
       s.kits -= count;
       s.wines.push({
         id: s.nextId++,
-        variety: components[0].variety,
+        variety: blendProfile(components, s.hybrids).dominant!.variety,
         quality: q,
         bottles: count,
         produced: count,
@@ -1893,6 +1897,7 @@ export function act(current: GameState, action: Action): GameState {
         release,
         components,
         bottled: s.week,
+        tasting: tastingProfile(components, s),
         design: { ...line.design },
         estate: s.name,
         founded: line.founded,

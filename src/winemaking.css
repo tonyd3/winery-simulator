@@ -432,6 +432,79 @@
   font-size: 11px;
   text-align: center;
 }
+.bottling-story {
+  min-width: 0;
+  align-self: start;
+}
+.tasting-notes {
+  margin: 24px 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.tasting-notes h4 {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 400;
+  margin: 0 0 10px;
+}
+.tasting-notes .tasting-aromas {
+  color: var(--wine);
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+.tasting-notes dl {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.tasting-notes dl > div {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+}
+.tasting-notes dt {
+  color: var(--muted);
+}
+.tasting-notes dd {
+  margin: 0;
+}
+.tasting-notes dd p {
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+}
+.tasting-notes dd p + p {
+  margin-top: 8px;
+}
+.tasting-notes .tasting-caption {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+.modal:has(.release-reveal) {
+  width: min(850px, 100%);
+}
+.reveal-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 35px;
+}
+.reveal-description {
+  min-width: 0;
+}
+@media (max-width: 700px) {
+  .reveal-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}
 .bottling-layout form > input,
 .bottling-layout select {
   width: 100%;
@@ -802,7 +875,8 @@
   margin: 15px 0 5px;
   overflow-wrap: anywhere;
 }
-.release-reveal > p {
+.release-reveal > p,
+.reveal-identity > p {
   font-size: 11px;
   color: #777c6d;
 }

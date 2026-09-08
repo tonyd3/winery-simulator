@@ -30,6 +30,13 @@ export const componentSchema = z
     year: count(10000),
     ml: count(100000000).min(1),
     quality: z.number().finite().min(0).max(100),
+    maturation: z
+      .object({
+        vessel: z.enum(['oak', 'steel']),
+        weeks: count(8),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 export const compositionSchema = z.array(componentSchema).min(1).max(500);
@@ -140,7 +147,8 @@ export function blendProfile(
 export function combine(parts: WineComponent[]): WineComponent[] {
   const grouped = new Map<string, WineComponent>();
   for (const part of parts) {
-    const key = `${part.variety}:${part.year}:${part.quality}:${part.estateId ?? 1}`;
+    const aging = part.maturation;
+    const key = `${part.variety}:${part.year}:${part.quality}:${part.estateId ?? 1}:${aging ? `${aging.vessel}:${aging.weeks}` : 'unrecorded'}`;
     const existing = grouped.get(key);
     if (existing) existing.ml += part.ml;
     else grouped.set(key, { ...part });

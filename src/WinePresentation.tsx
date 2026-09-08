@@ -5,6 +5,8 @@ import { getVariety, getEstate, wineSales } from './game';
 import type { GameState, Wine } from './game';
 import { LABEL_COLORS, vintage, volume } from './winemaking';
 import type { LabelDesign, WineComponent } from './winemaking';
+import { TastingNotes } from './TastingNotes';
+import { releaseTasting } from './wineSensory';
 
 export function SalesCount({ wines }: { wines: readonly Wine[] }) {
   const { count, complete } = wineSales(wines);
@@ -284,28 +286,35 @@ export function ReleaseReveal({
         <p className="eyebrow">
           {wine.estate} · RELEASE {String(wine.release).padStart(2, '0')}
         </p>
-        <div className="reveal-stage">
-          <WineBottle
-            name={wine.label}
-            estate={wine.estate}
-            design={wine.design}
-            founded={wine.founded}
-            year={vintage(wine.components)}
-            release={wine.release}
-            white={getVariety(state, wine.variety).wineType === 'White'}
-            score={points}
-          />
+        <div className="reveal-body">
+          <div className="reveal-identity">
+            <div className="reveal-stage">
+              <WineBottle
+                name={wine.label}
+                estate={wine.estate}
+                design={wine.design}
+                founded={wine.founded}
+                year={vintage(wine.components)}
+                release={wine.release}
+                white={getVariety(state, wine.variety).wineType === 'White'}
+                score={points}
+              />
+            </div>
+            <h3>{wine.label}</h3>
+            <p className="tasting-status" role="status">
+              {complete
+                ? `${wine.quality} points · ${wine.quality >= 95 ? 'An exceptional release' : wine.quality >= 85 ? 'Beautifully expressive' : wine.quality >= 75 ? 'A wine with character' : 'A promising beginning'}`
+                : 'Tasting your wine…'}
+            </p>
+            <p>
+              {wine.produced} bottles · {vintage(wine.components)}
+            </p>
+          </div>
+          <div className="reveal-description">
+            <Composition parts={wine.components} state={state} />
+            <TastingNotes profile={releaseTasting(wine, state)} />
+          </div>
         </div>
-        <h3>{wine.label}</h3>
-        <p className="tasting-status" role="status">
-          {complete
-            ? `${wine.quality} points · ${wine.quality >= 95 ? 'An exceptional release' : wine.quality >= 85 ? 'Beautifully expressive' : wine.quality >= 75 ? 'A wine with character' : 'A promising beginning'}`
-            : 'Tasting your wine…'}
-        </p>
-        <p>
-          {wine.produced} bottles · {vintage(wine.components)}
-        </p>
-        <Composition parts={wine.components} state={state} />
         <p className="fine-print">
           <Check size={13} /> Added to your wine line. This tasting score is
           final.

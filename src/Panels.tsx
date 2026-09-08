@@ -8,6 +8,8 @@ import { Holdings } from './Holdings';
 import { useState } from 'react';
 import Reserves, { WineLines } from './Reserves';
 import { WineBottle, Composition, SalesCount } from './WinePresentation';
+import { TastingNotes } from './TastingNotes';
+import { releaseTasting } from './wineSensory';
 import { vintage } from './winemaking';
 import WinePromotion from './WinePromotion';
 import {
@@ -878,8 +880,9 @@ function WineCard({
             <SalesCount wines={[w]} /> sold
           </p>
           <details className="wine-recipe">
-            <summary>Blend & provenance</summary>
+            <summary>Tasting notes & provenance</summary>
             <Composition parts={w.components} state={state} />
+            <TastingNotes profile={releaseTasting(w, state)} />
             <p className="fine-print">
               {w.estate} · Line established Year {w.founded}
             </p>

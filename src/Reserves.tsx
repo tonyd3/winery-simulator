@@ -13,6 +13,7 @@ import type { GameState } from './game';
 import type { Dispatch } from './Panels';
 import {
   assess,
+  blendProfile,
   combine,
   DEFAULT_DESIGN,
   LABEL_COLORS,
@@ -23,6 +24,8 @@ import {
 } from './winemaking';
 import type { LabelDesign, Reserve } from './winemaking';
 import { Composition, SalesCount, WineBottle } from './WinePresentation';
+import { TastingNotes } from './TastingNotes';
+import { releaseTasting, tastingProfile } from './wineSensory';
 
 function BottlingForm({
   reserve,
@@ -50,6 +53,10 @@ function BottlingForm({
   const activeDesign = line?.design ?? design;
   const q = assess(reserve.components, state.hybrids);
   const bottles = Number(count);
+  const previewParts =
+    Number.isInteger(bottles) && bottles > 0 && bottles <= max
+      ? portion(reserve.components, bottles * 750).filter((p) => p.ml > 0)
+      : reserve.components;
   const valid =
     Number.isInteger(bottles) &&
     bottles > 0 &&
@@ -76,25 +83,30 @@ function BottlingForm({
         </button>
       </div>
       <div className="bottling-layout">
-        <div className="bottling-preview">
-          <WineBottle
-            name={line?.name ?? name}
-            estate={state.name}
-            design={activeDesign}
-            founded={line?.founded ?? calendar(state.week).year}
-            year={vintage(reserve.components)}
-            release={
-              line
-                ? state.wines.filter((w) => w.lineId === line.id).length + 1
-                : 1
-            }
-            white={
-              getVariety(state, reserve.components[0].variety).wineType ===
-              'White'
-            }
-          />
-          <span className="eyebrow">YOUR NEXT RELEASE</span>
-          <p>{vintage(reserve.components)}</p>
+        <div className="bottling-story">
+          <div className="bottling-preview">
+            <WineBottle
+              name={line?.name ?? name}
+              estate={state.name}
+              design={activeDesign}
+              founded={line?.founded ?? calendar(state.week).year}
+              year={vintage(reserve.components)}
+              release={
+                line
+                  ? state.wines.filter((w) => w.lineId === line.id).length + 1
+                  : 1
+              }
+              white={
+                getVariety(
+                  state,
+                  blendProfile(previewParts, state.hybrids).dominant!.variety,
+                ).wineType === 'White'
+              }
+            />
+            <span className="eyebrow">YOUR NEXT RELEASE</span>
+            <p>{vintage(reserve.components)}</p>
+          </div>
+          <TastingNotes profile={tastingProfile(previewParts, state)} />
         </div>
         <form
           onSubmit={(e) => {
@@ -237,8 +249,8 @@ function BottlingForm({
             {valid
               ? `${liters(total - bottles * 750)} L will remain in reserves. `
               : ''}
-            One kit per bottle. Your recipe and label are saved with this
-            release.
+            One kit per bottle. Your recipe, tasting notes, and label are saved
+            with this release.
           </p>
           <button className="button primary wide" disabled={!valid}>
             Bottle & reveal <ArrowRight size={16} />
@@ -661,6 +673,7 @@ export function WineLines({
                       </b>
                     </summary>
                     <Composition parts={w.components} state={state} />
+                    <TastingNotes profile={releaseTasting(w, state)} />
                     <p className="fine-print">
                       Bottled by {w.estate}
                       {w.produced !== null &&
