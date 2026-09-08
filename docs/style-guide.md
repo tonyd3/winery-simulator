@@ -37,6 +37,8 @@ Build groups facilities and staff in department-filtered ledger rows, implemente
 
 ### Estate framing
 
+Growing parcels show a compact grape-quality forecast after vine health, using fine dividers, one display score, and the expected kilograms. Keep owned upgrade contributions in a native disclosure with visible health/ripeness requirements or suspension status. Label the score as an estimate at current conditions, hide it for resting and dormant parcels, and link the quality action to Build. See [HarvestForecast.tsx](../src/HarvestForecast.tsx) and [harvest.css](../src/harvest.css).
+
 The desktop estate workspace has a viewport-based height that stays fixed while switching parcels. Long parcel details scroll inside the inspector; its children must not shrink to fit. Plot selection updates the highlight and details while preserving the map framing and manual zoom. At 620px and below, the map and inspector stack: the map keeps its 350px height and the details use normal page scrolling. See `.estate-workspace` and `.plot-inspector` in `styles.css`.
 
 ### Research decisions

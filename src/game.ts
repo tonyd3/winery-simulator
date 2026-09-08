@@ -13,6 +13,7 @@ import {
   UPGRADES,
   UPGRADE_IDS,
   upgradeActive,
+  harvestInvestmentEffects,
   investmentUpkeep,
   investmentDemand,
   upgradeBlocked,
@@ -852,7 +853,8 @@ export const harvestYield = (
         getLand(s, p.id).baseYield *
           plotScale(expansions) *
           (0.6 + p.health * 0.004) *
-          getVariety(s, p.variety).yieldFactor,
+          getVariety(s, p.variety).yieldFactor *
+          harvestInvestmentEffects(s, p).yieldMultiplier,
       )
     : 0;
 export const estatePlots = (s: GameState, id = s.activeEstate) =>
@@ -1102,7 +1104,7 @@ export const harvestQuality = (s: GameState, p: Plot) =>
           p.health * 0.4 +
           p.growth * 0.3 +
           vintageWeatherQuality(s.week, getLand(s, p.id).region) +
-          (upgradeActive(s, 'sorting') ? 2 : 0) +
+          harvestInvestmentEffects(s, p).quality +
           suitability(
             s,
             p.variety!,

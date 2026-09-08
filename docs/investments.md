@@ -7,6 +7,9 @@ Open **Build → Buildings & equipment**. Department filters cover vineyard/cell
 | Investment | Purchase | Weekly operating | Weekly suspended | Operating prerequisite |
 | --- | ---: | ---: | ---: | --- |
 | Drip irrigation | $6,000 | $180 | $45 | None |
+| Compost program | $8,000 | $180 | $45 | None |
+| Canopy management team | $14,000 | $320 | $80 | None |
+| Precision irrigation controls | $26,000 | $600 | $150 | Drip irrigation |
 | Tasting terrace | $12,000 | $400 | $100 | None |
 | Winemaker’s bench | $18,000 | $550 | $138 | None |
 | Visitor center | $35,000 | $1,000 | $250 | None |
@@ -17,11 +20,27 @@ Open **Build → Buildings & equipment**. Department filters cover vineyard/cell
 | Wine club team | $45,000 | $1,200 | $300 | Tasting terrace |
 | Export sales team | $85,000 | $2,200 | $550 | None |
 | Optical sorting line | $32,000 | $700 | $175 | None |
+| Selective harvest crew | $38,000 | $1,000 | $250 | None |
 | Viticulture team | $28,000 | $1,600 | $400 | None |
 | Research & nursery lab | $65,000 | $1,400 | $350 | Winemaker’s bench |
 | Refrigerated grape store | $42,000 | $900 | $225 | None |
 
 These are fictional game balance values. Each investment also requires its corresponding [research project](regions-and-research.md#research-progression) before purchase; the table lists additional operating prerequisites. Research costs are separate from the purchase price. Existing owned facilities can continue operating or resume without retroactive research. Each investment is bought once for the shared business and benefits all estates. Upfront cost covers construction or team setup; weekly costs include staffing and maintenance. The eight-week figure is purchase price plus eight operating bills for that investment, excluding research, other facilities, and estate overhead.
+
+## Grape quality
+
+Four investments extend the grape-quality path. Existing studies unlock them, with no additional study slots or new research requirements for previously learned discoveries:
+
+| Investment | Required discovery | Benefit on new harvests |
+| --- | --- | --- |
+| Compost program | Vine science | +1 quality point |
+| Canopy management team | Soil & water mapping | +2 quality points at 80% or higher vine health |
+| Precision irrigation controls | Precision viticulture | +2 quality points at 95% or higher ripeness; drip irrigation must also operate |
+| Selective harvest crew | Selective fruit handling | +3 quality points, with 10% fewer kilograms picked |
+
+These are fictional game balance effects, evaluated when a parcel is harvested. The four additions provide up to +8 points; optical sorting adds another +2. Quality is still capped at 100, and vine health, ripeness, soil, climate, and grape finesse still matter. Selective picking multiplies yield by 0.9 before the final whole-kilogram rounding, including expanded plots and every regional estate. It does not reduce acreage, future growth, or harvest fees. Suspend the crew before picking to return to the normal yield and remove its bonus.
+
+The parcel inspector shows estimated grape quality and kilograms at current conditions during the growing season. Expand the upgrade contribution to see each owned investment's points, unmet health or ripeness threshold, or suspended status. The estimate uses the same functions as harvesting and plot-expansion previews. It disappears after harvest and in winter. Purchase, suspension, and resume never recalculate existing grape lots, batches, reserves, or bottled scores. Old saves receive no free upgrades; newly bought assets persist through the existing upgrade and suspension lists.
 
 ## Hospitality
 
