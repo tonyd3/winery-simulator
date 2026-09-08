@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { GameState, Wine } from './game';
+import type { ArchiveSummary } from './winemaking';
 
 export const centsSchema = z.number().int().min(0).max(1e14);
 const totalsSchema = z
@@ -97,6 +98,50 @@ export function releaseResult(wine: Wine) {
         : null,
   };
 }
+export function releaseFacts(wine: Wine) {
+  const result = releaseResult(wine);
+  const recordedSold = wine.accounts?.sold ?? 0;
+  const salesComplete =
+    wine.produced !== null && recordedSold === wine.produced - wine.bottles;
+  const profitCents = salesComplete ? result.marginCents : null;
+  return {
+    ...result,
+    profitCents,
+    averagePriceCents:
+      recordedSold > 0 ? result.revenueCents / recordedSold : null,
+    profitPerBottleCents:
+      recordedSold > 0 && profitCents !== null
+        ? profitCents / recordedSold
+        : null,
+    soldPercent:
+      wine.produced !== null && wine.produced > 0
+        ? ((wine.produced - wine.bottles) / wine.produced) * 100
+        : null,
+  };
+}
+
+export function wineLineResult(
+  releases: readonly Wine[],
+  archive?: ArchiveSummary,
+) {
+  const archived = archive?.accounts;
+  let profitCents: number | null = archive
+    ? archived?.complete
+      ? archived.revenueCents - archived.costCents - archived.promotionCents
+      : null
+    : 0;
+  let best = archive?.best ?? null;
+  for (const wine of releases) {
+    const result = releaseFacts(wine);
+    profitCents =
+      profitCents !== null && result.profitCents !== null
+        ? profitCents + result.profitCents
+        : null;
+    best = Math.max(best ?? 0, wine.quality);
+  }
+  return { profitCents, best };
+}
+
 export function archiveAccounts(
   wine: Wine,
   previous?: z.infer<typeof archivedAccountsSchema>,

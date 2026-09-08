@@ -9,6 +9,8 @@ import { Composition, SalesCount, WineBottle } from './WinePresentation';
 import { JudgingStatus } from './WinePromotion';
 import { TastingNotes } from './TastingNotes';
 import { releaseTasting } from './wineSensory';
+import { releaseFacts, wineLineResult } from './finance';
+import { recordedMoney, ReleaseFacts } from './ReleaseFacts';
 
 const RELEASES_PER_PAGE = 5;
 
@@ -38,58 +40,79 @@ function ReleaseHistory({
         {Math.min(visibleCount, releases.length)} of {releases.length} releases
         {' · Newest first'}
       </p>
-      {releases.slice(0, visibleCount).map((wine, index) => (
-        <details key={wine.id}>
-          <summary ref={index === 0 ? firstRelease : undefined}>
-            <span className="release-number">
-              No. {String(wine.release).padStart(2, '0')}
-            </span>
-            <span>
-              <span className="release-label">{wine.label}</span>
-              <small>
-                {vintage(wine.components)} ·{' '}
-                {wine.bottles === 0
-                  ? 'Sold out'
-                  : `${wine.bottles.toLocaleString()} bottles in stock`}
-              </small>
-            </span>
-            <b>
-              {wine.quality}
-              <small>POINTS</small>
-            </b>
-          </summary>
-          <div className="release-details">
-            <JudgingStatus wine={wine} />
-            <dl className="release-stock">
-              <div>
-                <dt>Produced</dt>
-                <dd>
-                  {wine.produced === null
-                    ? 'Unrecorded'
-                    : wine.produced.toLocaleString()}
-                </dd>
-              </div>
-              <div>
-                <dt>Sold</dt>
-                <dd>
-                  <SalesCount wines={[wine]} />
-                </dd>
-              </div>
-              <div>
-                <dt>Remaining</dt>
-                <dd>{wine.bottles.toLocaleString()}</dd>
-              </div>
-            </dl>
-            <Composition parts={wine.components} state={state} />
-            <TastingNotes profile={releaseTasting(wine, state)} />
-            <p className="fine-print">
-              Bottled by {wine.estate}
-              {wine.produced !== null &&
-                ` · Year ${calendar(wine.bottled).year}, week ${calendar(wine.bottled).week}`}
-            </p>
-          </div>
-        </details>
-      ))}
+      {releases.slice(0, visibleCount).map((wine, index) => {
+        const { soldPercent } = releaseFacts(wine);
+        return (
+          <details key={wine.id}>
+            <summary ref={index === 0 ? firstRelease : undefined}>
+              <span className="release-number">
+                No. {String(wine.release).padStart(2, '0')}
+              </span>
+              <span>
+                <span className="release-label">{wine.label}</span>
+                <small>
+                  {vintage(wine.components)} ·{' '}
+                  {wine.bottles === 0
+                    ? 'Sold out'
+                    : `${wine.bottles.toLocaleString()} bottles in stock`}
+                </small>
+              </span>
+              <b>
+                {wine.quality}
+                <small>POINTS</small>
+              </b>
+            </summary>
+            <div className="release-details">
+              <JudgingStatus wine={wine} />
+              <dl className="release-stock">
+                <div>
+                  <dt>Produced</dt>
+                  <dd>
+                    {wine.produced === null
+                      ? 'Unrecorded'
+                      : wine.produced.toLocaleString()}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Sold</dt>
+                  <dd>
+                    <SalesCount wines={[wine]} />
+                  </dd>
+                </div>
+                <div>
+                  <dt>Remaining</dt>
+                  <dd>{wine.bottles.toLocaleString()}</dd>
+                </div>
+                <div>
+                  <dt>Sold through</dt>
+                  <dd>
+                    {soldPercent === null
+                      ? 'Unrecorded'
+                      : `${soldPercent.toLocaleString('en-US', { maximumFractionDigits: 1 })}%`}
+                  </dd>
+                </div>
+                {wine.produced !== null && (
+                  <div>
+                    <dt>Since bottling</dt>
+                    <dd>
+                      {Math.max(0, state.week - wine.bottled).toLocaleString()}{' '}
+                      {state.week - wine.bottled === 1 ? 'week' : 'weeks'}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+              <ReleaseFacts wine={wine} />
+              <Composition parts={wine.components} state={state} />
+              <TastingNotes profile={releaseTasting(wine, state)} />
+              <p className="fine-print">
+                Bottled by {wine.estate}
+                {wine.produced !== null &&
+                  ` · Year ${calendar(wine.bottled).year}, week ${calendar(wine.bottled).week}`}
+              </p>
+            </div>
+          </details>
+        );
+      })}
       {releases.length > RELEASES_PER_PAGE && (
         <div className="release-history-actions">
           {remaining > 0 && (
@@ -164,8 +187,8 @@ export function WineLines({
           </h2>
           <p>
             Your house labels, at a glance. Open a wine line to explore its
-            releases, tasting notes, and sales. Older sold-out releases are
-            summarized as the archive grows.
+            releases, tasting notes, sales, and profit. Older sold-out releases
+            are summarized as the archive grows.
           </p>
         </div>
       </div>
@@ -194,6 +217,14 @@ export function WineLines({
           Older releases have incomplete production and sales records. A + marks
           sales tracked since this update; earlier sales are included only in
           the estate’s all-time total.
+        </p>
+      )}
+      {state.lines.length > 0 && (
+        <p className="history-profit-note">
+          Profit is recorded wine sales minus the production cost of bottles
+          sold and all marketing and judging fees. It excludes vine care, estate
+          upkeep, research, and equipment. Missing older records show
+          “Unrecorded”.
         </p>
       )}
       {state.lines.length === 0 ? (
@@ -246,6 +277,7 @@ export function WineLines({
               releases.length + (line.archive?.releases ?? 0);
             const latest = releases[0];
             const stock = releases.reduce((n, wine) => n + wine.bottles, 0);
+            const result = wineLineResult(releases, line.archive);
             return (
               <details className="line-archive" key={line.id}>
                 <summary className="line-summary">
@@ -273,6 +305,8 @@ export function WineLines({
                         {totalReleases === 1 ? 'release' : 'releases'}
                         {' · Est. year '}
                         {line.founded}
+                        {result.best !== null &&
+                          ` · Best ${result.best} points`}
                         {stock === 0 && totalReleases > 0 && ' · Sold out'}
                       </p>
                     </div>
@@ -287,6 +321,10 @@ export function WineLines({
                         <SalesCount wines={releases} archive={line.archive} />
                       </strong>
                       <small>Bottles sold</small>
+                    </span>
+                    <span>
+                      <strong>{recordedMoney(result.profitCents)}</strong>
+                      <small>Total profit</small>
                     </span>
                   </div>
                   <span className="line-toggle">

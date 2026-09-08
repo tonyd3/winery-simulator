@@ -7,7 +7,13 @@ import {
   serialize,
   wholesalePrice,
 } from '../src/game.ts';
-import { startFinance, releaseResult } from '../src/finance.ts';
+import {
+  startFinance,
+  releaseResult,
+  releaseFacts,
+  wineLineResult,
+  archiveAccounts,
+} from '../src/finance.ts';
 import {
   DEFAULT_DESIGN,
   productionCost,
@@ -32,6 +38,109 @@ function bottled() {
     line: { name: 'Accounts', design: DEFAULT_DESIGN },
   });
 }
+
+test('bottle facts use actual proceeds and sold costs instead of shelf price or unsold stock', () => {
+  const wine = bottled().wines[0];
+  wine.bottles = 75;
+  wine.price = 999;
+  wine.accounts = {
+    costCents: 10000,
+    revenueCents: 50000,
+    promotionCents: 5000,
+    sold: 25,
+  };
+  const facts = releaseFacts(wine);
+  assert.equal(facts.profitCents, 42500);
+  assert.equal(facts.averagePriceCents, 2000);
+  assert.equal(facts.profitPerBottleCents, 1700);
+  assert.equal(facts.soldPercent, 25);
+  assert.equal(facts.inventoryCents, 7500);
+});
+
+test('bottle facts distinguish no sales, promotion losses, and missing historical records', () => {
+  const wine = bottled().wines[0];
+  assert.equal(releaseFacts(wine).profitCents, 0);
+  assert.equal(releaseFacts(wine).averagePriceCents, null);
+  assert.equal(releaseFacts(wine).profitPerBottleCents, null);
+  assert.equal(releaseFacts(wine).soldPercent, 0);
+  wine.accounts!.promotionCents = 24000;
+  assert.equal(releaseFacts(wine).profitCents, -24000);
+  wine.bottles = 99;
+  wine.accounts!.sold = 1;
+  wine.accounts!.revenueCents = 100;
+  assert.ok(releaseFacts(wine).profitPerBottleCents! < 0);
+  wine.accounts!.costCents = null;
+  assert.equal(releaseFacts(wine).profitCents, null);
+  assert.equal(releaseFacts(wine).profitPerBottleCents, null);
+  assert.equal(releaseFacts(wine).averagePriceCents, 100);
+  wine.accounts!.costCents = 10000;
+  wine.bottles = 50; // Production survived, but the earlier sales accounts did not.
+  assert.equal(releaseFacts(wine).profitCents, null);
+  assert.equal(releaseFacts(wine).averagePriceCents, 100);
+  delete wine.accounts;
+  wine.produced = null;
+  assert.equal(releaseFacts(wine).soldPercent, null);
+  assert.equal(releaseFacts(wine).profitCents, null);
+});
+
+test('wine-line profit includes every release and remains unchanged when sold-out details are archived', () => {
+  const s = bottled();
+  const sold = act(s, { type: 'wholesale', id: s.wines[0].id }).wines[0];
+  assert.equal(releaseFacts(sold).soldPercent, 100);
+  const releases = Array.from({ length: 8 }, (_, i) => ({
+    ...structuredClone(sold),
+    id: i + 100,
+    release: i + 1,
+    quality: 70 + i,
+  }));
+  const result = wineLineResult(releases);
+  assert.equal(result.profitCents, releaseResult(sold).marginCents! * 8);
+  assert.equal(result.best, 77);
+  const archive = {
+    releases: 1,
+    lastRelease: 8,
+    sold: 100,
+    produced: 100,
+    complete: true,
+    best: 77,
+    accounts: archiveAccounts(releases[7]),
+  };
+  assert.deepEqual(wineLineResult(releases.slice(0, 7), archive), result);
+  assert.equal(
+    wineLineResult([], archive).profitCents,
+    releaseResult(sold).marginCents,
+  );
+  assert.deepEqual(wineLineResult([]), { profitCents: 0, best: null });
+});
+
+test('missing release or archived accounts never become a fabricated full line profit', () => {
+  const wine = bottled().wines[0];
+  const archive = {
+    releases: 2,
+    lastRelease: 2,
+    sold: 200,
+    produced: 200,
+    complete: true,
+    best: 93,
+  };
+  assert.equal(wineLineResult([wine], archive).profitCents, null);
+  assert.equal(wineLineResult([wine], archive).best, 93);
+  assert.equal(
+    wineLineResult([wine], {
+      ...archive,
+      accounts: {
+        revenueCents: 10000,
+        costCents: 0,
+        promotionCents: 0,
+        complete: false,
+      },
+    }).profitCents,
+    null,
+  );
+  const legacy = structuredClone(wine);
+  delete legacy.accounts;
+  assert.equal(wineLineResult([wine, legacy]).profitCents, null);
+});
 
 test('partial releases conserve harvest, fermentation, tasting and actual kit costs', () => {
   let s = stored();

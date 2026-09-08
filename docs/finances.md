@@ -24,6 +24,8 @@ Release margins exclude vine care, estate upkeep, research, land, and equipment.
 
 When sold-out history is compacted, financial totals remain with the wine line. This preserves results without reintroducing the 1,000-release bottling dead end.
 
+The same realized margin appears as **Total profit** in Wine shop → Wine history and Cellar → Wine lines. Line totals include all releases, including compacted history. Each line also shows its best recorded bottle score. Open a release for recorded revenue, the production cost of sold bottles, marketing and judging fees, unsold inventory cost, average sale price, and profit per sold bottle. Both per-bottle figures use the count of sales with financial records, including retail and wholesale. Releases without sales show no per-bottle average; incomplete costs or sales leave total profit unrecorded. Percentage sold uses original production, and release age is measured in game weeks since bottling; neither is inferred for releases without original production records.
+
 ## Older saves
 
 No financial history is inferred from a truncated ledger. Cash tracking starts with the next receipt or payment. Existing liquid and kit costs without records remain unrecorded, and releases containing those costs do not show a fabricated margin. Sales and promotion from this update onward are recorded. Consuming all unknown kit inventory lets later purchased inventory establish a known cost basis.
