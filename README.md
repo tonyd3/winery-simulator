@@ -158,16 +158,16 @@ Actual demand moves above and below that longer curve. Shop traffic changes smoo
 
 The shop shows a **forecast range** for the next weekly sale, weeks since bottling, and the strongest market influence. Events show how many sales weeks remain. Judging results arriving that week can raise actual sales above the range. A dedicated saved market seed keeps forecasts and sales reproducible: reloading, renaming, changing prices back and forth, or unrelated cellar actions do not reroll shoppers. Pausing a listing does not freeze release age or the market. Each new release keeps its bottling date; releases share grape-and-vintage customer pools in proportion to their source wine, so splitting bottles or nudging a blend across 50% does not multiply demand. A blend competes for every grape audience it contains; its dominant-grape label does not choose its buyers. Older saves receive a default market seed and keep recorded bottling dates, inventory, funds, prices, and sales history.
 
-Above **90 points**, suggested value includes a quadratic premium: each additional point adds more value than the previous one. Prestige strengthens that premium. For example, at 50 Prestige before medals or marketing:
+Above **80 points**, suggested value gains a gradual quality premium. Exceptional wine remains valuable, with smaller price steps between adjacent scores. Prestige strengthens the premium with diminishing influence. For example, at 50 Prestige before medals or marketing:
 
 | Bottle score | Suggested price |
 | --- | --- |
-| 90 | $31 |
-| 91 | $38 |
-| 92 | $56 |
-| 95 | $183 |
-| 98 | $417 |
-| 100 | $634 |
+| 90 | $50 |
+| 91 | $54 |
+| 92 | $59 |
+| 95 | $75 |
+| 98 | $94 |
+| 100 | $109 |
 
 This premium uses the original bottle score. Independent judging adds its medal's price and demand bonuses; it does not replace the bottle score. The same value curve feeds shop demand and wholesale offers. Existing releases gain the new suggested valuation while keeping their chosen shelf prices until you change them.
 

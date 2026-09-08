@@ -1241,7 +1241,7 @@ export const fairPrice = (
   // Wine quality keeps its 100-point scale; estate Prestige has diminishing influence.
   const influence = prestigeInfluence(prestige);
   const premium =
-    6 * Math.max(0, wine.quality - 90) ** 2 * (0.6 + influence * 0.008);
+    0.22 * Math.max(0, wine.quality - 80) ** 2 * (0.7 + influence * 0.003);
   return Math.min(
     BOTTLE_PRICE.max,
     Math.round(7 + wine.quality * 0.24 + influence * 0.055 + premium) +

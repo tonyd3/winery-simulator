@@ -155,7 +155,8 @@ test('large Prestige retains pricing, shop stock and hospitality capacity limits
     assert.ok(hospitality.rooms <= 24);
     assert.ok(Number.isFinite(hospitality.revenue));
     assert.ok(fairPrice({ quality: 100 }, score) <= 1000);
-    if (score >= 1000) assert.equal(fairPrice({ quality: 100 }, score), 1000);
+    if (score === Number.MAX_VALUE)
+      assert.equal(fairPrice({ quality: 100 }, score), 1000);
     lastValue = value;
     lastDemand = sales;
     assert.deepEqual(deserialize(serialize(s)), s);

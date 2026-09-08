@@ -1153,7 +1153,7 @@ export default function App() {
                 'glass',
                 '03',
                 'Blend, bottle & share',
-                'Blend reserves across grapes and vintages, then bottle into a new or existing wine line. Each 750 mL bottle uses one kit; orders arrive next week. Above 90 points, each extra point earns a larger price premium. Prestige amplifies it; judging medals add value. Set your price and list the wine.',
+                'Blend reserves across grapes and vintages, then bottle into a new or existing wine line. Each 750 mL bottle uses one kit; orders arrive next week. Above 80 points, a gradual quality premium rewards finer wine. Prestige strengthens it; judging medals add value. Set your price and list the wine.',
               ],
               [
                 'trend',
