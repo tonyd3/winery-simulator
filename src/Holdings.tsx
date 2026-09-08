@@ -1,3 +1,4 @@
+import { additionalLandUpkeep } from './investments';
 import { useState } from 'react';
 import { ArrowRight, MapPin, Plus, Shuffle } from 'lucide-react';
 import { RegionLandscape } from './RegionLandscape';
@@ -209,8 +210,9 @@ export function Holdings({
                 </p>
                 {!full && (
                   <small>
-                    +{money(35)} / week, plus {money(25)} per parcel purchased.
-                    {' '}Land and vines cost extra.
+                    +{money(35)} / week. Each purchased parcel adds {money(25)}/
+                    week plus any vineyard program costs. Land and vines cost
+                    extra.
                     {state.cash < price &&
                       ` · Need ${money(price - state.cash)} more`}
                   </small>
@@ -282,7 +284,9 @@ export function Holdings({
             </p>
             <div className="acquisition-cost">
               <strong>{money(cost)}</strong>
-              <span>+{money(175)} weekly upkeep</span>
+              <span>
+                +{money(additionalLandUpkeep(state, 175, 3, 1))} weekly upkeep
+              </span>
             </div>
             <button
               className="button primary wide"

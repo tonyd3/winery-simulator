@@ -156,13 +156,13 @@ test('bonuses stack across estates and selective picking reduces actual expanded
     const p = s.plots.find((p) => p.id === id)!;
     assert.deepEqual(harvestInvestmentEffects(s, p), {
       quality: 10,
-      yieldMultiplier: 0.9,
+      yieldMultiplier: 0.936,
     });
     assert.equal(
       harvestQuality(s, p),
       Math.min(100, harvestQuality(base, p) + 10),
     );
-    assert.equal(harvestYield(s, p), Math.round(harvestYield(base, p) * 0.9));
+    assert.equal(harvestYield(s, p), Math.round(harvestYield(base, p) * 0.936));
     const picked = act(s, { type: 'harvest', id });
     assert.equal(picked.grapes[0].quality, harvestQuality(s, p));
     assert.equal(picked.grapes[0].kg, harvestYield(s, p));
@@ -172,7 +172,7 @@ test('bonuses stack across estates and selective picking reduces actual expanded
   const paused = suspend(s, 'selectiveHarvest');
   assert.equal(
     harvestYield(paused, paused.plots[0]),
-    harvestYield(base, base.plots[0]),
+    Math.round(harvestYield(base, base.plots[0]) * 1.04),
   );
   assert.equal(
     harvestQuality(paused, paused.plots[0]),

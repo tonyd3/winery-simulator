@@ -1,3 +1,4 @@
+import { additionalLandUpkeep } from './investments';
 import { Plus } from 'lucide-react';
 import {
   calendar,
@@ -92,7 +93,15 @@ export function PlotExpansion({
             {plot.variety
               ? `Includes more ${getVariety(state, plot.variety).name} vines, producing from next spring. This year's crop stays unchanged.`
               : 'Add land to this parcel, then plant the larger area with your chosen grape.'}{' '}
-            +${PLOT_EXPANSION.upkeep} weekly upkeep.
+            +
+            {money(
+              additionalLandUpkeep(
+                state,
+                PLOT_EXPANSION.upkeep,
+                land.baseArea * PLOT_EXPANSION.step,
+              ),
+            )}{' '}
+            weekly upkeep, including vineyard programs.
           </p>
         </>
       )}

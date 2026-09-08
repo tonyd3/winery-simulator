@@ -6,10 +6,13 @@ Open **Build → Buildings & equipment**. Department filters cover vineyard/cell
 
 | Investment | Purchase | Weekly operating | Weekly suspended | Operating prerequisite |
 | --- | ---: | ---: | ---: | --- |
-| Drip irrigation | $6,000 | $180 | $45 | None |
-| Compost program | $8,000 | $180 | $45 | None |
-| Canopy management team | $14,000 | $320 | $80 | None |
-| Precision irrigation controls | $26,000 | $600 | $150 | Drip irrigation |
+| Drip irrigation | $6,000 | $20/ha + $12/district | 25% | None |
+| Compost program | $1,800 | $6/ha + $6/district | 25% | None |
+| Cover crop management | $1,800 | $6/ha + $8/district | 25% | None |
+| Vineyard mulching | $2,400 | $8/ha + $10/district | 25% | None |
+| Field drainage | $5,000 | $12/ha + $15/district | 25% | None |
+| Canopy management team | $14,000 | $24/ha + $20/district | 25% | None |
+| Precision irrigation controls | $26,000 | $36/ha + $24/district | 25% | Drip irrigation |
 | Tasting terrace | $12,000 | $280 | $70 | None |
 | Winemaker’s bench | $18,000 | $550 | $138 | None |
 | Visitor center | $35,000 | $600 | $150 | None |
@@ -19,13 +22,19 @@ Open **Build → Buildings & equipment**. Department filters cover vineyard/cell
 | Vineyard guesthouse | $180,000 | $3,000 | $750 | Visitor center |
 | Wine club team | $45,000 | $1,200 | $300 | Tasting terrace |
 | Export sales team | $85,000 | $2,200 | $550 | None |
-| Optical sorting line | $32,000 | $700 | $175 | None |
-| Selective harvest crew | $38,000 | $1,000 | $250 | None |
-| Viticulture team | $28,000 | $1,600 | $400 | None |
+| Optical sorting line | $32,000 | $40/ha + $30/district | 25% | None |
+| Selective harvest crew | $38,000 | $55/ha + $40/district | 25% | None |
+| Viticulture team | $28,000 | $50/ha + $40/district | 25% | None |
 | Research & nursery lab | $65,000 | $1,400 | $350 | Winemaker’s bench |
 | Refrigerated grape store | $42,000 | $900 | $225 | None |
 
 These are fictional game balance values. Each investment also requires its corresponding [research project](regions-and-research.md#research-progression) before purchase; the table lists additional operating prerequisites. Research costs are separate from the purchase price. Existing owned facilities can continue operating or resume without retroactive research. Each investment is bought once for the shared business and benefits all estates. Upfront cost covers construction or team setup; weekly costs include staffing and maintenance. The eight-week figure is purchase price plus eight operating bills for that investment, excluding research, other facilities, and estate overhead.
+
+## Agriculture and scale
+
+Area rates use all owned hectares, including empty land and expanded rows. Each estate/district containing owned land adds one servicing charge. Round the combined operating cost up to a whole dollar; suspension retains 25%, also rounded up. The starting 3 ha in one district costs $24/week for compost, rising to $28 after a 0.6 ha expansion. Build and Research show the same live totals; buying a facility does not buy its prerequisite or land.
+
+Compost adds 4% yield as well as one quality point. Cover crops (Vine science) reduce weekly health loss by one but slow growth by one. Mulching (Soil & water mapping) reduces dry-spell health loss by three on vineyards without operating drip irrigation. Drainage (the same study) adds two growth only in light rain. These weekly effects apply to growing vines across every estate, stop when suspended, and never change recorded wine.
 
 ## Grape quality
 
@@ -33,12 +42,12 @@ Four investments extend the grape-quality path. Existing studies unlock them, wi
 
 | Investment | Required discovery | Benefit on new harvests |
 | --- | --- | --- |
-| Compost program | Vine science | +1 quality point |
+| Compost program | Vine science | +1 quality point and 4% more grapes |
 | Canopy management team | Soil & water mapping | +2 quality points at 80% or higher vine health |
 | Precision irrigation controls | Precision viticulture | +2 quality points at 95% or higher ripeness; drip irrigation must also operate |
 | Selective harvest crew | Selective fruit handling | +3 quality points, with 10% fewer kilograms picked |
 
-These are fictional game balance effects, evaluated when a parcel is harvested. The four additions provide up to +8 points; optical sorting adds another +2. Quality is still capped at 100, and vine health, ripeness, soil, climate, and grape finesse still matter. Selective picking multiplies yield by 0.9 before the final whole-kilogram rounding, including expanded plots and every regional estate. It does not reduce acreage, future growth, or harvest fees. Suspend the crew before picking to return to the normal yield and remove its bonus.
+These are fictional game balance effects, evaluated when a parcel is harvested. The four additions provide up to +8 points; optical sorting adds another +2. Quality is still capped at 100, and vine health, ripeness, soil, climate, and grape finesse still matter. Compost multiplies yield by 1.04 and selective picking by 0.9 (0.936 together) before the final whole-kilogram rounding, including expanded plots and every regional estate. It does not reduce acreage, future growth, or harvest fees. Suspend the crew before picking to return to the normal yield and remove its bonus.
 
 The parcel inspector shows estimated grape quality and kilograms at current conditions during the growing season. Expand the upgrade contribution to see each owned investment's points, unmet health or ripeness threshold, or suspended status. The estimate uses the same functions as harvesting and plot-expansion previews. It disappears after harvest and in winter. Purchase, suspension, and resume never recalculate existing grape lots, batches, reserves, or bottled scores. Old saves receive no free upgrades; newly bought assets persist through the existing upgrade and suspension lists.
 
@@ -52,7 +61,7 @@ Forecasts use the starting week's Prestige, season, and active facilities, match
 
 ## Wine, production, and research benefits
 
-- An operating tasting terrace adds 12 base shoppers per listed release. Tasting room demand multiplies by 1.15; the restaurant by 1.20.
+- An operating tasting terrace adds 12 base shoppers to the shared grape-and-vintage audiences. Tasting room demand multiplies by 1.15; the restaurant by 1.20.
 - Sommeliers multiply demand by 1.20 for 80+ wines and suggested retail value by 1.08. The chosen shelf price and recorded wine score remain unchanged. Retail suggestions cap at $1,000.
 - The wine club multiplies demand by 1.35 for releases aged at least 12 game weeks. Export staff multiply demand by 1.45 and wholesale value by 1.08 for wines rated 85+. These benefits compound with the existing market, price, release-age, marketing, and judging formulas; sales remain capped by stock.
 - Irrigation retains its +3 growth and dry-spell protection. Viticulture staff add +2 growth and reduce health loss by one on every growing parcel, including offscreen estates. Sorting adds +2 to new harvest quality; temperature control retains +3 on new fermentations. Historical wine and batch scores do not change.
@@ -61,7 +70,7 @@ Forecasts use the starting week's Prestige, season, and active facilities, match
 
 ## Suspension, failure, and saves
 
-Suspend preserves ownership, removes benefits, and charges 25% of the listed weekly bill, rounded up. Suspending a prerequisite explicitly suspends its dependents. Reopening the prerequisite does not automatically restart their bills; resume each investment individually. Resuming is free but requires enough cash for one full week of total estate upkeep after the change.
+Suspend preserves ownership, removes benefits, and charges 25% of the listed weekly bill, rounded up. Suspending a prerequisite explicitly suspends its dependents. Reopening the prerequisite does not automatically restart their bills; resume each investment individually. Using a harvest, fermentation, or premium-wholesale benefit retains the full operating charge until the next weekly payment, even after suspension or reload. Multiple uses share one bill; a larger holding can raise the charge, but shrinking coverage cannot erase an incurred charge. Resuming is free but requires enough cash for one full week of total estate upkeep after the change.
 
 If available cash after that week's revenue cannot cover its bill, bankruptcy ends the estate and requires a new game. The remaining cash pays part of the final bill and the closure records the unpaid amount. Suspend investments before advancing to reduce future bills. There is no automatic rescue, sale, demolition, or refund.
 

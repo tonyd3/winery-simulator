@@ -1,4 +1,6 @@
 import { RESEARCH } from './catalog';
+import { LAND, plotScale } from './land';
+import { localPlotId, estateIdForPlot, districtForPlot } from './estates';
 import { prestigeInfluence } from './prestige';
 import type { ResearchId } from './catalog';
 import type { GameState, Plot, Wine } from './game';
@@ -6,6 +8,9 @@ import type { GameState, Plot, Wine } from './game';
 export const UPGRADE_IDS = [
   'irrigation',
   'compost',
+  'coverCrops',
+  'mulching',
+  'drainage',
   'canopy',
   'precisionIrrigation',
   'cellar',
@@ -36,6 +41,7 @@ type Investment = {
   name: string;
   cost: number;
   upkeep: number;
+  agriculture?: { perHectare: number; perDistrict: number };
   text: string;
   category: InvestmentDepartment;
   kind: 'facility' | 'team';
@@ -54,7 +60,8 @@ export const UPGRADES: Record<Upgrade, Investment> = {
     research: 'soil_mapping',
     name: 'Drip irrigation',
     cost: 6000,
-    upkeep: 180,
+    upkeep: 0,
+    agriculture: { perHectare: 20, perDistrict: 12 },
     category: 'vineyard',
     kind: 'facility',
     text: '+3 growth each week and protection from dry spells across your vineyards.',
@@ -62,18 +69,50 @@ export const UPGRADES: Record<Upgrade, Investment> = {
   compost: {
     research: 'ampelography',
     name: 'Compost program',
-    cost: 8000,
-    upkeep: 180,
+    cost: 1800,
+    upkeep: 0,
+    agriculture: { perHectare: 6, perDistrict: 6 },
     category: 'vineyard',
     kind: 'facility',
-    text: 'Enrich vineyard soils with estate compost. +1 quality point on new harvests across every estate.',
-    harvest: { quality: 1 },
+    text: 'Enrich vineyard soils with estate compost. +1 harvest quality point and 4% more grapes across every estate.',
+    harvest: { quality: 1, yieldMultiplier: 1.04 },
+  },
+  coverCrops: {
+    research: 'ampelography',
+    name: 'Cover crop management',
+    cost: 1800,
+    upkeep: 0,
+    agriculture: { perHectare: 6, perDistrict: 8 },
+    category: 'vineyard',
+    kind: 'team',
+    text: 'Living ground cover reduces weekly vine health loss by 1, but competes for water and slows ripening by 1 each growing week.',
+  },
+  mulching: {
+    research: 'soil_mapping',
+    name: 'Vineyard mulching',
+    cost: 2400,
+    upkeep: 0,
+    agriculture: { perHectare: 8, perDistrict: 10 },
+    category: 'vineyard',
+    kind: 'facility',
+    text: 'Retain soil moisture: 3 less health loss during dry spells on unirrigated vineyards. Does not add protection where drip irrigation already operates.',
+  },
+  drainage: {
+    research: 'soil_mapping',
+    name: 'Field drainage',
+    cost: 5000,
+    upkeep: 0,
+    agriculture: { perHectare: 12, perDistrict: 15 },
+    category: 'vineyard',
+    kind: 'facility',
+    text: 'Manage wet ground for 2 extra growth during light-rain weeks. Dry and overcast weeks receive no bonus.',
   },
   canopy: {
     research: 'soil_mapping',
     name: 'Canopy management team',
     cost: 14000,
-    upkeep: 320,
+    upkeep: 0,
+    agriculture: { perHectare: 24, perDistrict: 20 },
     category: 'vineyard',
     kind: 'team',
     text: 'Balance shade and airflow around the fruit. +2 harvest quality points when vine health is at least 80%. Tend weaker vines to benefit.',
@@ -83,7 +122,8 @@ export const UPGRADES: Record<Upgrade, Investment> = {
     research: 'precision_viticulture',
     name: 'Precision irrigation controls',
     cost: 26000,
-    upkeep: 600,
+    upkeep: 0,
+    agriculture: { perHectare: 36, perDistrict: 24 },
     category: 'vineyard',
     kind: 'facility',
     requires: 'irrigation',
@@ -189,7 +229,8 @@ export const UPGRADES: Record<Upgrade, Investment> = {
     research: 'fruit_selection',
     name: 'Optical sorting line',
     cost: 32000,
-    upkeep: 700,
+    upkeep: 0,
+    agriculture: { perHectare: 40, perDistrict: 30 },
     category: 'vineyard',
     kind: 'facility',
     text: '+2 quality points on new harvests. Improves selection of fruit; it cannot repair stored wine.',
@@ -199,7 +240,8 @@ export const UPGRADES: Record<Upgrade, Investment> = {
     research: 'fruit_selection',
     name: 'Selective harvest crew',
     cost: 38000,
-    upkeep: 1000,
+    upkeep: 0,
+    agriculture: { perHectare: 55, perDistrict: 40 },
     category: 'vineyard',
     kind: 'team',
     text: 'Pick only the best bunches. +3 quality points on new harvests, with 10% fewer kilograms picked. Applies across every estate while operating.',
@@ -209,10 +251,11 @@ export const UPGRADES: Record<Upgrade, Investment> = {
     research: 'precision_viticulture',
     name: 'Viticulture team',
     cost: 28000,
-    upkeep: 1600,
+    upkeep: 0,
+    agriculture: { perHectare: 50, perDistrict: 40 },
     category: 'vineyard',
     kind: 'team',
-    text: '+2 weekly growth and 1 less weekly health loss on every growing plot. Larger vineyard portfolios make better use of the team.',
+    text: '+2 weekly growth and 1 less weekly health loss on every growing plot. Staffing costs grow with vineyard area and districts.',
   },
   researchLab: {
     research: 'research_methods',
@@ -268,9 +311,98 @@ export function harvestInvestmentEffects(s: GameState, p: Plot) {
   }
   return { quality, yieldMultiplier };
 }
+export function vineyardFootprint(s: GameState) {
+  let hectares = 0;
+  const districts = new Set<string>();
+  for (const plot of s.plots) {
+    if (!plot.owned) continue;
+    hectares +=
+      Number(LAND[localPlotId(plot.id) - 1].area) * plotScale(plot.expansions);
+    districts.add(`${estateIdForPlot(plot.id)}:${districtForPlot(plot.id)}`);
+  }
+  return {
+    hectares: Math.round(hectares * 100) / 100,
+    districts: districts.size,
+  };
+}
+
+export function operatingCost(
+  s: GameState,
+  id: Upgrade,
+  footprint?: ReturnType<typeof vineyardFootprint>,
+) {
+  const u = UPGRADES[id];
+  if (!u.agriculture) return u.upkeep;
+  const land = footprint ?? vineyardFootprint(s);
+  const hundredths = Math.round(land.hectares * 100);
+  return Math.ceil(
+    (u.upkeep * 100 +
+      hundredths * u.agriculture.perHectare +
+      land.districts * u.agriculture.perDistrict * 100) /
+      100,
+  );
+}
+
+export function additionalLandUpkeep(
+  s: GameState,
+  base: number,
+  hectares: number,
+  districts = 0,
+) {
+  const current = vineyardFootprint(s);
+  const next = {
+    hectares: Math.round((current.hectares + hectares) * 100) / 100,
+    districts: current.districts + districts,
+  };
+  return (
+    base +
+    s.upgrades.reduce((sum, id) => {
+      if (!UPGRADES[id].agriculture) return sum;
+      const future = Math.max(
+        Math.ceil(
+          operatingCost(s, id, next) * (upgradeActive(s, id) ? 1 : 0.25),
+        ),
+        s.incurredInvestmentCosts?.[id] ?? 0,
+      );
+      return sum + future - investmentBill(s, id);
+    }, 0)
+  );
+}
+
+export function parcelPurchaseUpkeep(s: GameState, id: number) {
+  const estate = estateIdForPlot(id),
+    district = districtForPlot(id);
+  const districtHasLand = s.plots.some(
+    (plot) =>
+      plot.owned &&
+      estateIdForPlot(plot.id) === estate &&
+      districtForPlot(plot.id) === district,
+  );
+  return additionalLandUpkeep(
+    s,
+    25,
+    Number(LAND[localPlotId(id) - 1].area),
+    districtHasLand ? 0 : 1,
+  );
+}
+
+export function vineyardWeeklyEffects(s: GameState, sky: string) {
+  const irrigated = upgradeActive(s, 'irrigation');
+  return {
+    growth:
+      (upgradeActive(s, 'coverCrops') ? -1 : 0) +
+      (upgradeActive(s, 'drainage') && sky === 'Light rain' ? 2 : 0),
+    healthProtection:
+      (upgradeActive(s, 'coverCrops') ? 1 : 0) +
+      (upgradeActive(s, 'mulching') && sky === 'Dry spell' && !irrigated
+        ? 3
+        : 0),
+  };
+}
+
 export const investmentBill = (s: GameState, id: Upgrade) =>
   Math.max(
-    Math.ceil(UPGRADES[id].upkeep * (upgradeActive(s, id) ? 1 : 0.25)),
+    Math.ceil(operatingCost(s, id) * (upgradeActive(s, id) ? 1 : 0.25)),
     s.incurredInvestmentCosts?.[id] ?? 0,
   );
 
@@ -282,7 +414,7 @@ export function recordUpgradeUse(s: GameState, ids: readonly Upgrade[]) {
     s.incurredInvestmentCosts ??= {};
     s.incurredInvestmentCosts[id] = Math.max(
       s.incurredInvestmentCosts[id] ?? 0,
-      UPGRADES[id].upkeep,
+      operatingCost(s, id),
     );
     const prerequisite = UPGRADES[id].requires;
     if (prerequisite) recordUpgradeUse(s, [prerequisite]);

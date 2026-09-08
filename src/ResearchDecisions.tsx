@@ -17,7 +17,12 @@ import {
   researchComplete,
   researchTerms,
 } from './researchProgression';
-import { UPGRADES, upgradeActive, studyWeeks } from './investments';
+import {
+  UPGRADES,
+  upgradeActive,
+  studyWeeks,
+  operatingCost,
+} from './investments';
 
 export type ResearchNavigation = {
   onFocus: (id: ResearchId) => void;
@@ -135,7 +140,7 @@ export function OutcomePlanner({
                       : state.upgrades.includes(id)
                         ? 'Owned · needs to resume'
                         : money(UPGRADES[id].cost)}{' '}
-                    · {money(UPGRADES[id].upkeep)}/week
+                    · {money(operatingCost(state, id))}/week
                   </span>
                 </li>
               ))}
@@ -311,7 +316,7 @@ export function StudyPayoff({
               {state.upgrades.includes(u)
                 ? 'Already owned'
                 : `${money(upgrade.cost)} to ${upgrade.kind === 'team' ? 'hire' : 'build'}`}{' '}
-              · {money(upgrade.upkeep)}/week operating
+              · {money(operatingCost(state, u))}/week operating
             </span>
             {chain.length > 0 && (
               <small>
@@ -319,7 +324,7 @@ export function StudyPayoff({
                 {chain
                   .map(
                     (p) =>
-                      `${UPGRADES[p].name} (${state.upgrades.includes(p) ? 'owned' : money(UPGRADES[p].cost)}; ${money(UPGRADES[p].upkeep)}/week)`,
+                      `${UPGRADES[p].name} (${state.upgrades.includes(p) ? 'owned' : money(UPGRADES[p].cost)}; ${money(operatingCost(state, p))}/week)`,
                   )
                   .join(', ')}{' '}
                 operating. Their research is separate.

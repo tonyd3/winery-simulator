@@ -26,6 +26,7 @@ import {
   hospitalityForecast,
   annualHospitalityForecast,
   investmentUpkeep,
+  operatingCost,
   investmentDemand,
   studyWeeks,
 } from '../src/investments.ts';
@@ -66,20 +67,20 @@ function hospitality(s = funded()) {
 }
 const valid = (s: GameState) => assert.deepEqual(deserialize(serialize(s)), s);
 
-test('18 substantial investments charge once, enforce prerequisites and retain equipment separately', () => {
+test('21 investments charge once, enforce prerequisites and retain equipment separately', () => {
   let s = funded();
   const equipment = structuredClone(s.cellar);
   let capital = 0,
     operating = 0;
   const ids = UPGRADE_IDS.filter((id) => id !== 'cellar');
-  assert.equal(ids.length, 18);
+  assert.equal(ids.length, 21);
   for (const id of ids) {
-    assert.ok(UPGRADES[id].cost >= 6000);
-    assert.ok(UPGRADES[id].upkeep >= 180);
+    assert.ok(UPGRADES[id].cost >= 1800);
+    assert.ok(operatingCost(s, id) > 0);
     const before = s,
       copy = structuredClone(s);
     capital += UPGRADES[id].cost;
-    operating += UPGRADES[id].upkeep;
+    operating += operatingCost(s, id);
     s = buy(s, id);
     assert.deepEqual(before, copy);
     assert.equal(s.cash, 2000000 - capital);
@@ -374,7 +375,7 @@ test('harvest benefits retain the full operating bill after suspension and reloa
   s = act(s, { type: 'harvest', id: 1 });
   s = pause(s, 'compost');
   assert.equal(upkeep(s), activeBill);
-  assert.equal(s.incurredInvestmentCosts?.compost, UPGRADES.compost.upkeep);
+  assert.equal(s.incurredInvestmentCosts?.compost, operatingCost(s, 'compost'));
   s = deserialize(serialize(s));
   const cash = s.cash;
   s = act(s, { type: 'advance' });
@@ -383,8 +384,8 @@ test('harvest benefits retain the full operating bill after suspension and reloa
   assert.equal(
     upkeep(s),
     activeBill -
-      UPGRADES.compost.upkeep +
-      Math.ceil(UPGRADES.compost.upkeep * 0.25),
+      operatingCost(s, 'compost') +
+      Math.ceil(operatingCost(s, 'compost') * 0.25),
   );
 });
 

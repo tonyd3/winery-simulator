@@ -1,3 +1,5 @@
+import { LAND, PLOT_EXPANSION, plotScale } from './land';
+export { LAND, PLOT_EXPANSION, plotScale } from './land';
 import {
   centsSchema,
   financeSchema,
@@ -51,6 +53,8 @@ import {
   harvestInvestmentEffects,
   investmentUpkeep,
   recordUpgradeUse,
+  vineyardWeeklyEffects,
+  operatingCost,
   investmentDemand,
   upgradeBlocked,
   hospitalityForecast,
@@ -131,12 +135,6 @@ import type { MaturationVessel } from './maturation';
 export const SAVE_KEY = 'terroir.save.v1';
 export const BACKUP_KEY = 'terroir.backup.v1';
 export const BOTTLE_PRICE = { min: 1, max: 1000 };
-export const PLOT_EXPANSION = {
-  max: 4,
-  step: 0.5,
-  costPerHectare: 3000,
-  upkeep: 15,
-};
 export const hectares = (area: number) =>
   area.toLocaleString('en-US', {
     minimumFractionDigits: 1,
@@ -178,74 +176,6 @@ import type {
 } from './catalog';
 export { VARIETIES, REGIONS, REGION_IDS, RESEARCH, RESEARCH_IDS, TRAITS };
 export type { Variety, RegionId, ResearchId, BreedingTrait };
-export const LAND = [
-  {
-    id: 1,
-    name: 'South slope',
-    soil: 'Clay',
-    aspect: 'South-facing',
-    area: '1.2',
-    cost: 16800,
-    yield: 360,
-    x: 475,
-    y: 262,
-  },
-  {
-    id: 2,
-    name: 'Limestone terrace',
-    soil: 'Limestone',
-    aspect: 'East-facing',
-    area: '0.8',
-    cost: 14000,
-    yield: 280,
-    x: 700,
-    y: 377,
-  },
-  {
-    id: 3,
-    name: 'Orchard field',
-    soil: 'Chalk',
-    aspect: 'West-facing',
-    area: '1.0',
-    cost: 14000,
-    yield: 310,
-    x: 248,
-    y: 378,
-  },
-  {
-    id: 4,
-    name: 'Hilltop parcel',
-    soil: 'Chalk',
-    aspect: 'South-facing',
-    area: '1.4',
-    cost: 16800,
-    yield: 420,
-    x: 708,
-    y: 147,
-  },
-  {
-    id: 5,
-    name: 'River meadow',
-    soil: 'Clay',
-    aspect: 'East-facing',
-    area: '1.1',
-    cost: 14000,
-    yield: 340,
-    x: 475,
-    y: 495,
-  },
-  {
-    id: 6,
-    name: 'Old stone field',
-    soil: 'Limestone',
-    aspect: 'West-facing',
-    area: '1.3',
-    cost: 19200,
-    yield: 400,
-    x: 245,
-    y: 147,
-  },
-] as const;
 const bounded = (max = 1e12) => z.number().finite().min(0).max(max);
 const integer = (max = 1e9) => bounded(max).int();
 const varietySchema = z.string().min(1).max(32);
@@ -1086,8 +1016,6 @@ export function getLand(s: GameState, id: number) {
         : REGIONS[estate.region].soils[(local - 1 + district) % 6],
   };
 }
-export const plotScale = (expansions = 0) =>
-  1 + expansions * PLOT_EXPANSION.step;
 export const plotExpansionCost = (s: GameState, p: Plot) =>
   Math.round(
     getLand(s, p.id).baseArea *
@@ -1850,6 +1778,7 @@ export function act(current: GameState, action: Action): GameState {
       break;
     }
     case 'expandEstate': {
+      const previousUpkeep = upkeep(s);
       const estate = getEstate(s, action.id);
       if (estate.districts >= ESTATE_LIMITS.districts)
         throw new Error(
@@ -1865,7 +1794,7 @@ export function act(current: GameState, action: Action): GameState {
       s.activeEstate = estate.id;
       note(
         s,
-        `${estate.name} has a new district. All six parcels must be purchased separately before planting. District upkeep increases by $35/week, plus $25/week for each parcel you buy.`,
+        `${estate.name} has a new district. All six parcels must be purchased separately before planting. District upkeep increases by ${money(upkeep(s) - previousUpkeep)}/week. Parcel purchases add land upkeep and increase vineyard program bills.`,
         'good',
       );
       break;
@@ -1940,6 +1869,7 @@ export function act(current: GameState, action: Action): GameState {
         }
         if (date.season !== 'Winter' && p.harvestedYear !== date.year) {
           const previous = p.growth;
+          const agriculture = vineyardWeeklyEffects(s, sky.name);
           const fit = suitability(s, p.variety!, undefined, region);
           const resilience = Math.min(
             7,
@@ -1954,19 +1884,25 @@ export function act(current: GameState, action: Action): GameState {
               sky.growth +
               (upgradeActive(s, 'irrigation') ? 3 : 0) +
               (upgradeActive(s, 'viticulturist') ? 2 : 0) +
+              agriculture.growth +
               fit.growth,
           );
           p.health = Math.max(
             20,
             p.health -
               Math.max(
-                upgradeActive(s, 'viticulturist') ? 0 : 1,
+                Math.max(
+                  0,
+                  (upgradeActive(s, 'viticulturist') ? 0 : 1) -
+                    agriculture.healthProtection,
+                ),
                 (sky.name === 'Dry spell' && !upgradeActive(s, 'irrigation')
                   ? 9
                   : 2) +
                   fit.mismatch -
                   Math.floor(resilience / 2) -
-                  (upgradeActive(s, 'viticulturist') ? 1 : 0),
+                  (upgradeActive(s, 'viticulturist') ? 1 : 0) -
+                  agriculture.healthProtection,
               ),
           );
           if (previous < 80 && p.growth >= 80)
@@ -2458,6 +2394,7 @@ export function act(current: GameState, action: Action): GameState {
       break;
     }
     case 'expandPlot': {
+      const previousUpkeep = upkeep(s);
       const p = getPlot(action.id);
       if (!p.owned) throw new Error('Buy this parcel before expanding it.');
       if ((p.expansions ?? 0) >= PLOT_EXPANSION.max)
@@ -2475,7 +2412,7 @@ export function act(current: GameState, action: Action): GameState {
         : p.expansions;
       note(
         s,
-        `${getLand(s, p.id).name} expanded to ${getLand(s, p.id).area} ha. ${p.variety ? `New rows of ${getVariety(s, p.variety).name} will produce from Year ${calendar(s.week).year + 1}.` : 'Plant vines across the larger parcel when ready.'} Upkeep +$15/week.`,
+        `${getLand(s, p.id).name} expanded to ${getLand(s, p.id).area} ha. ${p.variety ? `New rows of ${getVariety(s, p.variety).name} will produce from Year ${calendar(s.week).year + 1}.` : 'Plant vines across the larger parcel when ready.'} Upkeep +${money(upkeep(s) - previousUpkeep)}/week.`,
         'good',
       );
       break;
@@ -2955,7 +2892,7 @@ export function act(current: GameState, action: Action): GameState {
       s.upgrades.push(action.upgrade);
       note(
         s,
-        `${u.name} is operating. Running cost ${money(u.upkeep)} per week.`,
+        `${u.name} is operating. Running cost ${money(operatingCost(s, action.upgrade))} per week.`,
         'good',
       );
       break;

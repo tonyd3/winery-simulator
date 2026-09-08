@@ -93,7 +93,7 @@ See [estate expansion rules](docs/estates.md) for costs, save compatibility, and
 
 ## Facilities, staff, and running costs
 
-**Build → Buildings & equipment** has 18 investments grouped into vineyard/cellar, hospitality, sales, and research. Prices range from **$6,000 to $180,000**, with **$180–$3,000 weekly running costs per investment**. Existing irrigation, tasting terrace, and winemaker’s bench purchases remain owned and use their listed running costs.
+**Build → Buildings & equipment** has 21 investments grouped into vineyard/cellar, hospitality, sales, and research. Vineyard programs charge per owned hectare plus district servicing, with the live total shown before purchase and in Research. Empty owned parcels and plot expansions count; separate estate/district overhead still applies. Other facilities retain fixed weekly costs. Existing purchases stay owned and use current operating rates. See [agriculture and operating costs](docs/investments.md).
 
 **Improve grape quality** through the compost program (+1 point), canopy management (+2 at 80%+ vine health), precision irrigation controls (+2 at 95%+ ripeness, requiring operating drip irrigation), and a selective harvest crew (+3 points for 10% less fruit). Research unlocks each purchase; operating benefits apply across all estates and stack with optical sorting's +2 points. The parcel inspector previews grape quality and kilograms before picking, with a disclosure explaining owned upgrades and unmet conditions. Suspended investments stop contributing, and already harvested grapes and wine retain their recorded scores.
 

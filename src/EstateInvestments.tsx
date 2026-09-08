@@ -22,6 +22,8 @@ import {
   hospitalityForecast,
   annualHospitalityForecast,
   investmentBill,
+  operatingCost,
+  vineyardFootprint,
   investmentUpkeep,
   upgradeActive,
   upgradeBlocked,
@@ -195,6 +197,8 @@ function InvestmentRow({
   onResearch: (id?: ResearchId) => void;
 }) {
   const u = UPGRADES[id];
+  const weeklyCost = operatingCost(state, id);
+  const footprint = u.agriculture ? vineyardFootprint(state) : null;
   const owned = state.upgrades.includes(id);
   const active = upgradeActive(state, id);
   const Icon = departmentIcons[u.category];
@@ -244,9 +248,17 @@ function InvestmentRow({
         </div>
         <p>{u.text}</p>
         <div className="investment-terms">
-          <span>{money(u.upkeep)} / week operating</span>
-          <span>{money(Math.ceil(u.upkeep * 0.25))} / week suspended</span>
+          <span>{money(weeklyCost)} / week operating</span>
+          <span>{money(Math.ceil(weeklyCost * 0.25))} / week suspended</span>
         </div>
+        {u.agriculture && footprint && (
+          <p>
+            {money(u.agriculture.perHectare)}/ha × {footprint.hectares} owned ha
+            + {money(u.agriculture.perDistrict)}/district ×{' '}
+            {footprint.districts}. Expanding land increases this bill, including
+            empty parcels.
+          </p>
+        )}
         {u.research && !owned && (
           <p>
             <button
@@ -265,11 +277,11 @@ function InvestmentRow({
         )}
         {extraRevenue !== null && (
           <p
-            className={`investment-return ${extraRevenue - u.upkeep < 0 ? 'investment-loss' : ''}`}
+            className={`investment-return ${extraRevenue - weeklyCost < 0 ? 'investment-loss' : ''}`}
           >
             At current traffic: {signedMoney(extraRevenue)} income −{' '}
-            {money(u.upkeep)} running costs ={' '}
-            {signedMoney(extraRevenue - u.upkeep)} / week, before wine sales.
+            {money(weeklyCost)} running costs ={' '}
+            {signedMoney(extraRevenue - weeklyCost)} / week, before wine sales.
           </p>
         )}
         {extraAnnual !== null && (
@@ -320,7 +332,7 @@ function InvestmentRow({
           <>
             <strong>{money(u.cost)}</strong>
             <small>
-              {money(u.cost + u.upkeep * 8)} incl. 8 weeks operating
+              {money(u.cost + weeklyCost * 8)} incl. 8 weeks operating
             </small>
             <button
               className="button primary"

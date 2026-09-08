@@ -12,6 +12,7 @@ import {
   UPGRADE_IDS,
   studyWeeks,
   upgradeActive,
+  operatingCost,
 } from './investments';
 import type { Upgrade } from './investments';
 import {
@@ -138,7 +139,7 @@ export function researchPlan(s: GameState, goalId: ResearchGoalId) {
       (trial?.knowledge ?? 0),
     sequentialWeeks: remaining.reduce((n, id) => n + weeks(id), 0),
     minimumWeeks: Math.max(0, ...path.map(longest)),
-    operatingUpkeep: investments.reduce((n, id) => n + UPGRADES[id].upkeep, 0),
+    operatingUpkeep: investments.reduce((n, id) => n + operatingCost(s, id), 0),
     ready:
       firstCrossDone ||
       finesseDone ||
