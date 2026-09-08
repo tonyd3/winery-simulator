@@ -2934,3 +2934,12 @@ h1 {
     gap: 4px;
   }
 }
+
+.planting-destination {
+  display: grid;
+  gap: 10px;
+  margin: 24px 0;
+}
+.planting-destination select {
+  width: 100%;
+}

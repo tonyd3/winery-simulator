@@ -63,7 +63,8 @@ export function PlotInspector({
   dispatch,
   selected,
   navigate,
-}: Props & { selected: number }) {
+  initialVariety,
+}: Props & { selected: number; initialVariety?: Variety }) {
   const plot = state.plots.find((p) => p.id === selected)!;
   const land = getLand(state, selected);
   const [clearing, setClearing] = useState(false);
@@ -72,7 +73,11 @@ export function PlotInspector({
       Number(REGIONS[land.region].signature.includes(b)) -
       Number(REGIONS[land.region].signature.includes(a)),
   );
-  const [variety, setVariety] = useState<Variety>(choices[0][0]);
+  const [variety, setVariety] = useState<Variety>(
+    choices.some(([id]) => id === initialVariety)
+      ? initialVariety!
+      : choices[0][0],
+  );
   const ready = readyToHarvest(plot, state.week);
   const harvested = plot.harvestedYear === calendar(state.week).year;
   const winter = calendar(state.week).season === 'Winter';
