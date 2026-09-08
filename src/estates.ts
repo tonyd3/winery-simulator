@@ -17,6 +17,6 @@ export const localPlotId = (id: number) => ((id - 1) % 6) + 1;
 export const plotId = (estate: number, district = 0, local = 1) =>
   (estate - 1) * 24 + district * 6 + local;
 export const districtCost = (districts: number) =>
-  36000 + (districts - 1) * 18000;
+  75000 + (districts - 1) * 25000;
 export const acquisitionCost = (estates: number) =>
-  56000 + (estates - 1) * 16000;
+  250000 + (estates - 1) * 100000;

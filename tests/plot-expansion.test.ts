@@ -271,10 +271,11 @@ test('fractional hectare expansions retain accurate regional and portfolio total
   s = act(s, { type: 'acquireEstate', region: 'tuscany', name: 'Tuscan Rows' });
   s = act(s, { type: 'expandEstate', id: 2 });
   const id = plotId(2, 1, 5);
+  s = act(s, { type: 'buyPlot', id });
   s = expand(s, id);
   assert.equal(getLand(s, id).area, '1.65');
   assert.equal(getLand(s, id).region, 'tuscany');
-  assert.equal(estateArea(s, 2).toFixed(2), '10.35');
+  assert.equal(estateArea(s, 2).toFixed(2), '4.65');
   assert.equal(estateArea(s, 1), 3);
   assert.equal(s.plots.filter((p) => p.id === id).length, 1);
   valid(s);

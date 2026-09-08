@@ -171,7 +171,7 @@ export const LAND = [
     soil: 'Clay',
     aspect: 'South-facing',
     area: '1.2',
-    cost: 0,
+    cost: 16800,
     yield: 360,
     x: 475,
     y: 262,
@@ -182,7 +182,7 @@ export const LAND = [
     soil: 'Limestone',
     aspect: 'East-facing',
     area: '0.8',
-    cost: 0,
+    cost: 14000,
     yield: 280,
     x: 700,
     y: 377,
@@ -193,7 +193,7 @@ export const LAND = [
     soil: 'Chalk',
     aspect: 'West-facing',
     area: '1.0',
-    cost: 0,
+    cost: 14000,
     yield: 310,
     x: 248,
     y: 378,
@@ -1093,14 +1093,10 @@ export const estateArea = (s: GameState, id = s.activeEstate) =>
   estatePlots(s, id)
     .filter((p) => p.owned)
     .reduce((n, p) => n + Number(getLand(s, p.id).area), 0);
-function newDistrict(
-  estate: number,
-  district: number,
-  fullyOwned: boolean,
-): Plot[] {
+function newDistrict(estate: number, district: number): Plot[] {
   return LAND.map((l) => ({
     id: plotId(estate, district, l.id),
-    owned: fullyOwned || l.id <= 3,
+    owned: district === 0 && l.id <= 3,
     variety: null,
     growth: 0,
     health: 95,
@@ -1782,7 +1778,7 @@ export function act(current: GameState, action: Action): GameState {
         districts: 1,
         founded: calendar(s.week).year,
       });
-      s.plots.push(...newDistrict(id, 0, false));
+      s.plots.push(...newDistrict(id, 0));
       s.activeEstate = id;
       note(
         s,
@@ -1802,12 +1798,12 @@ export function act(current: GameState, action: Action): GameState {
         `${estate.name} vineyard expansion`,
         districtCost(estate.districts),
       );
-      s.plots.push(...newDistrict(estate.id, estate.districts, true));
+      s.plots.push(...newDistrict(estate.id, estate.districts));
       estate.districts++;
       s.activeEstate = estate.id;
       note(
         s,
-        `${estate.name} expanded by 6.8 ha. Six empty parcels are ready; cellar space and tanks are purchased separately. Weekly upkeep increases by $185.`,
+        `${estate.name} has a new district. All six parcels must be purchased separately before planting. District upkeep increases by $35/week, plus $25/week for each parcel you buy.`,
         'good',
       );
       break;

@@ -205,11 +205,12 @@ export function Holdings({
                 <p>
                   {full
                     ? '27.2 ha available across all four districts.'
-                    : '6.8 ha · 6 empty parcels · land only'}
+                    : 'Unlocks 6 parcels to buy separately · 6.8 ha total'}
                 </p>
                 {!full && (
                   <small>
-                    +{money(185)} / week · Vines purchased separately
+                    +{money(35)} / week, plus {money(25)} per parcel purchased.
+                    {' '}Land and vines cost extra.
                     {state.cash < price &&
                       ` · Need ${money(price - state.cash)} more`}
                   </small>

@@ -308,7 +308,7 @@ test('unaffordable and invalid equipment purchases and fermentations leave every
 
 test('v4 migration retains all prior large tanks, occupied wine, portfolio and finances', () => {
   let s = newGame('mosel', 'Old Cellar');
-  s.cash = 100000;
+  s.cash = 1000000;
   s = act(s, { type: 'acquireEstate', region: 'napa', name: 'Western Vines' });
   s = act(s, { type: 'expandEstate', id: 2 });
   s = grapes(400, s);

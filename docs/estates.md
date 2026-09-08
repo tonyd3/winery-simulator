@@ -6,11 +6,13 @@ The wine business now owns a portfolio of estates, sharing funds, research, equi
 
 | Purchase | Cost | Land included | Shared tank capacity | Added weekly upkeep |
 | --- | ---: | --- | ---: | ---: |
-| First additional estate | $56,000 | 3 empty parcels / 3.0 ha | Purchased separately | $175 |
-| Later estates | Prior acquisition price + $16,000 | 3 empty parcels / 3.0 ha | Purchased separately | $175 |
-| Second district at an estate | $36,000 | 6 empty parcels / 6.8 ha | Purchased separately | $185 |
-| Third district | $54,000 | 6 empty parcels / 6.8 ha | Purchased separately | $185 |
-| Fourth district | $72,000 | 6 empty parcels / 6.8 ha | Purchased separately | $185 |
+| First additional estate | $250,000 | 3 empty parcels / 3.0 ha | Purchased separately | $175 |
+| Later estates | Prior acquisition price + $100,000 | 3 empty parcels / 3.0 ha | Purchased separately | $175 |
+| Second district at an estate | $75,000 | None; unlocks 6 parcels for separate purchase | Purchased separately | $35 |
+| Third district | $100,000 | None; unlocks 6 parcels for separate purchase | Purchased separately | $35 |
+| Fourth district | $125,000 | None; unlocks 6 parcels for separate purchase | Purchased separately | $35 |
+
+Buying a district unlocks its map and six parcels totaling 6.8 ha, but adds no owned acreage. Every parcel must be bought before planting or enlargement: South slope $16,800, Limestone terrace $14,000, Orchard field $14,000, Hilltop parcel $16,800, River meadow $14,000, and Old stone field $19,200. All six cost $94,800 in addition to the district price. Each parcel adds $25 weekly upkeep only when purchased; the district alone adds $35. Vines and cellar equipment cost extra. Districts cost several times as much as a parcel, and the first new estate costs twice the most expensive district.
 
 Each original vineyard has three neighboring parcels for sale: River meadow costs $14,000, Hilltop parcel $16,800, and Old stone field $19,200. Each costs more than the $12,500 starting balance, encouraging production on the three founding parcels before buying land. Each purchase adds $25 weekly upkeep. New vines cost extra. Buying land never grants ripe grapes, research points, supplies, or starting capital. All purchases are atomic and reject invalid, duplicate, unaffordable, or over-limit requests.
 
@@ -27,6 +29,8 @@ Districts cycle the regional soil palette across the familiar six parcel shapes.
 Seasons remain synchronized across all regions, matching the game's existing abstract calendar. Equipment applies to the whole business; this iteration does not add transportation delays, local staff, separate winery accounts, or estate sales.
 
 ## Wine provenance and saves
+
+The new purchase rules apply to future purchases. Existing saves keep all previously owned district parcels, planted vines, plot expansions, balances, and historical purchase charges without additional fees or a save-version change.
 
 Fresh grapes record an estate ID. Fermentation and reserve transfer preserve it, and recipe grouping includes origin alongside variety, vintage, and intrinsic quality. The same grape and year from two estates remains two identifiable sources. Compatibility still aggregates by grape, so acquiring estates cannot manufacture a diversity bonus. Composition displays and source-quality tables identify origins once there is more than one estate.
 
