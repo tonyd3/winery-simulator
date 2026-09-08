@@ -254,9 +254,18 @@ test('an exceptional fresh white can reach 90 in steel while poor fruit cannot b
   s = act(s, { type: 'reserve', id: s.batches[0].id });
   const scores = Array.from(
     { length: 12 },
-    (_, seed) =>
+    (_, vintage) =>
       act(
-        { ...s, seed: (seed + 1) * 1000 },
+        {
+          ...s,
+          reserves: s.reserves.map((reserve) => ({
+            ...reserve,
+            components: reserve.components.map((part) => ({
+              ...part,
+              year: vintage + 1,
+            })),
+          })),
+        },
         {
           type: 'bottle',
           id: s.reserves[0].id,
