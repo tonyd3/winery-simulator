@@ -1,3 +1,4 @@
+import { styleMarket } from './styleMarket';
 import { VARIETIES } from './catalog';
 import type { GameState, Wine } from './game';
 
@@ -58,6 +59,7 @@ export function weeklyDemandMultiplier(wine: Wine, s: GameState) {
 }
 
 export function marketConditions(wine: Wine, s: GameState) {
+  const style = styleMarket(wine.components, s);
   const seed = s.marketSeed ?? MARKET_SEED;
   const week = s.week + 1;
   const total = wine.components.reduce((sum, part) => sum + part.ml, 0);
@@ -110,10 +112,16 @@ export function marketConditions(wine: Wine, s: GameState) {
   );
   return {
     traffic,
+    style,
     popularity,
     season,
     event: event ? { ...event, weeks: eventWeeks } : null,
-    multiplier: traffic * popularity * season * (event?.multiplier ?? 1),
+    multiplier:
+      traffic *
+      popularity *
+      season *
+      style.multiplier *
+      (event?.multiplier ?? 1),
     outlook: event
       ? `${event.label} · ${eventWeeks} ${eventWeeks === 1 ? 'week' : 'weeks'}`
       : strongest.label,

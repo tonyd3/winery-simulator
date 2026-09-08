@@ -1,4 +1,5 @@
 import { parcelPurchaseUpkeep } from './investments';
+import { stylePreference } from './styleMarket';
 import { demandContext, type DemandContext } from './game';
 import { FinanceReport } from './FinanceReport';
 import { qualityResponse, signedPrestige } from './prestige';
@@ -992,7 +993,12 @@ function WineCard({
                 Interest tapers over years.
               </p>
               <p className="fine-print">
-                {forecast.outlook}. Weekly sales vary.
+                {forecast.outlook}. Weekly sales vary.{' '}
+                {Math.round((forecast.style.multiplier - 1) * 100) >= 0
+                  ? '+'
+                  : ''}
+                {Math.round((forecast.style.multiplier - 1) * 100)}% demand from
+                current cellar-style preferences.
               </p>
               <ShelfAllocation wine={w} state={state} dispatch={dispatch} />
               <button
@@ -1022,6 +1028,7 @@ export function Market({ state, dispatch, navigate }: Props) {
   const [tab, setTab] = useState<'stock' | 'history'>('stock');
   const stock = state.wines.filter((w) => w.bottles > 0);
   const demandGroups = demandContext(state);
+  const preference = stylePreference(state);
   return (
     <div className="market-workspace">
       <nav className="cellar-tabs" aria-label="Wine shop views">
@@ -1056,6 +1063,22 @@ export function Market({ state, dispatch, navigate }: Props) {
             </span>
           </div>
           <BottleStoragePanel state={state} dispatch={dispatch} shop />
+          <section
+            className="cellar-note market-style-note"
+            aria-label="Buyer style preferences"
+          >
+            <div>
+              <strong>Buyers favor {preference.label.toLowerCase()}.</strong>{' '}
+              {preference.weeks} sale{' '}
+              {preference.weeks === 1 ? 'week' : 'weeks'} left · Next:{' '}
+              {preference.next.toLowerCase()}.
+              <p>
+                Cellar treatments and maturation shape this preference. Matching
+                styles sell faster; combining every treatment divides their
+                appeal. Scores and shelf prices stay unchanged.
+              </p>
+            </div>
+          </section>
           {stock.length ? (
             <div className="wine-grid">
               {[...stock].reverse().map((w) => (

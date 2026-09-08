@@ -17,7 +17,7 @@ import { JUDGING, MARKETING, wineAward } from '../src/promotion.ts';
 import { DEFAULT_DESIGN } from '../src/winemaking.ts';
 import { marketConditions, weeklyDemandMultiplier } from '../src/market.ts';
 
-function bottled(quality = 96) {
+function bottled(quality = 96, bottles = 200) {
   let s = newGame();
   s.week = 8;
   s.batches = [
@@ -40,7 +40,7 @@ function bottled(quality = 96) {
   return act(s, {
     type: 'bottle',
     id: 2,
-    bottles: 200,
+    bottles,
     line: { name: 'The Gathering', design: DEFAULT_DESIGN },
   });
 }
@@ -73,7 +73,7 @@ test('marketing charges once, boosts retail only, and leaves production and shel
 });
 
 test('campaign boosts exactly four sales weeks, survives reload, expires, and can be renewed', () => {
-  let s = listed();
+  let s = listed(bottled(96, 400));
   s = act(s, { type: 'marketWine', id: s.wines[0].id });
   s = act(s, {
     type: 'price',

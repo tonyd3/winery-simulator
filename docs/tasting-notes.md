@@ -2,7 +2,7 @@
 
 The bottling workbench forecasts a wine’s aromas, body, acidity, tannins, regional style, and recorded maturation. The finished-bottle reveal repeats the forecast. Find it later under **Wine shop → Tasting notes & provenance**, **Wine history**, or **Cellar → Wine lines**.
 
-These descriptions are a style forecast. Source quality shapes the finish description, but aromas are not quality bonuses: a fragrant wine can still score poorly. Generating or viewing notes consumes no simulation randomness, knowledge, cash, or game time, and does not add a price or sales bonus.
+These descriptions are a style forecast. Source quality shapes the finish description, but aromas are not quality bonuses: a fragrant wine can still score poorly. Generating or viewing notes consumes no simulation randomness, knowledge, cash, or game time, and does not itself add a price or sales bonus. Recorded cellar treatments also inform the Wine shop's separate, rotating buyer-style preferences; merely opening these notes never changes demand.
 
 ## How the forecast works
 
