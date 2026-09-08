@@ -77,6 +77,7 @@ import {
 
 import { PRESTIGE_EARNINGS, prestigeInfluence } from './prestige';
 import { tastingProfile, tastingNotesSchema } from './wineSensory';
+import { harvestCharacterSchema } from './winemaking';
 
 export const SAVE_KEY = 'terroir.save.v1';
 export const BACKUP_KEY = 'terroir.backup.v1';
@@ -251,6 +252,7 @@ const grapeSchema = z
     kg: integer(1800),
     quality: bounded(100),
     picked: integer(100000),
+    harvest: harvestCharacterSchema.optional(),
     estateId: z.number().int().min(1).max(8).optional(),
   })
   .strict();
@@ -267,6 +269,7 @@ const batchSchema = z
     age: integer(8),
     oak: z.boolean(),
     year: integer(10000),
+    harvest: harvestCharacterSchema.optional(),
     // Absent in older saves: preserve those batches' existing maturation curve.
     agingProfile: z.literal('balanced').optional(),
     estateId: z.number().int().min(1).max(8).optional(),
@@ -1715,12 +1718,22 @@ export function act(current: GameState, action: Action): GameState {
       spend(s, 'Harvest crew', plotHarvestCost(p));
       const q = harvestQuality(s, p);
       const kg = harvestYield(s, p);
+      const growingWeeks = calendar(s.week).week;
+      const sunnyWeeks = Array.from(
+        { length: growingWeeks },
+        (_, i) => weather(s.week - i, land.region).name,
+      ).filter((sky) => sky === 'Sunshine' || sky === 'Dry spell').length;
       s.grapes.push({
         id: s.nextId++,
         variety: p.variety!,
         kg,
         quality: q,
         picked: s.week,
+        harvest: {
+          ripeness: p.growth,
+          health: p.health,
+          sunExposure: sunnyWeeks / growingWeeks,
+        },
         estateId: land.estateId,
       });
       p.harvestedYear = calendar(s.week).year;
@@ -1840,6 +1853,7 @@ export function act(current: GameState, action: Action): GameState {
         age: 0,
         oak: action.oak,
         year: calendar(g.picked).year,
+        ...(g.harvest ? { harvest: { ...g.harvest } } : {}),
         agingProfile: 'balanced',
         ...(g.estateId !== undefined ? { estateId: g.estateId } : {}),
       });
@@ -1889,6 +1903,7 @@ export function act(current: GameState, action: Action): GameState {
             year: b.year,
             ml: b.liters * 1000,
             quality: quality(b),
+            ...(b.harvest ? { harvest: { ...b.harvest } } : {}),
             maturation: { vessel: b.oak ? 'oak' : 'steel', weeks: b.age },
             ...(b.techniques ? { techniques: [...b.techniques] } : {}),
             ...(b.estateId !== undefined ? { estateId: b.estateId } : {}),

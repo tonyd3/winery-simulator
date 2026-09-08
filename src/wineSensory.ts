@@ -134,6 +134,7 @@ export const tastingNotesSchema = z
     origins: z.array(z.string().min(1).max(140)).min(1).max(8),
     aging: z.array(z.string().min(1).max(140)).min(1).max(3),
     techniques: z.array(z.string().min(1).max(140)).max(3).optional(),
+    vintage: z.string().min(1).max(240).optional(),
   })
   .strict();
 export type TastingProfile = z.infer<typeof tastingNotesSchema>;
@@ -176,6 +177,88 @@ function grapeResolver(hybrids: Context['hybrids']) {
 const percentage = (share: number) =>
   share < 0.01 ? '<1%' : `${Math.round(share * 100)}%`;
 
+// Related expressions of the same fruit, from fresher to riper. These describe
+// game style, not measured compounds, sweetness, or extra bottle maturation.
+const FRUIT_EXPRESSIONS: Record<string, [string, string, string]> = {
+  Plum: ['Fresh plum', 'Plum', 'Plum compote'],
+  'Black plum': ['Fresh black plum', 'Black plum', 'Ripe black plum'],
+  'Red plum': ['Tart red plum', 'Red plum', 'Ripe red plum'],
+  'Black cherry': [
+    'Fresh black cherry',
+    'Black cherry',
+    'Black cherry preserve',
+  ],
+  Cherry: ['Fresh cherry', 'Cherry', 'Ripe cherry'],
+  'Sour cherry': ['Tart cherry', 'Sour cherry', 'Morello cherry'],
+  Blackcurrant: ['Fresh blackcurrant', 'Blackcurrant', 'Cassis'],
+  Blackberry: ['Fresh blackberry', 'Blackberry', 'Blackberry preserve'],
+  Blueberry: ['Fresh blueberry', 'Blueberry', 'Ripe blueberry'],
+  Raspberry: ['Fresh raspberry', 'Raspberry', 'Raspberry preserve'],
+  Strawberry: ['Wild strawberry', 'Strawberry', 'Ripe strawberry'],
+  Redcurrant: ['Tart redcurrant', 'Redcurrant', 'Ripe redcurrant'],
+  Apple: ['Green apple', 'Apple', 'Yellow apple'],
+  'Green apple': ['Crisp green apple', 'Green apple', 'Ripe apple'],
+  Pear: ['Crisp pear', 'Pear', 'Ripe pear'],
+  Quince: ['Fresh quince', 'Quince', 'Ripe quince'],
+  Lemon: ['Lemon zest', 'Lemon', 'Ripe lemon'],
+  Lime: ['Lime zest', 'Lime', 'Ripe lime'],
+  Grapefruit: ['Grapefruit zest', 'Grapefruit', 'Pink grapefruit'],
+  Gooseberry: ['Tart gooseberry', 'Gooseberry', 'Ripe gooseberry'],
+  Peach: ['White peach', 'Peach', 'Yellow peach'],
+  Apricot: ['Fresh apricot', 'Apricot', 'Ripe apricot'],
+  Lychee: ['Fresh lychee', 'Lychee', 'Ripe lychee'],
+  'Orchard fruit': [
+    'Crisp orchard fruit',
+    'Orchard fruit',
+    'Ripe orchard fruit',
+  ],
+  Fruit: ['Fresh fruit', 'Fruit', 'Ripe fruit'],
+};
+
+// A separate, stateless hash: viewing notes never advances simulation randomness.
+function expressionSeed(key: string) {
+  let hash = 2166136261;
+  for (const char of key) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  hash = Math.imul(hash ^ (hash >>> 16), 0x85ebca6b);
+  hash = Math.imul(hash ^ (hash >>> 13), 0xc2b2ae35);
+  hash ^= hash >>> 16;
+  return (hash >>> 0) / 0xffffffff;
+}
+
+function vintageCharacter(
+  base: Character,
+  part: WineComponent,
+  region: RegionId,
+) {
+  const key = `${region}:${part.year}`;
+  const variation = expressionSeed(key) * 2 - 1;
+  const harvest = part.harvest;
+  const ripeness = harvest
+    ? (harvest.ripeness - 90) / 10 + (harvest.sunExposure - 0.5) * 0.6
+    : 0;
+  const tone = ripeness + variation * 0.65;
+  const aromas: Record<string, number> = {};
+  for (const [aroma, strength] of Object.entries(base.aromas)) {
+    const expression = FRUIT_EXPRESSIONS[aroma];
+    const fruitTone = tone + (expressionSeed(`${key}:${aroma}`) - 0.5) * 0.5;
+    const name = expression
+      ? expression[fruitTone < -0.3 ? 0 : fruitTone > 0.3 ? 2 : 1]
+      : aroma;
+    // Shift prominence within the grape's own vocabulary. Floral/herbal notes
+    // come forward in fresher picks; ripe fruit leads in later picks.
+    const emphasis = 0.8 + expressionSeed(`${aroma}:${key}`) * 0.4;
+    const weight = strength * emphasis * (expression ? 1 : 1 - tone * 0.2);
+    aromas[name] = (aromas[name] ?? 0) + weight;
+  }
+  return {
+    aromas,
+    expression: tone,
+    body: base.body + ripeness * 0.3,
+    acidity: base.acidity - ripeness * 0.65,
+    tannin: base.tannin * (1 - ripeness * 0.08),
+  };
+}
+
 /** Descriptive only: consumes no game RNG and never changes quality or pricing. */
 export function tastingProfile(
   parts: WineComponent[],
@@ -191,14 +274,31 @@ export function tastingProfile(
     { ml: number; min: number; max: number }
   >();
   let unknown = 0;
-  let heat = 0;
+  let fruitExpression = 0;
   let oakAroma = 0;
   let oakAge = 0;
+  let sourceQuality = 0;
+  let harvestMl = 0;
+  let ripenessTotal = 0;
+  let healthTotal = 0;
   const techniques = new Map<CellarTechnique, number>();
   for (const part of parts) {
     if (part.ml <= 0) continue;
     const share = part.ml / total;
-    addCharacter(result, resolve(part.variety), share);
+    // Old recipes without an estate ID came from the original estate, never the active view.
+    const estate = state.estates.find((e) => e.id === (part.estateId ?? 1));
+    if (!estate) throw new Error('The wine’s source estate is missing.');
+    const region = estate.region;
+    const character = vintageCharacter(resolve(part.variety), part, region);
+    addCharacter(result, character, share);
+    fruitExpression +=
+      (character.expression + (REGIONS[region].heat - 3) * 0.15) * share;
+    sourceQuality += part.quality * share;
+    if (part.harvest) {
+      harvestMl += part.ml;
+      ripenessTotal += part.harvest.ripeness * part.ml;
+      healthTotal += part.harvest.health * part.ml;
+    }
     for (const id of part.techniques ?? [])
       techniques.set(id, (techniques.get(id) ?? 0) + part.ml);
     if (part.techniques?.includes('skin_contact')) {
@@ -214,14 +314,9 @@ export function tastingProfile(
       result.aromas['Bread dough'] =
         (result.aromas['Bread dough'] ?? 0) + 0.7 * share;
     }
-    // Old recipes without an estate ID came from the original estate, never the active view.
-    const estate = state.estates.find((e) => e.id === (part.estateId ?? 1));
-    if (!estate) throw new Error('The wine’s source estate is missing.');
-    const region = estate.region;
     regions.set(region, (regions.get(region) ?? 0) + part.ml);
     result.body += REGIONAL_CHARACTER[region].body * share;
     result.acidity += REGIONAL_CHARACTER[region].acidity * share;
-    heat += REGIONS[region].heat * share;
     const maturation = part.maturation;
     if (!maturation) {
       unknown += part.ml;
@@ -266,12 +361,33 @@ export function tastingProfile(
           ? 'supple tannins'
           : 'firm tannins';
   const fruit =
-    heat < 2
-      ? 'Bright, fresh fruit'
-      : heat < 4
-        ? 'Rounded, ripe fruit'
-        : 'Rich, sun-ripened fruit';
-  const palate = `${body}, with ${acidity} acidity and ${texture}. ${fruit}${oakAge >= 2 ? ' and a gently rounded oak texture' : ''}.`;
+    fruitExpression < -0.3
+      ? 'Fresh, lifted fruit'
+      : fruitExpression > 0.3
+        ? 'Generous, ripe fruit'
+        : 'Juicy, rounded fruit';
+  const finish =
+    harvestMl / total >= 0.5 && healthTotal / harvestMl < 60
+      ? 'A softer, subdued fruit finish'
+      : sourceQuality < 55
+        ? 'A light, straightforward finish'
+        : sourceQuality < 75
+          ? 'A clear, fruit-led finish'
+          : sourceQuality < 90
+            ? 'Focused fruit with a lingering finish'
+            : 'Layered fruit with a long finish';
+  const palate = `${body}, with ${acidity} acidity and ${texture}. ${fruit}${oakAge >= 2 ? ' and a gently rounded oak texture' : ''}. ${finish}.`;
+  const picking = harvestMl
+    ? `${percentage(harvestMl / total)} recorded harvest: ${ripenessTotal / harvestMl < 88 ? 'picked on the fresher side' : ripenessTotal / harvestMl >= 96 ? 'picked at full ripeness' : 'picked with balanced ripeness'}, ${healthTotal / harvestMl < 60 ? 'with stressed vines muting the fruit' : healthTotal / harvestMl < 85 ? 'with some vine stress' : 'from healthy vines'}.`
+    : '';
+  const vintage = [
+    picking,
+    harvestMl < total
+      ? `${percentage((total - harvestMl) / total)} harvest conditions unrecorded; vintage character is estimated.`
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
   const origins = [...regions]
     .sort(([a, x], [b, y]) => y - x || a.localeCompare(b))
     .map(
@@ -289,13 +405,14 @@ export function tastingProfile(
     });
   if (unknown)
     aging.push(
-      `${percentage(unknown / total)} aging history unrecorded. Grape and region estimates only for this portion.`,
+      `${percentage(unknown / total)} aging history unrecorded. No oak or maturation assumed for this portion.`,
     );
   return {
     aromas: aromas.slice(0, 5),
     palate,
     origins,
     aging,
+    vintage,
     ...(techniques.size
       ? {
           techniques: CELLAR_TECHNIQUE_IDS.filter((id) =>

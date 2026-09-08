@@ -24,6 +24,14 @@ export const LABEL_COLORS = {
   ochre: '#ab783f',
   ink: '#485c67',
 };
+// Captured when picked, before vine state resets or cellar quality gains apply.
+export const harvestCharacterSchema = z
+  .object({
+    ripeness: z.number().finite().min(80).max(100),
+    health: z.number().finite().min(0).max(100),
+    sunExposure: z.number().finite().min(0).max(1),
+  })
+  .strict();
 export const componentSchema = z
   .object({
     variety: z.string().min(1).max(32),
@@ -32,6 +40,7 @@ export const componentSchema = z
     ml: count(100000000).min(1),
     quality: z.number().finite().min(0).max(100),
     techniques: cellarTechniquesSchema.optional(),
+    harvest: harvestCharacterSchema.optional(),
     maturation: z
       .object({
         vessel: z.enum(['oak', 'steel']),
@@ -154,7 +163,8 @@ export function combine(parts: WineComponent[]): WineComponent[] {
   const grouped = new Map<string, WineComponent>();
   for (const part of parts) {
     const aging = part.maturation;
-    const key = `${part.variety}:${part.year}:${part.quality}:${part.estateId ?? 1}:${aging ? `${aging.vessel}:${aging.weeks}` : 'unrecorded'}:${part.techniques ? techniqueKey(part.techniques) : 'unrecorded'}`;
+    const harvest = part.harvest;
+    const key = `${part.variety}:${part.year}:${part.quality}:${part.estateId ?? 1}:${aging ? `${aging.vessel}:${aging.weeks}` : 'unrecorded'}:${part.techniques ? techniqueKey(part.techniques) : 'unrecorded'}:${harvest ? `${harvest.ripeness}:${harvest.health}:${harvest.sunExposure}` : 'unrecorded'}`;
     const existing = grouped.get(key);
     if (existing) existing.ml += part.ml;
     else grouped.set(key, { ...part });
