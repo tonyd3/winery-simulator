@@ -200,7 +200,8 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `src/EstateInvestments.tsx`, `src/investments.ts`, `src/investments.css`: investment catalog, running costs, suspension, hospitality forecasts, and staff benefits.
 - `tests/investments.test.ts`: investment economy, prerequisites, suspension, production and sales benefits, and save compatibility.
 - `src/winemaking.ts`: reserve, recipe, label, and line schemas; exact volume allocation and blending quality.
-- `src/Reserves.tsx`: reserve storage, blending bench, bottling form, and line archive.
+- `src/Reserves.tsx`: reserve storage, blending bench, and bottling form.
+- `src/WineLines.tsx`: searchable wine-line ledger and expandable release history, shared by the cellar and wine shop.
 - `src/BlendAnalysis.tsx`: live recipe analysis, source-quality advice, and paid cellar tasting.
 - `src/WinePresentation.tsx`: bottle artwork, provenance, and animated score reveal.
 - `tests/blending.test.ts`: cross-vintage blending, partial bottling, inherited labels, tasting persistence, and migration.

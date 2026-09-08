@@ -6,7 +6,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowRight, Plus, Shuffle, X } from 'lucide-react';
 import { generateBlendName } from './blendNames';
 import { BlendAnalysis, BlendTasting } from './BlendAnalysis';
-import { JudgingStatus } from './WinePromotion';
 import { Empty, Icon, Modal } from './components';
 import { calendar, getVariety } from './game';
 import type { GameState } from './game';
@@ -24,9 +23,9 @@ import {
   volume,
 } from './winemaking';
 import type { LabelDesign, Reserve } from './winemaking';
-import { Composition, SalesCount, WineBottle } from './WinePresentation';
+import { Composition, WineBottle } from './WinePresentation';
 import { TastingNotes } from './TastingNotes';
-import { releaseTasting, tastingProfile } from './wineSensory';
+import { tastingProfile } from './wineSensory';
 import {
   loadReserveSort,
   RESERVE_SORT_KEY,
@@ -682,159 +681,5 @@ export default function Reserves({
         </Modal>
       )}
     </div>
-  );
-}
-
-export function WineLines({
-  state,
-  history = false,
-}: {
-  state: GameState;
-  history?: boolean;
-}) {
-  return (
-    <section className="wine-lines">
-      <div className="section-intro">
-        <div>
-          <span className="eyebrow">
-            {history ? 'THE ESTATE ARCHIVE' : 'AN ESTATE IN THE MAKING'}
-          </span>
-          <h2>
-            {history ? 'Every vintage lives on.' : 'Labels with a history.'}
-          </h2>
-          <p>
-            Every release, including sold-out wines. Follow its grapes,
-            vintages, tasting score, and bottles sold through the shop or
-            wholesale.
-          </p>
-        </div>
-      </div>
-      {history && (
-        <dl className="history-totals">
-          <div>
-            <dt>Releases in the archive</dt>
-            <dd>{state.wines.length.toLocaleString()}</dd>
-          </div>
-          <div>
-            <dt>Bottles sold · all time</dt>
-            <dd>{state.stats.sold.toLocaleString()}</dd>
-          </div>
-          <div>
-            <dt>Bottles in stock</dt>
-            <dd>
-              {state.wines.reduce((n, w) => n + w.bottles, 0).toLocaleString()}
-            </dd>
-          </div>
-        </dl>
-      )}
-      {state.wines.some((w) => w.produced === null) && (
-        <p className="history-note">
-          Older releases have incomplete production and sales records. A + marks
-          sales tracked since this update; earlier sales are included only in
-          the estate’s all-time total.
-        </p>
-      )}
-      {state.lines.length === 0 ? (
-        <Empty icon="glass" title="Your first house label starts here.">
-          Bottle a reserve to create a wine line. Choose its name, bottle shape,
-          and label, then return to it with future vintages.
-        </Empty>
-      ) : (
-        state.lines.map((line) => {
-          const releases = state.wines.filter((w) => w.lineId === line.id);
-          const latest = releases.at(-1)!;
-          return (
-            <article className="line-archive" key={line.id}>
-              <div className="line-identity">
-                <WineBottle
-                  name={line.name}
-                  estate={latest?.estate ?? state.name}
-                  design={line.design}
-                  founded={line.founded}
-                  year={
-                    latest ? vintage(latest.components) : `Year ${line.founded}`
-                  }
-                  release={releases.length}
-                  white={
-                    latest &&
-                    getVariety(state, latest.variety).wineType === 'White'
-                  }
-                />
-                <div>
-                  <span className="eyebrow">
-                    ESTABLISHED YEAR {line.founded} · {line.design.style} LABEL
-                  </span>
-                  <h3>{line.name}</h3>
-                  <p>
-                    {releases.length}{' '}
-                    {releases.length === 1 ? 'release' : 'releases'} ·{' '}
-                    {releases
-                      .reduce((n, w) => n + w.bottles, 0)
-                      .toLocaleString()}{' '}
-                    bottles in stock
-                  </p>
-                  <p className="line-sales">
-                    <strong>
-                      <SalesCount wines={releases} />
-                    </strong>{' '}
-                    bottles sold
-                  </p>
-                </div>
-              </div>
-              <div className="release-history">
-                {[...releases].reverse().map((w) => (
-                  <details key={w.id}>
-                    <summary>
-                      <span className="release-number">
-                        No. {String(w.release).padStart(2, '0')}
-                      </span>
-                      <span>
-                        <span className="release-label">{w.label}</span>
-                        <small>
-                          {vintage(w.components)}
-                          {w.bottles === 0 ? ' · Sold out' : ''}
-                        </small>
-                        <JudgingStatus wine={w} />
-                        <span className="release-stock">
-                          <span>
-                            <strong>
-                              {w.produced === null
-                                ? 'Unrecorded'
-                                : w.produced.toLocaleString()}
-                            </strong>
-                            <small>Produced</small>
-                          </span>
-                          <span>
-                            <strong>
-                              <SalesCount wines={[w]} />
-                            </strong>
-                            <small>Sold</small>
-                          </span>
-                          <span>
-                            <strong>{w.bottles.toLocaleString()}</strong>
-                            <small>Remaining</small>
-                          </span>
-                        </span>
-                      </span>
-                      <b>
-                        {w.quality}
-                        <small>POINTS</small>
-                      </b>
-                    </summary>
-                    <Composition parts={w.components} state={state} />
-                    <TastingNotes profile={releaseTasting(w, state)} />
-                    <p className="fine-print">
-                      Bottled by {w.estate}
-                      {w.produced !== null &&
-                        ` · Year ${calendar(w.bottled).year}, week ${calendar(w.bottled).week}`}
-                    </p>
-                  </details>
-                ))}
-              </div>
-            </article>
-          );
-        })
-      )}
-    </section>
   );
 }
