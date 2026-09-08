@@ -62,7 +62,7 @@ export function blendResearchMissing(
 ): ResearchId[] {
   const used = parts.filter((p) => p.ml > 0);
   const required: ResearchId[] = ['oenology'];
-  if (new Set(used.map((p) => p.variety)).size > 1) required.push('assemblage');
+  if (new Set(used.map((p) => p.variety)).size > 2) required.push('assemblage');
   if (new Set(used.map((p) => p.year)).size > 1)
     required.push('vintage_blending');
   if (new Set(used.map((p) => p.estateId ?? 1)).size > 1)
