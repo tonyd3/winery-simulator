@@ -135,6 +135,31 @@ export function assess(
   };
 }
 
+// Source character is fixed for a grape, estate and vintage. Weight it by volume
+// so splitting, relabeling or adding a drop cannot reroll an entire reserve.
+export function tastingScore(
+  parts: WineComponent[],
+  hybrids: readonly GrapeLineage[] = [],
+) {
+  const total = volume(parts);
+  if (!total) return 0;
+  const variation =
+    parts.reduce((sum, part) => {
+      let hash = 2166136261;
+      for (const char of `${part.variety}:${part.estateId ?? 1}:${part.year}`)
+        hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+      const offset =
+        ((hash >>> 0) % (CELLAR_TASTING.variation * 2 + 1)) -
+        CELLAR_TASTING.variation;
+      return sum + offset * part.ml;
+    }, 0) / total;
+  const profile = assess(parts, hybrids);
+  return Math.max(
+    0,
+    Math.min(100, Math.round(profile.base + profile.compatibility + variation)),
+  );
+}
+
 export function blendProfile(
   parts: WineComponent[],
   hybrids: readonly GrapeLineage[] = [],

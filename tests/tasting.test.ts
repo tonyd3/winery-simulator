@@ -176,3 +176,78 @@ test('tasting bounds remain valid at score limits and a new blend receives its o
   assert.equal(volume(newBlend.components), 10000);
   valid(s);
 });
+
+test('a drop of the same wine cannot reroll a tasted reserve across blends or reloads', () => {
+  let s = learn(newGame(), 'oenology');
+  s.reserves = [1, 2].map((id) => ({
+    id,
+    name: `Merlot ${id}`,
+    stored: s.week,
+    score: null,
+    components: [
+      {
+        variety: 'merlot',
+        estateId: 1,
+        year: 1,
+        quality: 94,
+        ml: id === 1 ? 150000 : 1000,
+      },
+    ],
+  }));
+  s.nextId = 3;
+  s = act(s, { type: 'tasteReserve', id: 1 });
+  const original = s.reserves[0].score;
+  const seed = s.seed;
+  let mainId = 1;
+  for (let attempt = 0; attempt < 14; attempt++) {
+    s = act(deserialize(serialize(s)), {
+      type: 'blend',
+      name: `Attempt ${attempt}`,
+      portions: [
+        {
+          id: mainId,
+          ml: volume(s.reserves.find((r) => r.id === mainId)!.components),
+        },
+        { id: 2, ml: 1 },
+      ],
+    });
+    mainId = s.reserves.at(-1)!.id;
+    s = act(s, {
+      type: 'bottle',
+      id: mainId,
+      bottles: 1,
+      line: s.lines.length
+        ? { id: s.lines[0].id }
+        : { name: 'Sample', design: DEFAULT_DESIGN },
+    });
+    assert.equal(s.wines.at(-1)!.quality, original);
+    assert.equal(s.reserves.at(-1)!.score, original);
+  }
+  assert.equal(s.seed, seed);
+  valid(s);
+});
+
+test('tasting depends on source proportions, not component order, cost or sampling order', () => {
+  const s = stored();
+  const original = act(s, { type: 'tasteReserve', id: 1 }).reserves[0].score;
+  const changed = structuredClone(s);
+  changed.seed = 42;
+  changed.reserves[0].name = 'Different name';
+  changed.reserves[0].components.reverse();
+  changed.reserves[0].components.forEach((part) => {
+    part.ml *= 2;
+    part.directCostCents = 999;
+  });
+  assert.equal(
+    act(changed, { type: 'tasteReserve', id: 1 }).reserves[0].score,
+    original,
+  );
+  const improved = structuredClone(s);
+  improved.reserves[0].components.forEach((part) => {
+    part.quality += 10;
+  });
+  assert.equal(
+    act(improved, { type: 'tasteReserve', id: 1 }).reserves[0].score,
+    original! + 10,
+  );
+});

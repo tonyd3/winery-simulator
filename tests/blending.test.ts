@@ -300,9 +300,11 @@ test('tasting variation is bounded, persisted, deterministic, and locked for par
   assert.equal(partial.wines[1].quality, w.quality);
   assert.equal(partial.seed, s.seed);
   const scores = new Set<number>();
-  for (let seed = 1; seed <= 20; seed++) {
+  for (let year = 1; year <= 20; year++) {
     const trial = structuredClone(original);
-    trial.seed = seed * 1000;
+    trial.reserves[2].components.forEach((part) => {
+      part.year += year;
+    });
     scores.add(bottle(trial).wines[0].quality);
   }
   assert.ok(scores.size >= 4);

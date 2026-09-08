@@ -88,9 +88,9 @@ import {
   wineBenefits,
 } from './promotion';
 import {
-  assess,
   blendProfile,
   CELLAR_TASTING,
+  tastingScore,
   combine,
   take,
   portion,
@@ -1558,15 +1558,7 @@ function random(s: GameState) {
 }
 function scoreReserve(s: GameState, reserve: Reserve) {
   if (reserve.score === null)
-    reserve.score = Math.max(
-      0,
-      Math.min(
-        100,
-        assess(reserve.components, s.hybrids).expected +
-          Math.floor(random(s) * (CELLAR_TASTING.variation * 2 + 1)) -
-          CELLAR_TASTING.variation,
-      ),
-    );
+    reserve.score = tastingScore(reserve.components, s.hybrids);
   return reserve.score;
 }
 // Calendar-based weather is independent of action order and survives reloads
