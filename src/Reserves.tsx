@@ -397,7 +397,7 @@ export default function Reserves({
                   {smallReserves.length}{' '}
                   {smallReserves.length === 1 ? 'lot holds' : 'lots hold'} less
                   than a 750 mL bottle each. Blend them into another wine, or
-                  clear them to free reserve spaces.
+                  dump them to free reserve spaces.
                 </p>
               </div>
               <div className="reserve-leftover-actions">
@@ -421,7 +421,7 @@ export default function Reserves({
                   className="button secondary"
                   onClick={() => setClearing(smallReserves)}
                 >
-                  Clear small leftovers
+                  Dump all small leftovers
                 </button>
               </div>
             </div>
@@ -513,15 +513,17 @@ export default function Reserves({
                           />{' '}
                           L
                         </label>
+                      ) : total < 750 ? (
+                        <button
+                          className="text-button"
+                          aria-label={`Dump remainder from lot ${r.id}: ${liters(total)} L`}
+                          onClick={() => setClearing([r])}
+                        >
+                          Dump remainder · {liters(total)} L
+                        </button>
                       ) : (
                         <button
                           className="text-button"
-                          disabled={total < 750}
-                          title={
-                            total < 750
-                              ? 'A bottle needs 750 mL. Blend this lot or clear small leftovers.'
-                              : undefined
-                          }
                           onClick={() => {
                             setAmounts({});
                             setBottling(r.id);
@@ -656,7 +658,7 @@ export default function Reserves({
         </>
       )}
       {clearing && (
-        <Modal title="Clear small leftovers?" onClose={closeClearing}>
+        <Modal title="Dump small leftovers?" onClose={closeClearing}>
           <div className="reserve-clear-review">
             <p>
               Free {clearing.length} reserve{' '}
@@ -713,7 +715,7 @@ export default function Reserves({
                   }
                 }}
               >
-                Discard {liters(clearingVolume)} L
+                Dump {liters(clearingVolume)} L
               </button>
             </div>
           </div>
