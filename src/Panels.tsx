@@ -1,3 +1,4 @@
+import { parcelPurchaseUpkeep } from './investments';
 import { demandContext, type DemandContext } from './game';
 import { FinanceReport } from './FinanceReport';
 import { qualityResponse, signedPrestige } from './prestige';
@@ -365,7 +366,10 @@ export function PlotInspector({
             Buy this parcel
             <span className="button-price">{money(land.cost)}</span>
           </button>
-          <p className="fine-print">Adds $25 to weekly estate upkeep.</p>
+          <p className="fine-print">
+            Adds {money(parcelPurchaseUpkeep(state, selected))} to weekly
+            upkeep, including vineyard programs.
+          </p>
           {state.cash < land.cost && (
             <p className="fine-print">
               Need {money(land.cost - state.cash)} more to buy this parcel.

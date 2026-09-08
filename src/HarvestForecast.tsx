@@ -31,8 +31,8 @@ export function HarvestForecast({
       <p>
         {harvestYield(state, plot).toLocaleString('en-US')} kg at current health
         and ripeness
-        {effects.yieldMultiplier < 1
-          ? ' · 10% less from selective picking'
+        {effects.yieldMultiplier !== 1
+          ? ` · ${Math.abs(Math.round((effects.yieldMultiplier - 1) * 100))}% ${effects.yieldMultiplier > 1 ? 'more' : 'less'} from vineyard programs`
           : ''}
         .{plot.growth < 80 ? ' Harvest unlocks at 80% ripeness.' : ''}
       </p>
