@@ -46,9 +46,9 @@ Choose Bordeaux, Burgundy, Napa Valley, Mosel, Tuscany, Rioja, Mendoza, or Baros
 
 **Cellar techniques** are researched after Cellar foundations, then selected separately for each fresh harvest before fermentation. Skin contact adds body and tannin (+1 week, $40 per tank); malolactic fermentation softens acidity (+2 weeks, $60 per tank); lees aging adds texture and bread-dough notes (+3 weeks, $50 per tank). The batch shows its full processing cost and tank time upfront. Steps run automatically, preserve partial-harvest handling, and carry into blend and bottle tasting notes. See [cellar techniques](docs/cellar-techniques.md) for research terms and save behavior.
 
-**Research** contains **67 studies**: 33 techniques across vineyard science, cellar techniques, tourism/hospitality, and commerce/discovery, plus 34 individual grape studies. Search by technique, grape, or unlock; follow clickable prerequisites; filter by availability. Studies range from **6–72 weeks** and **$1,200–$180,000**. A game year has 12 weeks. Research costs are separate from buildings, teams, and planting.
+**Research** contains **85 studies**: 33 techniques across vineyard science, cellar techniques, tourism/hospitality, and commerce/discovery, plus 52 individual grape studies. Search by technique, grape, or unlock; follow clickable prerequisites; filter by availability. Studies range from **6–72 weeks** and **$1,200–$180,000**. A game year has 12 weeks. Research costs are separate from buildings, teams, and planting.
 
-The 34-grape library includes Gamay, Carménère, Graciano, Petite Sirah / Durif, Pinot Gris / Pinot Grigio, Viognier, Albariño, Grüner Veltliner, Marsanne, and Roussanne. Each has its own field study, growing traits, and blending affinities. Search accepts names without accents. See the [grape expansion guide](docs/grape-library.md) for costs and recipe ideas.
+The 52-grape library now includes ten more Italian varieties—Aglianico, Sagrantino, Corvina, Montepulciano, Nero d’Avola, Dolcetto, Fiano, Verdicchio, Garganega, and Arneis—and eight French selections: Tannat, Carignan, Cinsault / Cinsaut, Pinot Meunier, Savagnin, Melon de Bourgogne, Clairette, and Grenache Blanc. Each has its own field study, growing traits, tasting profile, and blending affinities. Search accepts names without accents and either apostrophe style. See the [grape expansion guide](docs/grape-library.md) for costs and recipe ideas.
 
 Knowledge comes from weekly observation (+6; +2 after Vine science; +4 after Field notebooks), harvesting (+12), and bottling (+1 per 40 bottles). Start with one study slot and buy up to eight under **Research → Add study slot**. The second slot costs $5,000, the third $10,000, and each later slot costs $5,000 more; slots are permanent and add no weekly upkeep. Every study pays its own cash and knowledge costs upfront and progresses in parallel, with individual pause/resume and abandon controls. Paused studies keep their slots; abandoning refunds nothing. One breeding trial can run separately. An operating research lab doubles all running study and trial progress and adds 10 knowledge each week.
 
@@ -210,7 +210,7 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `tests/compatibility.test.ts`: complementary and conflicting recipes, proportions, ancestry, bounds, and preview-to-bottle consistency.
 - `tests/quality.test.ts`: quality distribution, exceptional-wine progression, legacy maturation, and nonlinear pricing.
 - `src/cellarTechniques.ts`, `src/GrapeArrival.tsx`: batch technique rules, progress labels, and per-harvest cellar choices.
-- `src/catalog.ts`: 34 grape definitions, eight regions, and 67 research projects.
+- `src/catalog.ts`: 52 grape definitions, eight regions, and 85 research projects.
 - `src/Regions.tsx`: new-estate region selection.
 - `src/RegionLandscape.tsx`: distinct SVG postcards for all eight regions.
 - `src/Research.tsx` and `src/ResearchProjects.tsx`: research ledger, grape library, active studies, and breeding nursery.

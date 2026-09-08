@@ -15,6 +15,11 @@ const powerful = new Set([
   'mourvedre',
   'petite_sirah',
   'carmenere',
+  'aglianico',
+  'sagrantino',
+  'montepulciano',
+  'nero_davola',
+  'tannat',
 ]);
 const aromatic = new Set([
   'riesling',
@@ -140,6 +145,161 @@ const partners = new Map<string, Rule>([
     {
       affinity: 3,
       reason: 'Fragrant Rhône whites combine floral lift with finer texture.',
+    },
+  ],
+  [
+    pairKey('aglianico', 'merlot'),
+    {
+      affinity: 2,
+      reason: 'Aglianico’s firm structure gains softer plum fruit from Merlot.',
+    },
+  ],
+  [
+    pairKey('sagrantino', 'sangiovese'),
+    {
+      affinity: 3,
+      reason:
+        'Sagrantino adds depth and tannin to Sangiovese’s bright cherry fruit.',
+    },
+  ],
+  [
+    pairKey('corvina', 'sangiovese'),
+    {
+      affinity: 2,
+      reason:
+        'Fresh cherry styles meet, with Sangiovese adding a firmer backbone.',
+    },
+  ],
+  [
+    pairKey('montepulciano', 'sangiovese'),
+    {
+      affinity: 3,
+      reason:
+        'Montepulciano’s rounded dark fruit balances Sangiovese’s lively acidity.',
+    },
+  ],
+  [
+    pairKey('nero_davola', 'syrah'),
+    {
+      affinity: 3,
+      reason: 'Dark cherry and plum combine with Syrah’s peppery depth.',
+    },
+  ],
+  [
+    pairKey('dolcetto', 'barbera'),
+    {
+      affinity: 2,
+      reason:
+        'Barbera brings acidity to Dolcetto’s dark fruit and almond character.',
+    },
+  ],
+  [
+    pairKey('fiano', 'vermentino'),
+    {
+      affinity: 2,
+      reason: 'Fiano’s rounded pear and nutty detail gain a fresh citrus edge.',
+    },
+  ],
+  [
+    pairKey('verdicchio', 'garganega'),
+    {
+      affinity: 2,
+      reason:
+        'Verdicchio’s bright acidity lifts Garganega’s softer orchard fruit.',
+    },
+  ],
+  [
+    pairKey('garganega', 'chardonnay'),
+    {
+      affinity: 3,
+      reason:
+        'Garganega’s floral and almond detail complements Chardonnay’s orchard fruit.',
+    },
+  ],
+  [
+    pairKey('arneis', 'pinot_gris'),
+    {
+      affinity: 2,
+      reason:
+        'Soft pear and peach aromas form a rounded, gently floral white blend.',
+    },
+  ],
+  [
+    pairKey('tannat', 'cabernet_franc'),
+    {
+      affinity: 3,
+      reason:
+        'Tannat supplies deep color and tannin while Cabernet Franc adds fragrant lift.',
+    },
+  ],
+  [
+    pairKey('carignan', 'grenache'),
+    {
+      affinity: 3,
+      reason: 'Carignan’s savory freshness balances Grenache’s generous fruit.',
+    },
+  ],
+  [
+    pairKey('carignan', 'syrah'),
+    {
+      affinity: 2,
+      reason: 'Savory dark fruit meets Syrah’s pepper and fuller texture.',
+    },
+  ],
+  [
+    pairKey('cinsault', 'grenache'),
+    {
+      affinity: 3,
+      reason:
+        'Cinsault adds fragrance and a lighter touch to Grenache’s ripe fruit.',
+    },
+  ],
+  [
+    pairKey('cinsault', 'syrah'),
+    {
+      affinity: 2,
+      reason:
+        'Cinsault’s red-berry perfume softens Syrah’s darker, peppery style.',
+    },
+  ],
+  [
+    pairKey('pinot_meunier', 'pinot'),
+    {
+      affinity: 3,
+      reason:
+        'Supple Meunier fruit rounds out Pinot Noir’s bright, delicate character.',
+    },
+  ],
+  [
+    pairKey('savagnin', 'chardonnay'),
+    {
+      affinity: 3,
+      reason:
+        'Savagnin’s lively acidity gives Chardonnay’s orchard fruit a firmer outline.',
+    },
+  ],
+  [
+    pairKey('melon', 'chenin'),
+    {
+      affinity: 2,
+      reason:
+        'Melon’s subtle citrus keeps Chenin’s quince and apple character fresh.',
+    },
+  ],
+  [
+    pairKey('clairette', 'grenache_blanc'),
+    {
+      affinity: 3,
+      reason:
+        'Clairette’s floral lift complements Grenache Blanc’s generous body.',
+    },
+  ],
+  [
+    pairKey('grenache_blanc', 'roussanne'),
+    {
+      affinity: 3,
+      reason:
+        'Grenache Blanc provides body while Roussanne brings fragrance and detail.',
     },
   ],
 ]);

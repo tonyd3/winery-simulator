@@ -6,7 +6,7 @@ These descriptions are a style forecast. Source quality shapes the finish descri
 
 ## How the forecast works
 
-- All 34 grape varieties have a small sensory profile. Each component contributes by its share of the actual bottled volume. Leading aromas are shown; trace additions cannot take over the description.
+- All 52 grape varieties have a small sensory profile. Each component contributes by its share of the actual bottled volume. Leading aromas are shown; trace additions cannot take over the description.
 - Each harvest year and source region has a stable aromatic expression. Related fruit descriptions and their prominence vary within the grape's vocabulary: Cabernet can lean toward fresh blackcurrant and black cherry in one vintage, cassis and black cherry preserve in another. This is deterministic game variation, not a claim about historical weather. Different vintages can still resemble one another.
 - New harvests record ripeness, vine health, and the share of growing weeks with sunshine or dry weather up to picking. Fresher picks favor lifted fruit and acidity; fully ripe picks favor fuller fruit and softer tannins. The weather contribution is modest. Stressed vines can give a more subdued finish. Picking conditions are captured before the plot resets and remain attached to each portion of wine.
 - Bred grapes inherit equal parts of their parents’ sensory profiles. Ancestry is resolved through successive generations, so a backcross carries more of the recurring parent’s character.
