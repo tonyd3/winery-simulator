@@ -110,6 +110,20 @@
     min-height: 44px;
   }
 }
+.reserve-sort {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+  color: var(--ink);
+  font-size: 12px;
+}
+.reserve-sort select {
+  width: auto;
+  max-width: 100%;
+  min-height: 44px;
+}
 .reserve-row {
   border-top: 1px solid #deded2;
   padding: 24px 0;

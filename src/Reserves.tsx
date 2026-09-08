@@ -27,6 +27,13 @@ import type { LabelDesign, Reserve } from './winemaking';
 import { Composition, SalesCount, WineBottle } from './WinePresentation';
 import { TastingNotes } from './TastingNotes';
 import { releaseTasting, tastingProfile } from './wineSensory';
+import {
+  loadReserveSort,
+  RESERVE_SORT_KEY,
+  RESERVE_SORT_OPTIONS,
+  sortReserves,
+} from './reserveSort';
+import type { ReserveSort } from './reserveSort';
 
 function BottlingForm({
   reserve,
@@ -272,6 +279,14 @@ export default function Reserves({
   onResearch: (id?: ResearchId) => void;
 }) {
   const [amounts, setAmounts] = useState<Record<number, string>>({});
+  const [sort, setSort] = useState(loadReserveSort);
+  useEffect(() => {
+    try {
+      localStorage.setItem(RESERVE_SORT_KEY, sort);
+    } catch {
+      // Keep the selected order usable even when it cannot be saved.
+    }
+  }, [sort]);
   const [blendName, setBlendName] = useState('');
   const [bottling, setBottling] = useState<number | null>(null);
   const [tasting, setTasting] = useState<number | null>(null);
@@ -375,7 +390,22 @@ export default function Reserves({
           )}
           <div className="reserve-workspace">
             <div className="reserve-list">
-              {state.reserves.map((r) => {
+              <label className="reserve-sort">
+                Sort by
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as ReserveSort)}
+                >
+                  {Object.entries(RESERVE_SORT_OPTIONS).map(
+                    ([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
+              {sortReserves(state.reserves, sort).map((r) => {
                 const total = volume(r.components);
                 const checked = amounts[r.id] !== undefined;
                 return (
