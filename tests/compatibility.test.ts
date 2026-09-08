@@ -86,6 +86,46 @@ test('new grapes offer complementary recipes without erasing delicate-style clas
   assert.ok(blendProfile(recipe('marsanne', 'roussanne', 50, 75)).high < 90);
 });
 
+test('French and Italian additions have useful blends while powerful reds still clash with delicate grapes', () => {
+  for (const [a, b] of [
+    ['aglianico', 'merlot'],
+    ['sagrantino', 'sangiovese'],
+    ['corvina', 'sangiovese'],
+    ['montepulciano', 'sangiovese'],
+    ['nero_davola', 'syrah'],
+    ['dolcetto', 'barbera'],
+    ['fiano', 'vermentino'],
+    ['verdicchio', 'garganega'],
+    ['garganega', 'chardonnay'],
+    ['arneis', 'pinot_gris'],
+    ['tannat', 'cabernet_franc'],
+    ['carignan', 'grenache'],
+    ['carignan', 'syrah'],
+    ['cinsault', 'grenache'],
+    ['cinsault', 'syrah'],
+    ['pinot_meunier', 'pinot'],
+    ['savagnin', 'chardonnay'],
+    ['melon', 'chenin'],
+    ['clairette', 'grenache_blanc'],
+    ['grenache_blanc', 'roussanne'],
+  ]) {
+    assert.ok(assess(recipe(a, b)).compatibility > 0, `${a} / ${b}`);
+    assert.ok(assess(recipe(a, b, 99)).compatibility < 0.2);
+    assert.ok(blendProfile(recipe(a, b, 50, 75)).high < 90);
+  }
+  for (const variety of [
+    'aglianico',
+    'sagrantino',
+    'montepulciano',
+    'nero_davola',
+    'tannat',
+  ]) {
+    assert.ok(assess(recipe('pinot', variety)).compatibility < 0);
+    assert.ok(assess(recipe('gamay', variety)).compatibility < 0);
+  }
+  assert.ok(assess(recipe('pinot_meunier', 'chardonnay')).compatibility < 0);
+});
+
 test('Viognier lifts Syrah in small proportions, dominates larger blends, and passes its accent through ancestry', () => {
   const accent = assess(recipe('syrah', 'viognier', 90));
   close(accent.compatibility, 1.08);
