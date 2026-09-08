@@ -222,10 +222,7 @@ export function PlotInspector({
           <button
             className="button primary wide"
             disabled={!ready || state.cash < plotHarvestCost(plot)}
-            onClick={() => {
-              if (dispatch({ type: 'harvest', id: selected }))
-                navigate('cellar');
-            }}
+            onClick={() => dispatch({ type: 'harvest', id: selected })}
           >
             <Icon name="grape" size={17} />
             {harvested
