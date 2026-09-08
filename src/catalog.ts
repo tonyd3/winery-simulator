@@ -742,9 +742,9 @@ export const TECHNIQUES = {
   breeding: study(
     'vineyard',
     'Cross-pollination',
-    220,
-    22000,
-    24,
+    320,
+    38000,
+    36,
     ['heritage'],
     'Open the breeding nursery. Cross two learned varieties in a separate 24-week, $7,500 field trial.',
   ),
@@ -782,7 +782,7 @@ export const TECHNIQUES = {
     1500,
     6,
     [],
-    'Combine reserve lots of the same grape, vintage and estate. Single-lot bottling is available from the beginning.',
+    'Start blending with up to two grape varieties of the same wine color, vintage and estate. Single-lot bottling is available from the beginning.',
   ),
   skin_contact: study(
     'cellar',
@@ -813,12 +813,12 @@ export const TECHNIQUES = {
   ),
   assemblage: study(
     'cellar',
-    'Varietal assemblage',
+    'Advanced blending',
     100,
     7500,
     14,
     ['oenology'],
-    'Blend different grape varieties. Their proportions and compatibility determine the finished wine’s quality.',
+    'Blend three or more grape varieties, balancing structure, fruit and aroma through their proportions. Opens vintage, regional and red & white blending studies.',
   ),
   vintage_blending: study(
     'cellar',

@@ -187,6 +187,29 @@ test('tourism discoveries unlock purchases separately and a tasting room still n
   valid(s);
 });
 
+test('a starting estate can unlock a two-grape blend with only the six-week foundation study', () => {
+  let s = reserves();
+  s.cash = newGame().cash;
+  s.knowledge = newGame().knowledge;
+  s.reserves[1].components[0].variety = 'cabernet';
+  s = tick(s, 1);
+  const before = structuredClone(s);
+  s = act(s, { type: 'research', id: 'oenology' });
+  assert.equal(s.cash, before.cash - 1500);
+  assert.equal(s.knowledge, before.knowledge - 35);
+  s = tick(s, 5);
+  assert.throws(() => blend(s), /Cellar foundations/);
+  s = tick(deserialize(serialize(s)), 1);
+  assert.deepEqual(s.research, ['oenology']);
+  s = blend(s);
+  assert.equal(volume(s.reserves.at(-1)!.components), 30000);
+  assert.equal(
+    new Set(s.reserves.at(-1)!.components.map((p) => p.variety)).size,
+    2,
+  );
+  valid(s);
+});
+
 test('blend permissions check the recipe across grapes, colors, vintages and estate origins before consuming anything', () => {
   let s = reserves();
   const before = structuredClone(s);
@@ -195,7 +218,17 @@ test('blend permissions check the recipe across grapes, colors, vintages and est
   learn(s, 'oenology');
   assert.equal(volume(blend(s).reserves.at(-1)!.components), 30000);
   s.reserves[1].components[0].variety = 'cabernet';
-  assert.throws(() => blend(s), /Varietal assemblage/);
+  valid(blend(s));
+  s.reserves[1].components.push({
+    variety: 'syrah',
+    year: 1,
+    estateId: 1,
+    ml: 15000,
+    quality: 80,
+  });
+  const lockedRecipe = structuredClone(s);
+  assert.throws(() => blend(s), /Advanced blending/);
+  assert.deepEqual(s, lockedRecipe);
   learn(s, 'assemblage');
   blend(s);
   s.reserves[1].components[0].year = 2;
@@ -215,6 +248,25 @@ test('blend permissions check the recipe across grapes, colors, vintages and est
   valid(blend(s));
 });
 
+test('basic blending counts grapes across all selected lots, not the number of lots or source components', () => {
+  const s = learn(reserves(), 'oenology');
+  s.reserves[1].components[0].variety = 'cabernet';
+  s.reserves.push({ ...structuredClone(s.reserves[0]), id: s.nextId++ });
+  const action = {
+    type: 'blend' as const,
+    name: 'Three lots, two grapes',
+    portions: s.reserves.map((r) => ({ id: r.id, ml: 15000 })),
+  };
+  valid(act(s, action));
+  s.reserves[2].components[0].variety = 'syrah';
+  action.portions[2].ml = 1;
+  const before = structuredClone(s);
+  assert.throws(() => act(s, action), /Advanced blending/);
+  assert.deepEqual(s, before);
+  learn(s, 'assemblage');
+  valid(act(deserialize(serialize(s)), action));
+});
+
 test('nested recipes cannot hide restricted components, but legacy blends remain bottleable', () => {
   const s = reserves();
   learn(s, 'oenology');
@@ -225,11 +277,18 @@ test('nested recipes cannot hide restricted components, but legacy blends remain
     ml: 15000,
     quality: 85,
   });
+  s.reserves[0].components.push({
+    variety: 'syrah',
+    year: 1,
+    estateId: 1,
+    ml: 15000,
+    quality: 80,
+  });
   assert.deepEqual(blendResearchMissing(s, s.reserves[0].components), [
     'assemblage',
     'vintage_blending',
   ]);
-  assert.throws(() => blend(s), /Varietal assemblage/);
+  assert.throws(() => blend(s), /Advanced blending/);
   const bottled = act(s, {
     type: 'bottle',
     id: 1,
@@ -361,6 +420,54 @@ test('advanced breeding traits and hybrid parents require separate discoveries; 
   learn(s, 'field_notebooks');
   assert.equal(weeklyKnowledge(s), before + 4);
   valid(s);
+});
+
+test('new cross-pollination studies are later investments and take the full 36 weeks before opening the nursery', () => {
+  let s = learn(funded(), 'heritage');
+  const before = structuredClone(s);
+  const trial = {
+    type: 'breed' as const,
+    parents: ['merlot', 'sauvignon'] as [string, string],
+    trait: 'climate' as const,
+    name: 'Later nursery',
+  };
+  assert.throws(
+    () => act({ ...s, cash: 37999 }, { type: 'research', id: 'breeding' }),
+    /funds|Need|cash/i,
+  );
+  s = act(s, { type: 'research', id: 'breeding' });
+  assert.equal(s.cash, before.cash - 38000);
+  assert.equal(s.knowledge, before.knowledge - 320);
+  assert.equal(s.researchProject?.duration, 36);
+  s = tick(deserialize(serialize(s)), 35);
+  assert.throws(() => act(s, trial), /Cross-pollination/);
+  s = tick(s, 1);
+  s = act(s, trial);
+  assert.equal(s.breedingProject?.duration, 24);
+  valid(s);
+});
+
+test('paid version-six breeding and assemblage studies retain their terms and completed unlocks', () => {
+  for (const [id, duration] of [
+    ['breeding', 24],
+    ['assemblage', 14],
+  ] as const) {
+    let s = learn(
+      reserves(),
+      id === 'breeding' ? 'heritage' : 'oenology',
+    );
+    s.researchProject = { id, duration, remaining: 2, paused: true };
+    const loaded = deserialize(serialize(s));
+    assert.deepEqual(loaded, s);
+    assert.equal(tick(loaded, 3).researchProject?.remaining, 2);
+    s = act(loaded, { type: 'pauseResearch', id, paused: false });
+    s = tick(s, 1);
+    assert.ok(!s.research.includes(id));
+    s = tick(deserialize(serialize(s)), 1);
+    assert.ok(s.research.includes(id));
+    assert.deepEqual(s.reserves, loaded.reserves);
+    valid(s);
+  }
 });
 
 test('save validation rejects malformed long studies and duplicate licenses rather than repairing corrupt progression', () => {

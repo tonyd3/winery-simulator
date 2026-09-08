@@ -36,7 +36,7 @@ The current catalog has 67 projects: 33 techniques and 34 individual grape field
 | Branch | Progression and actual unlocks |
 | --- | --- |
 | Vineyard science | Vine science (+2 weekly knowledge) → Nursery propagation → Climate adaptation, Cross-pollination → Field selection (+2 resilience, shorter trials) → Generational crosses → Aroma & finesse selection. Soil & water mapping unlocks irrigation; Precision viticulture unlocks vineyard staff. |
-| Cellar techniques | Cellar foundations → Varietal assemblage → Perpetual reserves, Regional cuvées, Red & white experiments. Fermentation control unlocks the winemaker’s bench; Selective fruit handling unlocks optical sorting; Cold-chain logistics unlocks refrigeration. Sensory science is required for sommelier training. |
+| Cellar techniques | Cellar foundations (up to two grapes) → Advanced blending (three or more grapes) → Perpetual reserves, Regional cuvées, Red & white experiments. Fermentation control unlocks the winemaker’s bench; Selective fruit handling unlocks optical sorting; Cold-chain logistics unlocks refrigeration. Sensory science is required for sommelier training. |
 | Tourism & hospitality | Wine tourism → Visitor services → Hosted tastings → Sommelier training / Wine & gastronomy → Destination stays. These permit separate purchases of terrace, visitor center, tasting room, sommelier team, restaurant, and guesthouse. |
 | Commerce & discovery | Estate storytelling → Cellar-door membership / Export trade. Experimental viticulture opens rare grape studies. Field notebooks adds 4 weekly knowledge. Research institute unlocks the lab. |
 | Individual grapes | Classic grapes require Vine science; heritage grapes require Nursery propagation; rare grapes require Experimental viticulture. Each variety has a separate duration and price based on rarity, planting cost, and finesse. Home-region favorites cost 20% less cash and require two fewer study weeks. Visiting or buying a different region does not change these study terms. |
@@ -53,11 +53,15 @@ Existing saves default to one study slot while preserving the paid project's dur
 
 Basic harvest, fermentation, aging, reserve storage, analysis, single-lot bottling, marketing, judging, land, and tank purchases stay available. Every purchase in the 14-item capital investment catalog has a research prerequisite. Existing owned facilities can operate and resume without retroactive research charges.
 
-Blend creation checks all positive-volume recipe components, including those inside earlier blends. Different grapes, years, estate origins, and wine colors require separate studies. Failed attempts consume no wine, money, IDs, knowledge, or RNG. Permission does not improve a recipe’s score: compatibility and component quality still matter. Existing blends remain bottleable.
+Basic blending arrives after Cellar foundations alone: 6 study weeks, $1,500 and 35 knowledge, rather than the former two-study path of 20 weeks, $9,000 and 135 knowledge. It permits up to two grape varieties from the same vintage, estate and wine color. Advanced blending (the existing `assemblage` save ID) opens three-or-more-grape recipes for another 14 weeks, $7,500 and 100 knowledge. Perpetual reserves, Regional cuvées and Red & white experiments remain later specialties behind Advanced blending.
+
+Blend creation checks all positive-volume recipe components, including those inside earlier blends. The basic limit counts distinct grapes, not reserve lots; any number of lots may be combined within the existing cellar capacity. Different years, estate origins, and wine colors require their separate studies. Failed attempts consume no wine, money, IDs, knowledge, or RNG. These discoveries open more recipe choices without adding automatic score bonuses: compatibility, source quality and proportions determine the improvement. Existing blends remain bottleable, and completed or active Varietal assemblage studies become Advanced blending with their original terms and permissions preserved.
 
 Skin contact, Malolactic fermentation, and Lees aging each require Cellar foundations. Completing a study unlocks a choice on new batches; it never changes wine already in a tank, reserve, or bottle. Study costs and batch processing costs are separate. See [cellar techniques](cellar-techniques.md) for the exact terms and style effects.
 
 ## Breeding
+
+Cross-pollination requires Vine science and Nursery propagation, then costs $38,000 and 320 knowledge and takes 36 study weeks. Its full prerequisite path takes 52 study weeks without a lab, placing nursery access well after basic blending. Previously paid 24-week Cross-pollination studies keep their contracted duration and remaining time; completed research, custom grapes, and active field trials are unchanged.
 
 A trial costs 160 knowledge and $7,500, and lasts 24 weeks (18 after Field selection). Two distinct unlocked parents are required. Previously bred parents require Generational crosses; the Wine quality trait requires Aroma & finesse selection. Choose a unique name up to 28 characters. An estate can retain 60 custom grapes; the cap is shown when reached.
 
