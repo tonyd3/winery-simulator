@@ -286,6 +286,9 @@ function BottlingForm({
               ? 'Warehouse full. Sell bottles in the wine shop or add storage above. This wine can stay in reserves.'
               : `${room.toLocaleString()} bottle spaces free in the warehouse. You can bottle up to ${limit.toLocaleString()} with your current wine, kits and space.`}
           </p>
+          <button className="button primary wide" disabled={!valid}>
+            Bottle & reveal <ArrowRight size={16} />
+          </button>
           <p className="tasting-estimate">
             {reserve.score !== null
               ? `Assessed at ${reserve.score} points. Further bottles keep this score.`
@@ -298,9 +301,6 @@ function BottlingForm({
             One kit per bottle. Your recipe, tasting notes, and label are saved
             with this release.
           </p>
-          <button className="button primary wide" disabled={!valid}>
-            Bottle & reveal <ArrowRight size={16} />
-          </button>
         </form>
       </div>
     </section>

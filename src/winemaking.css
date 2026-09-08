@@ -1181,6 +1181,9 @@
     grid-template-columns: 1fr;
     gap: 24px;
   }
+  .bottling-layout form {
+    grid-row: 1;
+  }
   .bottling-preview {
     padding: 15px;
     border-radius: 3px;

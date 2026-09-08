@@ -337,6 +337,7 @@ export default function EstateMap({
                 tabIndex={0}
                 aria-label={`${l.name}, ${p.owned ? (p.variety ? getVariety(state, p.variety).name : 'empty parcel') : 'available to buy'}${ready ? ', ready to harvest' : ''}${p.expansions ? `, expanded to ${l.area} hectares` : ''}`}
                 aria-pressed={active}
+                data-harvest-parcel={id}
                 onClick={() => onSelect(id)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {

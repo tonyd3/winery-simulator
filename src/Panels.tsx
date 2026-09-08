@@ -115,6 +115,47 @@ export function PlotInspector({
       <p className="inspector-subtitle">
         {land.area} hectares · {land.aspect}
       </p>
+      {plot.variety && (
+        <div className="parcel-actions">
+          <button
+            className="button primary wide"
+            aria-keyshortcuts="Space"
+            disabled={!ready || state.cash < plotHarvestCost(plot)}
+            onClick={() => dispatch({ type: 'harvest', id: selected })}
+          >
+            <Icon name="grape" size={17} />
+            {harvested
+              ? 'Harvest complete'
+              : ready
+                ? 'Harvest grapes'
+                : 'Waiting for ripeness'}
+            {ready && (
+              <span className="button-price">
+                {money(plotHarvestCost(plot))}
+              </span>
+            )}
+          </button>
+          <button
+            className="button secondary wide"
+            disabled={
+              winter ||
+              harvested ||
+              plot.tended === state.week ||
+              state.cash < plotTendCost(plot)
+            }
+            onClick={() => dispatch({ type: 'tend', id: selected })}
+          >
+            <Icon name="sprout" size={17} />
+            {plot.tended === state.week ? 'Tended this week' : 'Tend the vines'}
+            <span className="button-price">{money(plotTendCost(plot))}</span>
+          </button>
+          <p className="fine-print">
+            {harvested
+              ? 'One harvest per parcel, per year.'
+              : 'Space harvests the selected ripe parcel. Harvest at 80%+, before winter.'}
+          </p>
+        </div>
+      )}
       <div className={`grape-summary ${!plot.variety ? 'unplanted' : ''}`}>
         <div className="grape-medallion">
           <Icon name={plot.variety ? 'grape' : 'sprout'} size={35} />
@@ -231,42 +272,6 @@ export function PlotInspector({
             <Icon name={ready ? 'sun' : 'sprout'} size={19} />
             <p>{harvestAdvice(plot, state.week)}</p>
           </div>
-          <button
-            className="button primary wide"
-            disabled={!ready || state.cash < plotHarvestCost(plot)}
-            onClick={() => dispatch({ type: 'harvest', id: selected })}
-          >
-            <Icon name="grape" size={17} />
-            {harvested
-              ? 'Harvest complete'
-              : ready
-                ? 'Harvest grapes'
-                : 'Waiting for ripeness'}
-            {ready && (
-              <span className="button-price">
-                {money(plotHarvestCost(plot))}
-              </span>
-            )}
-          </button>
-          <button
-            className="button secondary wide"
-            disabled={
-              winter ||
-              harvested ||
-              plot.tended === state.week ||
-              state.cash < plotTendCost(plot)
-            }
-            onClick={() => dispatch({ type: 'tend', id: selected })}
-          >
-            <Icon name="sprout" size={17} />
-            {plot.tended === state.week ? 'Tended this week' : 'Tend the vines'}
-            <span className="button-price">{money(plotTendCost(plot))}</span>
-          </button>
-          <p className="fine-print">
-            {harvested
-              ? 'One harvest per parcel, per year.'
-              : 'Harvest at 80%+ ripeness, before winter.'}
-          </p>
           {clearing ? (
             <div className="replant-confirm">
               <p>
@@ -389,13 +394,11 @@ export function PlotInspector({
   );
 }
 
+export type CellarTab = 'fermentation' | 'reserves' | 'lines' | 'equipment';
 export function Cellar(
-  props: Props & { initialTab?: 'reserves' | 'fermentation' },
+  props: Props & { tab: CellarTab; onTabChange: (tab: CellarTab) => void },
 ) {
-  const { state, dispatch } = props;
-  const [tab, setTab] = useState<
-    'fermentation' | 'reserves' | 'lines' | 'equipment'
-  >(props.initialTab ?? 'fermentation');
+  const { state, dispatch, tab, onTabChange: setTab } = props;
   return (
     <div className="cellar-workspace">
       <nav className="cellar-tabs" aria-label="Cellar departments">
@@ -1118,11 +1121,11 @@ export function Market({ state, dispatch, navigate }: Props) {
               <h3>The wine shop</h3>
               <p>
                 Above 80 points, a gradual quality premium rewards finer wine.
-                Prestige strengthens that premium. Use the suggested
-                price and sales forecast to find your market. Interest fades
-                gradually over several years. Seasons, grape trends, and visitor
-                surges or slumps move demand up and down. The range allows for
-                weekly surprises; incoming judging results can lift it further.
+                Prestige strengthens that premium. Use the suggested price and
+                sales forecast to find your market. Interest fades gradually
+                over several years. Seasons, grape trends, and visitor surges or
+                slumps move demand up and down. The range allows for weekly
+                surprises; incoming judging results can lift it further.
               </p>
             </div>
             <div>

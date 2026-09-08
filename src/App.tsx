@@ -33,7 +33,7 @@ import type { Upgrade } from './investments';
 import { ReleaseReveal } from './WinePresentation';
 import { liters, volume } from './winemaking';
 import { Cellar, Improvements, Journal, Market, PlotInspector } from './Panels';
-import type { View } from './Panels';
+import type { View, CellarTab } from './Panels';
 import { Icon, Modal } from './components';
 import { PrestigeDetails, PrestigeResource } from './EstatePrestige';
 import {
@@ -46,6 +46,7 @@ import {
   money,
   newGame,
   readyToHarvest,
+  plotHarvestCost,
   SAVE_KEY,
   serialize,
   tankCount,
@@ -122,9 +123,7 @@ export default function App() {
   const [researchFocus, setResearchFocus] = useState<ResearchId | undefined>();
   const [researchTab, setResearchTab] = useState<ResearchTab>('projects');
   const [navigationRevision, setNavigationRevision] = useState(0);
-  const [cellarTab, setCellarTab] = useState<'reserves' | 'fermentation'>(
-    'fermentation',
-  );
+  const [cellarTab, setCellarTab] = useState<CellarTab>('fermentation');
   const [investmentFocus, setInvestmentFocus] = useState<Upgrade | undefined>();
   const [grapeDestination, setGrapeDestination] = useState<string | null>(null);
   const [selection, setSelected] = useState(1);
@@ -244,6 +243,50 @@ export default function App() {
     },
     [notify, replace],
   );
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.code !== 'Space' ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.isComposing ||
+        event.defaultPrevented ||
+        view !== 'estate' ||
+        setup ||
+        rename ||
+        modal ||
+        reveal ||
+        current.current.bankruptcy ||
+        current.current.pendingEvents > 0 ||
+        document.querySelector('[role="dialog"], dialog[open]')
+      )
+        return;
+      const target = event.target instanceof Element ? event.target : null;
+      const control = target?.closest(
+        'input, textarea, select, button, a, summary, [contenteditable]:not([contenteditable="false"]), [role="button"], [role="textbox"], [role="combobox"], [role="slider"]',
+      );
+      if (
+        control &&
+        control.getAttribute('data-harvest-parcel') !== String(selected)
+      )
+        return;
+      const plot = current.current.plots.find((plot) => plot.id === selected);
+      if (
+        !plot ||
+        !readyToHarvest(plot, current.current.week) ||
+        current.current.cash < plotHarvestCost(plot)
+      )
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (!event.repeat) dispatch({ type: 'harvest', id: selected });
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [view, setup, rename, modal, reveal, selected, dispatch]);
+
   const closeModal = useCallback(() => {
     setModal(null);
     setPendingImport(null);
@@ -252,7 +295,6 @@ export default function App() {
     setResearchFocus(study);
     setPlantingTarget(null);
     setResearchTab('projects');
-    setCellarTab('fermentation');
     setInvestmentFocus(undefined);
     setNavigationRevision((n) => n + 1);
     setView(next);
@@ -267,7 +309,8 @@ export default function App() {
     navigate(destination.view, destination.study);
     if (destination.nursery) setResearchTab('nursery');
     if (destination.library) setResearchTab('library');
-    if (destination.reserves) setCellarTab('reserves');
+    if (destination.view === 'cellar')
+      setCellarTab(destination.reserves ? 'reserves' : 'fermentation');
     if (destination.investment) {
       setBuildLand(false);
       setInvestmentFocus(destination.investment);
@@ -347,7 +390,12 @@ export default function App() {
   const sky = weather(state.week, getEstate(state).region);
   const harvests = state.plots.filter((p) => readyToHarvest(p, state.week));
   const bottled = state.wines.reduce((n, w) => n + w.bottles, 0);
-  const getNextStep = (): { title: string; text: string; view: View } => {
+  const getNextStep = (): {
+    title: string;
+    text: string;
+    view: View;
+    cellarTab?: CellarTab;
+  } => {
     if (date.week === 9 && harvests.length)
       return {
         title: 'Harvest before winter.',
@@ -359,18 +407,21 @@ export default function App() {
         title: 'Your grapes are waiting.',
         text: 'Start fermentation while the harvest is fresh.',
         view: 'cellar',
+        cellarTab: 'fermentation',
       };
     if (state.batches.some((b) => b.stage !== 'fermenting'))
       return {
         title: 'Something good is ready.',
         text: 'Move your finished wine into reserves, or let it age.',
         view: 'cellar',
+        cellarTab: 'fermentation',
       };
     if (state.reserves.some((r) => volume(r.components) >= 750))
       return {
         title: 'Your reserves are waiting.',
         text: 'Blend stored wines or bottle a new release for your wine line.',
         view: 'cellar',
+        cellarTab: 'reserves',
       };
     if (state.wines.some((w) => !w.listed && w.bottles > 0))
       return {
@@ -389,6 +440,7 @@ export default function App() {
         title: 'Let time do its thing.',
         text: 'Advance the week while your wine develops in the cellar.',
         view: 'cellar',
+        cellarTab: 'fermentation',
       };
     return {
       title: 'Make yourself at home.',
@@ -845,6 +897,8 @@ export default function App() {
                       aria-label="Go to suggested next step"
                       onClick={() => {
                         navigate(nextStep.view);
+                        if (nextStep.cellarTab)
+                          setCellarTab(nextStep.cellarTab);
                         if (nextStep.view === 'estate' && harvests.length) {
                           dispatch({
                             type: 'visitEstate',
@@ -865,7 +919,8 @@ export default function App() {
                 state={state}
                 dispatch={dispatch}
                 navigate={navigate}
-                initialTab={cellarTab}
+                tab={cellarTab}
+                onTabChange={setCellarTab}
               />
             ) : view === 'market' ? (
               <Market state={state} dispatch={dispatch} navigate={navigate} />
