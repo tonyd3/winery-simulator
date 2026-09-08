@@ -10,7 +10,6 @@ import {
   fairPrice,
   grapeLiters,
   newGame,
-  missions,
   quality,
   readyToHarvest,
   serialize,
@@ -291,47 +290,28 @@ test('volume conversion does not lose a liter to floating point multiplication',
   assert.equal(grapeLiters(280), 196);
 });
 
-test('milestones complete automatically without cash, revenue, or ledger bonuses', () => {
+test('new estates save production progress without achievement tracking', () => {
   let s = newGame();
-  assert.equal(
-    missions(s).some((m) => m.done),
-    false,
-  );
+  assert.equal(Object.hasOwn(s, 'claimed'), false);
+  assert.deepEqual(deserialize(serialize(s)), s);
   s = act(s, { type: 'harvest', id: 1 });
-  assert.equal(missions(s).find((m) => m.id === 'harvest')!.done, true);
+  assert.equal(s.stats.harvested, s.grapes[0].kg);
   assert.equal(s.cash, 12500 - 180);
   assert.equal(s.stats.revenue, 0);
   assert.equal(s.ledger.length, 2);
   assert.equal(s.ledger[0].amount, -180);
-  assert.equal(missions(s).find((m) => !m.done)!.id, 'vintage');
+  const loaded = deserialize(serialize(s));
+  assert.deepEqual(loaded, s);
+  assert.equal(Object.hasOwn(loaded, 'claimed'), false);
   const before = structuredClone(s);
   assert.throws(
     () => act(s, { type: 'claim', id: 'harvest' } as unknown as Action),
     /Unknown game action/,
   );
   assert.deepEqual(s, before);
-  s.stats.bottled = 100;
-  s.stats.sold = 100;
-  s.stats.best = 90;
-  s.plots[3].owned = true;
-  const cash = s.cash,
-    ledger = structuredClone(s.ledger);
-  assert.equal(
-    missions(s).every((m) => m.done),
-    true,
-  );
-  assert.equal(
-    missions(s).some((m) => 'reward' in m),
-    false,
-  );
-  assert.equal(s.cash, cash);
-  assert.deepEqual(s.ledger, ledger);
-  const loaded = deserialize(serialize(s));
-  assert.deepEqual(missions(loaded), missions(s));
-  assert.equal(loaded.cash, cash);
 });
 
-test('existing milestone payouts stay in saved balances and history without new rewards', () => {
+test('legacy achievement metadata and payouts survive loading without affecting gameplay', () => {
   const legacy = newGame();
   legacy.claimed = ['harvest'];
   legacy.cash += 350;
@@ -342,8 +322,20 @@ test('existing milestone payouts stay in saved balances and history without new 
   });
   const loaded = deserialize(serialize(legacy));
   assert.deepEqual(loaded, legacy);
-  assert.equal(missions(loaded).find((m) => m.id === 'harvest')!.done, true);
-  const renamed = act(loaded, { type: 'rename', name: 'Old estate' });
-  assert.equal(renamed.cash, legacy.cash);
-  assert.deepEqual(renamed.ledger, legacy.ledger);
+  const withoutAchievements = structuredClone(loaded);
+  delete withoutAchievements.claimed;
+  const harvested = act(loaded, { type: 'harvest', id: 1 });
+  const untracked = act(withoutAchievements, { type: 'harvest', id: 1 });
+  assert.deepEqual(harvested, { ...untracked, claimed: ['harvest'] });
+  assert.equal(harvested.cash, legacy.cash - 180);
+  assert.deepEqual(harvested.ledger.slice(1), legacy.ledger);
+  assert.deepEqual(deserialize(serialize(harvested)), harvested);
+
+  const older = JSON.parse(serialize(legacy));
+  older.state.version = 5;
+  delete older.state.grapeLicenses;
+  const migrated = deserialize(JSON.stringify(older));
+  assert.deepEqual(migrated.claimed, legacy.claimed);
+  assert.deepEqual(migrated.ledger, legacy.ledger);
+  assert.equal(migrated.cash, legacy.cash);
 });

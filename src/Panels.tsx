@@ -18,7 +18,7 @@ import {
   Pencil,
   Plus,
 } from 'lucide-react';
-import { Icon, Progress, Empty, Done } from './components';
+import { Icon, Progress, Empty } from './components';
 import {
   availableVarieties,
   getVariety,
@@ -37,7 +37,6 @@ import {
   CELLAR_QUALITY,
   wholesalePrice,
   grapeLiters,
-  missions,
   money,
   quality,
   readyToHarvest,
@@ -1197,58 +1196,30 @@ export function Journal({ state, dispatch }: Props) {
             ))}
           </div>
         </section>
-        <section>
-          <div className="section-line">
-            <h3>Milestones</h3>
-            <Icon name="trophy" size={18} />
-          </div>
-          <div className="milestones">
-            {missions(state).map((m) => (
-              <div className="milestone" key={m.id}>
-                <div className={`milestone-check ${m.done ? 'complete' : ''}`}>
-                  {m.done ? (
-                    <Check size={15} />
-                  ) : (
-                    <Icon name="sprout" size={15} />
-                  )}
-                </div>
-                <div>
-                  <h4>{m.title}</h4>
-                  <p>{m.text}</p>
-                  {m.done ? (
-                    <Done>Completed</Done>
-                  ) : (
-                    <span className="subtle">In progress</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="support-box">
-            <h3>A helping hand.</h3>
-            <p>
-              Help a neighboring grower for $250 once per week, or take a $3,000
-              loan with $60 weekly interest.
-            </p>
-            <button
-              className="button secondary wide"
-              disabled={state.helpWeek === state.week}
-              onClick={() => dispatch({ type: 'work' })}
-            >
-              {state.helpWeek === state.week
-                ? 'Neighbor helped this week'
-                : 'Help a neighbor · +$250'}
-            </button>
-            <button
-              className="text-button"
-              disabled={state.debt > 0 && state.cash < state.debt}
-              onClick={() => dispatch({ type: state.debt ? 'repay' : 'loan' })}
-            >
-              {state.debt ? 'Repay $3,000 loan' : 'Take a $3,000 business loan'}
-              <ArrowUpRight size={14} />
-            </button>
-          </div>
-        </section>
+        <aside className="support-box" aria-labelledby="support-title">
+          <h3 id="support-title">A helping hand.</h3>
+          <p>
+            Help a neighboring grower for $250 once per week, or take a $3,000
+            loan with $60 weekly interest.
+          </p>
+          <button
+            className="button secondary wide"
+            disabled={state.helpWeek === state.week}
+            onClick={() => dispatch({ type: 'work' })}
+          >
+            {state.helpWeek === state.week
+              ? 'Neighbor helped this week'
+              : 'Help a neighbor · +$250'}
+          </button>
+          <button
+            className="text-button"
+            disabled={state.debt > 0 && state.cash < state.debt}
+            onClick={() => dispatch({ type: state.debt ? 'repay' : 'loan' })}
+          >
+            {state.debt ? 'Repay $3,000 loan' : 'Take a $3,000 business loan'}
+            <ArrowUpRight size={14} />
+          </button>
+        </aside>
       </div>
     </div>
   );

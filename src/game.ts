@@ -389,8 +389,8 @@ export const stateSchema = z
         best: bounded(100),
       })
       .strict(),
-    // Retained for old saves; new milestones derive completion from estate progress.
-    claimed: z.array(z.string().max(20)).max(5),
+    // Legacy save metadata only; no gameplay reads or writes achievements.
+    claimed: z.array(z.string().max(20)).max(5).optional(),
     nextId: integer(),
     helpWeek: z.number().int().min(-1).max(100000),
     debt: bounded(3000),
@@ -733,7 +733,6 @@ export function newGame(
     ],
     ledger: [{ week: 6, label: 'Your starting capital', amount: 12500 }],
     stats: { harvested: 0, bottled: 0, sold: 0, revenue: 0, best: 0 },
-    claimed: [],
     nextId: 1,
     helpWeek: -1,
     debt: 0,
@@ -1051,39 +1050,6 @@ export const readyToHarvest = (p: Plot, week: number) =>
   p.growth >= 80 &&
   p.harvestedYear !== calendar(week).year &&
   calendar(week).season !== 'Winter';
-export const missions = (s: GameState) =>
-  [
-    {
-      id: 'harvest',
-      title: 'From the vine',
-      text: 'Bring in your first grape harvest.',
-      done: s.stats.harvested > 0,
-    },
-    {
-      id: 'vintage',
-      title: 'Your first vintage',
-      text: 'Bottle a wine from your own grapes.',
-      done: s.stats.bottled > 0,
-    },
-    {
-      id: 'sales',
-      title: 'A taste of success',
-      text: 'Sell 100 bottles of your wine.',
-      done: s.stats.sold >= 100,
-    },
-    {
-      id: 'land',
-      title: 'Room to grow',
-      text: 'Expand your estate to four parcels.',
-      done: s.plots.filter((p) => p.owned).length >= 4,
-    },
-    {
-      id: 'quality',
-      title: 'Something exceptional',
-      text: 'Bottle a vintage rated 90 or above.',
-      done: s.stats.best >= 90,
-    },
-  ].map((m) => ({ ...m, done: m.done || s.claimed.includes(m.id) }));
 function note(
   s: GameState,
   text: string,

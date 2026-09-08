@@ -32,7 +32,7 @@ Requires Node.js 22 or newer. Built with React, TypeScript, Vite, and Zod. All a
 3. In **Cellar**, choose stainless steel or French oak and review the required tanks and processing cost. Large harvests fill multiple tanks. Fresh grapes spoil after three game weeks.
 4. Advance two weeks. Age for up to eight weeks if you like, then **Move to reserves** to free all tanks used by that harvest. In **Reserves & blending**, store the wine, blend it with other grapes and vintages, or bottle it on its own.
 5. Bottle any amount into a new or existing wine line. Choose a bottle and label for a new line, then watch its tasting score appear. In **Wine shop**, set its price and list the release. Customers buy each game week. Wholesale sells the entire remaining stock immediately at a lower price.
-6. Track milestones in **Journal**, plant your empty parcel, buy more land, and invest in irrigation, tanks, a tasting terrace, or temperature control.
+6. Review income and expenses in **Journal**, plant your empty parcel, buy more land, and research investments that suit your estate.
 
 The year has 12 game weeks: spring 1–3, summer 4–6, autumn 7–9, winter 10–12. Harvest each parcel once per year at 80%+ ripeness, before winter. Grapes regrow each spring. Regional climate, grape resilience, vine health, ripeness, soil match, and inherited traits affect production. The calendar is deliberately compressed for play, not a realistic winemaking schedule.
 
@@ -147,14 +147,15 @@ This premium uses the original bottle score. Independent judging adds its medal'
 
 Campaign countdowns and judging results persist in saves. The panel's outcome is fixed when you enter, so reloading while waiting does not reroll it. The original bottle rating stays separate from the panel score; reviews and medals remain visible in **Wine history** and **Cellar → Wine lines**, including after sellout. Older saves start with no campaigns or judging entries and keep existing prices, funds, and inventory.
 
-Milestones are automatic progress markers and do not grant money. The journal shows completed achievements and the estate highlights the next unfinished milestone. Previously earned cash and historical ledger entries remain intact in older saves.
+**Journal** contains the estate ledger, lifetime revenue, weekly upkeep, best vintage, and financial support. The estate’s winemaker note suggests practical next steps based on current inventory and crops. There are no achievement targets or completion checklists.
 
 ## Saves
 
 - Every successful game action saves automatically to browser `localStorage` under `terroir.save.v1`.
 - **Save & settings → Export save** downloads a JSON file. **Import save** validates the entire state and previews the estate before replacing the open game.
-- A save contains the calendar, funds, plots, inventory, production, labels/prices, owned and suspended investments, orders, milestones, ledger, random-generator state, region, knowledge, research, breeding projects, complete custom-grape lineages, all estates and districts, the selected estate, purchased plot expansions and productive rows, wine origins, cellar bays, purchased tanks, and occupied tank assignments.
+- A save contains the calendar, funds, plots, inventory, production, labels/prices, owned and suspended investments, orders, ledger, random-generator state, region, knowledge, research, breeding projects, complete custom-grape lineages, all estates and districts, the selected estate, purchased plot expansions and productive rows, wine origins, cellar bays, purchased tanks, and occupied tank assignments.
 - Version-one through version-five saves migrate automatically to version six, with the original property retained as the home estate and existing 400 L tanks preserved. Existing land soils, vines, funds, inventory, and calendar are preserved; the legacy estate receives Bordeaux as its region. Old bottles keep their scores, prices, and stock, and become releases in house wine lines. Original production quantities are marked unrecorded when the old save did not track them. Previously unlocked grapes and owned investments remain available. Paid legacy collection studies keep their original remaining time and promised grape unlocks. Completed legacy techniques receive their new prerequisites. The storage key remains unchanged for compatibility.
+- Old achievement metadata is accepted as inert save data; new games do not create it. Historical payouts and ledger entries remain intact.
 - Invalid imports leave the current estate intact. Unreadable existing saves are preserved as a recovery copy when browser storage permits it. Failed storage writes show an explicit export reminder.
 - Other tabs on the same origin adopt incoming saves and pause their timers.
 - Saves are local to the browser and origin. There is no account or cloud synchronization. Export before clearing browser data, moving ports, deploying to a new address, or changing devices.
@@ -174,7 +175,7 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `src/EstateMap.tsx`: interactive SVG estate districts and original vector art.
 - `src/Holdings.tsx`, `src/estates.ts`, `src/holdings.css`: estate selection, district expansion, regional acquisitions, and parcel addressing.
 - `tests/estates.test.ts`: estate migration, purchases, regional production, provenance, and full portfolio capacity.
-- `src/Panels.tsx`: vineyard inspector, production, pricing, ledger, and milestones.
+- `src/Panels.tsx`: vineyard inspector, production, pricing, ledger, and financial support.
 - `src/EstateInvestments.tsx`, `src/investments.ts`, `src/investments.css`: investment catalog, running costs, suspension, hospitality forecasts, and staff benefits.
 - `tests/investments.test.ts`: investment economy, prerequisites, suspension, production and sales benefits, and save compatibility.
 - `src/winemaking.ts`: reserve, recipe, label, and line schemas; exact volume allocation and blending quality.

@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import {
   X,
   ArrowUpRight,
-  Check,
   Grape,
   Wine,
   Droplets,
@@ -174,13 +173,5 @@ export function Modal({
         {children}
       </div>
     </div>
-  );
-}
-export function Done({ children }: { children: ReactNode }) {
-  return (
-    <span className="done-label">
-      <Check size={14} />
-      {children}
-    </span>
   );
 }

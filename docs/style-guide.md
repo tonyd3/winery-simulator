@@ -19,6 +19,10 @@ Each screen has one main job and a clear next action. Keep the current content h
 
 Use spacing, alignment, typography, and thin dividers to group information. Tinted panels belong around a meaningful interaction, such as the blend bench or parcel inspector. Repeated records should usually be rows. Avoid adding a mosaic of independent cards, decorative hero sections to working screens, or extra badges that repeat information.
 
+### Journal and estate guidance
+
+The Journal focuses on accounts: financial totals, a transaction ledger, and neighboring work or loan controls. Keep the ledger prominent and financial support compact alongside it, stacking them on narrow screens. The estate may show a contextual winemaker note for available actions; do not add achievement checklists, milestone targets, or completion bars.
+
 ### Investment decisions
 
 Build groups facilities and staff in department-filtered ledger rows, implemented in [EstateInvestments.tsx](../src/EstateInvestments.tsx) and [investments.css](../src/investments.css). Keep upfront prices, operating costs, suspended maintenance, prerequisites, and purchase/resume actions together. The budget summary separates hospitality income from wine sales and distinguishes forecasts from guaranteed returns. On narrow screens, stack purchase details beneath each description; retain readable long prices and disabled reasons.
@@ -75,7 +79,7 @@ Reuse the existing primitives and classes:
 - `.button.primary`: wine fill with light text for the main action in a decision area.
 - `.button.secondary`: light paper fill and a fine border for supporting actions.
 - `.text-button`: lower-emphasis inline actions, such as generation, inspection, and navigation.
-- `Modal`, `Empty`, `Progress`, and `Done` from [components.tsx](../src/components.tsx): retain their established structure and behavior.
+- `Modal`, `Empty`, and `Progress` from [components.tsx](../src/components.tsx): retain their established structure and behavior.
 - Lucide icons: match neighboring line weights and sizes; the shared `Icon` defaults to 20px with a 1.7 stroke. Keep icon-only controls accessible by name.
 
 Place costs, availability, and disabled-state explanations close to the relevant control. Preserve semantic buttons, associated input labels, visible focus indicators, and the modal's Escape, focus-trapping, and focus-restoration behavior. Do not shrink touch targets to preserve a dense desktop arrangement.

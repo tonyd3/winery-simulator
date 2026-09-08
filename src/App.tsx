@@ -14,7 +14,6 @@ import {
   Clock3,
   ExternalLink,
   HardDrive,
-  MoreHorizontal,
   Pause,
   Pencil,
   Play,
@@ -31,7 +30,7 @@ import { ReleaseReveal } from './WinePresentation';
 import { liters, volume } from './winemaking';
 import { Cellar, Improvements, Journal, Market, PlotInspector } from './Panels';
 import type { View } from './Panels';
-import { Icon, Modal, Progress } from './components';
+import { Icon, Modal } from './components';
 import {
   act,
   getEstate,
@@ -39,7 +38,6 @@ import {
   BACKUP_KEY,
   calendar,
   deserialize,
-  missions,
   money,
   newGame,
   readyToHarvest,
@@ -268,7 +266,6 @@ export default function App() {
   const sky = weather(state.week, getEstate(state).region);
   const harvests = state.plots.filter((p) => readyToHarvest(p, state.week));
   const bottled = state.wines.reduce((n, w) => n + w.bottles, 0);
-  const currentMission = missions(state).find((m) => !m.done);
   const getNextStep = (): { title: string; text: string; view: View } => {
     if (state.grapes.length)
       return {
@@ -558,7 +555,7 @@ export default function App() {
                         ? 'Thoughtful additions for the vintages ahead.'
                         : view === 'research'
                           ? 'Study new grapes. Master your craft. Shape the estate’s future.'
-                          : 'Small beginnings. Measurable progress.'}
+                          : 'Your accounts, transactions, and financial support.'}
               </p>
             </div>
             <div className="season-weather">
@@ -703,30 +700,6 @@ export default function App() {
                     >
                       <ArrowRight size={21} />
                     </button>
-                  </div>
-                  <div className="next-milestone">
-                    <div>
-                      <Icon name="trophy" size={19} />
-                      <span>NEXT MILESTONE</span>
-                      <button
-                        className="icon-button"
-                        onClick={() => navigate('journal')}
-                        aria-label="View all milestones"
-                      >
-                        <MoreHorizontal size={18} />
-                      </button>
-                    </div>
-                    <h3>
-                      {currentMission?.title ?? 'An estate to be proud of.'}
-                    </h3>
-                    <div className="milestone-progress">
-                      <Progress value={currentMission ? 0 : 100} />
-                      <span>
-                        {currentMission
-                          ? 'In progress'
-                          : 'All milestones complete'}
-                      </span>
-                    </div>
                   </div>
                 </div>
               </>
@@ -998,7 +971,7 @@ export default function App() {
                 'trend',
                 '04',
                 'Grow at your own pace',
-                'Advance one week at a time, or press 1×, 2×, or 4×. Build offers facilities and teams with substantial weekly costs. Visitor income depends on reputation and season. Suspend investments to cut their bills to 25%; their benefits stop. Your journal tracks milestones automatically and offers ways to earn money when cash is tight.',
+                'Advance one week at a time, or press 1×, 2×, or 4×. Build offers facilities and teams with substantial weekly costs. Visitor income depends on reputation and season. Suspend investments to cut their bills to 25%; their benefits stop. Check your journal for the estate ledger, neighboring vineyard work, and business loans.',
               ],
             ].map(([icon, number, title, text]) => (
               <div className="guide-step" key={number}>

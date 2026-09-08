@@ -923,9 +923,6 @@ h1 {
   margin-bottom: 18px;
 }
 .estate-bottom {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 302px;
-  gap: 19px;
   margin-top: 20px;
 }
 .advisor {
@@ -966,47 +963,6 @@ h1 {
 .advisor > .icon-button {
   margin-left: auto;
   color: #87966f;
-}
-.next-milestone {
-  padding: 17px 20px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: #faf9f3;
-}
-.next-milestone > div:first-child {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #a5a080;
-}
-.next-milestone > div:first-child > span {
-  font-size: 7px;
-  letter-spacing: 1.5px;
-  color: #a0a38d;
-}
-.next-milestone .icon-button {
-  margin-left: auto;
-  height: 20px;
-}
-.next-milestone h3 {
-  font-size: 12px;
-  font-weight: 500;
-  margin: 7px 0 13px;
-}
-.milestone-progress {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-.milestone-progress > .progress {
-  flex: 1;
-}
-.milestone-progress > span {
-  font-size: 8px;
-  color: #a0a38d;
-}
-.milestone-progress .text-button {
-  font-size: 9px;
 }
 .game-footer {
   display: flex;
@@ -1522,14 +1478,6 @@ h1 {
 .upgrade .button {
   font-size: 11px;
 }
-.done-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  color: #8a9b73;
-  white-space: nowrap;
-}
 .journal-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1566,7 +1514,7 @@ h1 {
 }
 .journal-columns {
   display: grid;
-  grid-template-columns: 1.3fr 1fr;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: 40px;
 }
 .ledger {
@@ -1599,43 +1547,8 @@ h1 {
 .ledger-row strong.positive {
   color: #7f9469;
 }
-.milestone {
-  display: flex;
-  gap: 15px;
-  padding: 17px 0;
-  border-bottom: 1px solid #eceee1;
-}
-.milestone-check {
-  width: 27px;
-  height: 27px;
-  border: 1px solid #e1e6d4;
-  color: #b2bba2;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-.milestone-check.complete {
-  background: #e6eddc;
-  border-color: #cfdabf;
-  color: #879c6d;
-}
-.milestone h4 {
-  font-size: 12px;
-  font-weight: 500;
-  margin: 2px 0 6px;
-}
-.milestone p {
-  font-size: 10px;
-  color: #949e83;
-  line-height: 1.6;
-  margin-bottom: 7px;
-}
-.milestone .text-button {
-  font-size: 10px;
-}
 .support-box {
-  margin-top: 20px;
+  align-self: start;
   padding: 20px;
   background: #f0f1e5;
   border-radius: 6px;
@@ -1971,9 +1884,6 @@ h1 {
     height: clamp(625px, 65vh, 820px);
     grid-template-columns: minmax(0, 1fr) 330px;
   }
-  .estate-bottom {
-    grid-template-columns: minmax(0, 1fr) 330px;
-  }
   .plot-inspector {
     padding: 30px 28px 0;
   }
@@ -2013,9 +1923,6 @@ h1 {
     padding: 0 25px;
   }
   .estate-workspace {
-    grid-template-columns: minmax(0, 1fr) 280px;
-  }
-  .estate-bottom {
     grid-template-columns: minmax(0, 1fr) 280px;
   }
   .plot-inspector {
@@ -2202,10 +2109,6 @@ h1 {
   .estate-workspace {
     grid-template-columns: minmax(0, 1fr) 255px;
   }
-  .estate-bottom {
-    grid-template-columns: minmax(0, 1fr) 255px;
-    gap: 12px;
-  }
   .plot-inspector {
     padding: 20px 17px 0;
   }
@@ -2245,9 +2148,6 @@ h1 {
   }
   .advisor small {
     font-size: 6px;
-  }
-  .next-milestone {
-    padding: 15px;
   }
   .operations-page {
     padding: 24px;
@@ -2303,12 +2203,6 @@ h1 {
     width: 135%;
     max-width: none;
     left: -17.5%;
-  }
-  .estate-bottom {
-    grid-template-columns: 1fr;
-  }
-  .next-milestone {
-    display: none;
   }
   .map-legend {
     display: none;
