@@ -169,6 +169,7 @@ test('a fully enlarged real plot produces a six-tank harvest that preserves all 
   assert.equal(volume(s.reserves[0].components), 756000);
   assert.equal(s.reserves[0].components[0].estateId, 1);
   s.kits = 2000;
+  s = act(s, { type: 'expandBottleStorage', kind: 'warehouse' });
   s = act(s, {
     type: 'bottle',
     id: s.reserves[0].id,

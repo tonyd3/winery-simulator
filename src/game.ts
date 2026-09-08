@@ -10,6 +10,19 @@ import {
 } from './finance';
 import { productionCost, addProductionCost } from './winemaking';
 import {
+  BOTTLE_STORAGE,
+  bottleStorageSchema,
+  initializeBottleStorage,
+  storageCapacity,
+  storageExpansionCost,
+  warehouseRoom,
+  shelfStock,
+  shelvesUsed,
+  shelfRoom,
+  suggestedShelfSpace,
+} from './bottleStorage';
+import type { StorageKind } from './bottleStorage';
+import {
   researchComplete,
   studyDurationLimit,
   researchTerms,
@@ -341,6 +354,7 @@ const legacyWineSchema = z
   })
   .strict();
 const wineSchema = legacyWineSchema.extend({
+  shelfSpace: integer(12000).nullable().default(null),
   accounts: releaseAccountsSchema.optional(),
   lineId: integer(),
   release: integer().min(1),
@@ -366,6 +380,7 @@ const eventSchema = z
 export const stateSchema = z
   .object({
     version: z.literal(6),
+    bottleStorage: bottleStorageSchema.default({ warehouse: 0, shelves: 0 }),
     cellar: z
       .object({
         bays: z
@@ -524,9 +539,12 @@ export const stateSchema = z
     marketSeed: integer(4294967295).default(MARKET_SEED),
   })
   .strict()
+  .transform(initializeBottleStorage)
   .superRefine((s, ctx) => {
     const fail = (message: string) =>
       ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+    if (shelvesUsed(s) > storageCapacity(s, 'shelves'))
+      fail('Shelf allocations exceed the available shop space.');
     const known = new Set(Object.keys(VARIETIES));
     const hybridIds = new Set<string>();
     for (const h of s.hybrids) {
@@ -861,6 +879,8 @@ export type Action =
     }
   | { type: 'cellarExperiment'; reserveIds: [number, number] }
   | { type: 'expandCellar' }
+  | { type: 'expandBottleStorage'; kind: StorageKind }
+  | { type: 'shelfSpace'; id: number; bottles: number }
   | { type: 'buyTank'; count?: number }
   | { type: 'acquireEstate'; region: RegionId; name: string }
   | { type: 'expandEstate'; id: number }
@@ -912,7 +932,7 @@ export type Action =
   | { type: 'upgrade'; upgrade: Upgrade }
   | { type: 'operateUpgrade'; upgrade: Upgrade; active: boolean }
   | { type: 'price'; id: number; price: number }
-  | { type: 'list'; id: number }
+  | { type: 'list'; id: number; bottles?: number }
   | { type: 'wholesale'; id: number }
   | { type: 'marketWine'; id: number }
   | { type: 'judgeWine'; id: number }
@@ -936,6 +956,7 @@ export function newGame(
   const r = REGIONS[region];
   return {
     version: 6,
+    bottleStorage: { warehouse: 0, shelves: 0 },
     cellar: {
       bays: 4,
       expansions: 0,
@@ -1349,14 +1370,14 @@ export function demandContext(s: GameState) {
   const byId = new Map<number, Wine>();
   for (const wine of s.wines) {
     byId.set(wine.id, wine);
-    if (!wine.listed || !wine.bottles) continue;
+    if (!shelfStock(wine)) continue;
     const key = customerGroup(wine);
     const group = groups.get(key) ?? { stock: 0, wines: [] };
     group.stock += wine.bottles;
     group.wines.push(wine);
     groups.set(key, group);
   }
-  return { groups, byId };
+  return { groups, byId, shelfUsed: shelvesUsed(s) };
 }
 export type DemandContext = ReturnType<typeof demandContext>;
 
@@ -1369,13 +1390,26 @@ export function demandForecast(
   const key = customerGroup(wine);
   const existing = context.byId.get(wine.id);
   const previousStock =
-    existing?.listed && customerGroup(existing) === key ? existing.bottles : 0;
+    existing && shelfStock(existing) && customerGroup(existing) === key
+      ? existing.bottles
+      : 0;
   const stock =
     (context.groups.get(key)?.stock ?? 0) - previousStock + wine.bottles;
   const rate = stock ? (outlook.rate * wine.bottles) / stock : 0;
+  const available = Math.min(
+    wine.bottles,
+    Math.max(
+      0,
+      storageCapacity(s, 'shelves') -
+        context.shelfUsed +
+        (existing ? shelfStock(existing) : 0),
+    ),
+    wine.shelfSpace ||
+      (!existing?.listed && wine.listed ? suggestedShelfSpace(s, wine) : 0),
+  );
   return {
-    low: demandCount(wine, rate * WEEKLY_DEMAND.min),
-    high: Math.min(wine.bottles, Math.ceil(rate * WEEKLY_DEMAND.max)),
+    low: Math.min(available, demandCount(wine, rate * WEEKLY_DEMAND.min)),
+    high: Math.min(available, Math.ceil(rate * WEEKLY_DEMAND.max)),
     outlook: outlook.market.outlook,
   };
 }
@@ -1391,7 +1425,7 @@ export function weeklySales(s: GameState) {
       sales.set(
         wine.id,
         Math.min(
-          wine.bottles,
+          shelfStock(wine),
           Math.max(
             0,
             Math.floor((preceding + rate) * roll + 1e-9) -
@@ -1407,6 +1441,9 @@ export function weeklySales(s: GameState) {
 export function demand(wine: Wine, s: GameState) {
   if (!wine.listed || !wine.bottles) return 0;
   // Public single-release queries support a counterfactual wine without changing s.
+  const existing = s.wines.find((w) => w.id === wine.id);
+  if (!existing?.listed && !wine.shelfSpace)
+    wine = { ...wine, shelfSpace: suggestedShelfSpace(s, wine) };
   const wines = s.wines.filter((w) => w.id !== wine.id);
   wines.push(wine);
   return weeklySales({ ...s, wines }).get(wine.id) ?? 0;
@@ -1595,7 +1632,9 @@ export function act(current: GameState, action: Action): GameState {
     throw new Error('This estate is bankrupt. Start a new game to continue.');
   // A development hot update can retain an estate from the previous schema.
   const s =
-    (current.version as number) < 6
+    (current.version as number) < 6 ||
+    !current.bottleStorage ||
+    current.wines.some((w) => w.shelfSpace == null)
       ? deserialize(serialize(current))
       : structuredClone(current);
   s.researchSlots ??= 1;
@@ -2690,6 +2729,10 @@ export function act(current: GameState, action: Action): GameState {
         throw new Error(
           'There are 1,000 active releases. Sell some stock or wait for pending judging before bottling again.',
         );
+      if (count > warehouseRoom(s))
+        throw new Error(
+          `Your warehouse has room for ${warehouseRoom(s).toLocaleString()} more bottles. Sell some stock or expand the warehouse before bottling.`,
+        );
       let line;
       if ('id' in action.line) {
         const lineId = action.line.id;
@@ -2754,6 +2797,7 @@ export function act(current: GameState, action: Action): GameState {
         judging: null,
         price: retailPrice({ quality: q }, s),
         listed: false,
+        shelfSpace: 0,
         year: Math.max(...components.map((p) => p.year)),
         label: line.name,
         lineId: line.id,
@@ -2802,6 +2846,26 @@ export function act(current: GameState, action: Action): GameState {
       spend(s, '600 bottling kits', 480);
       s.deliveries.push({ kits: 600, arrival: s.week + 1, costCents: 48000 });
       note(s, '600 bottles, corks, and labels ordered. Delivery next week.');
+      break;
+    }
+    case 'expandBottleStorage': {
+      if (action.kind !== 'warehouse' && action.kind !== 'shelves')
+        throw new Error('Choose warehouse storage or shop shelves.');
+      const kind = action.kind;
+      const terms = BOTTLE_STORAGE[kind];
+      if (s.bottleStorage[kind] >= terms.maxExpansions)
+        throw new Error('This storage has reached its maximum capacity.');
+      const label =
+        kind === 'warehouse'
+          ? 'Wine warehouse expansion'
+          : 'Wine shop shelving';
+      debit(s, label, storageExpansionCost(s, kind), true);
+      s.bottleStorage[kind]++;
+      note(
+        s,
+        `${label} added: room for ${terms.step} more bottles. No additional weekly upkeep.`,
+        'good',
+      );
       break;
     }
     case 'expandCellar': {
@@ -2912,11 +2976,44 @@ export function act(current: GameState, action: Action): GameState {
     }
     case 'list': {
       const w = getWine(action.id);
-      w.listed = !w.listed;
+      if (w.listed) {
+        w.listed = false;
+        w.shelfSpace = 0;
+      } else {
+        if (!w.bottles) throw new Error('This release is sold out.');
+        const count = action.bottles ?? suggestedShelfSpace(s, w);
+        if (
+          !Number.isInteger(count) ||
+          count < 1 ||
+          count > w.bottles ||
+          count > shelfRoom(s)
+        )
+          throw new Error(
+            `Choose 1–${Math.min(w.bottles, shelfRoom(s))} bottles for this shelf. Free space from another listing or add shelves in the wine shop.`,
+          );
+        w.shelfSpace = count;
+        w.listed = true;
+      }
       note(
         s,
-        `${w.label} ${w.listed ? 'is on sale. Customers arrive each week.' : 'has been removed from the shop.'}`,
+        `${w.label} ${w.listed ? `is on sale with ${w.shelfSpace} shelf spaces. Stock refills automatically each week.` : 'has been removed from the shop. Its shelf space is free; all bottles stay in storage.'}`,
       );
+      break;
+    }
+    case 'shelfSpace': {
+      const w = getWine(action.id);
+      if (!w.listed || !w.bottles)
+        throw new Error('List this wine before adjusting its shelf space.');
+      const max = Math.min(w.bottles, shelfRoom(s) + shelfStock(w));
+      if (
+        !Number.isInteger(action.bottles) ||
+        action.bottles < 1 ||
+        action.bottles > max
+      )
+        throw new Error(
+          `Choose 1–${max} shelf spaces. Reduce another listing or add more shelves.`,
+        );
+      w.shelfSpace = action.bottles;
       break;
     }
     case 'marketWine': {

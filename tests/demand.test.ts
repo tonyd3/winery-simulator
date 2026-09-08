@@ -316,8 +316,11 @@ test('old saves acquire a reproducible market seed and invalid market seeds are 
 
 test('splitting the same stock across releases or labels cannot multiply sales', () => {
   const base = stocked();
+  // Give every split bottle a shelf space to isolate shared customer demand.
+  base.bottleStorage.shelves = 4;
   base.wines[0].bottles = 336;
   base.wines[0].produced = 336;
+  base.wines[0].shelfSpace = 336;
   const expected = demand(base.wines[0], base);
   for (const pieces of [1, 12, 336]) {
     const s = structuredClone(base);
@@ -328,6 +331,7 @@ test('splitting the same stock across releases or labels cannot multiply sales',
       label: `Split ${i}`,
       bottles: 336 / pieces,
       produced: 336 / pieces,
+      shelfSpace: 336 / pieces,
       release: i + 1,
     }));
     const sum = s.wines.reduce((n, w) => n + demand(w, s), 0);

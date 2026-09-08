@@ -1,0 +1,131 @@
+.bottle-storage {
+  padding: 0 30px;
+  border-bottom: 1px solid var(--line);
+}
+.market-workspace .bottle-storage {
+  margin-bottom: 28px;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+.storage-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto auto;
+  align-items: center;
+  gap: 22px;
+  padding: 19px 0;
+}
+.storage-row + .storage-row {
+  border-top: 1px solid var(--line);
+}
+.storage-description h3 {
+  margin: 0 0 5px;
+  font: 400 19px var(--serif);
+}
+.storage-description p,
+.shelf-allocation p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.storage-description .storage-warning {
+  margin-top: 6px;
+  color: var(--wine);
+}
+.storage-count {
+  display: grid;
+  gap: 5px;
+  font-variant-numeric: tabular-nums;
+}
+.storage-count strong {
+  font: 400 24px var(--serif);
+}
+.storage-count strong small {
+  font-size: 16px;
+}
+.storage-count span,
+.storage-purchase small {
+  font-size: 11px;
+  line-height: 1.5;
+}
+.storage-purchase {
+  display: grid;
+  gap: 5px;
+  text-align: right;
+}
+.storage-purchase .button {
+  min-height: 40px;
+  font-size: 12px;
+  white-space: normal;
+}
+.shelf-allocation {
+  margin-top: 20px;
+  padding-top: 17px;
+  border-top: 1px solid var(--line);
+}
+.shelf-allocation label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.shelf-controls {
+  display: flex;
+  gap: 9px;
+  margin-bottom: 9px;
+}
+.shelf-controls input {
+  width: 90px;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+.wine-card .shelf-controls .button {
+  flex: 1;
+  min-height: 40px;
+  font-size: 12px;
+}
+.shelf-allocation > .text-button {
+  margin-top: 10px;
+  min-height: 36px;
+}
+.bottling-storage-note {
+  margin: 14px 0;
+  color: var(--wine);
+  font-size: 12px;
+  line-height: 1.6;
+}
+@media (max-width: 1000px) {
+  .storage-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+  }
+  .storage-purchase {
+    grid-column: 1 / -1;
+    justify-self: start;
+    text-align: left;
+  }
+}
+@media (max-width: 600px) {
+  .bottle-storage {
+    padding: 0 18px;
+  }
+  .storage-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .storage-count {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .storage-purchase {
+    justify-self: stretch;
+  }
+  .storage-purchase .button {
+    width: 100%;
+    min-height: 44px;
+  }
+  .wine-card .shelf-controls .button,
+  .shelf-controls input {
+    min-height: 44px;
+  }
+}

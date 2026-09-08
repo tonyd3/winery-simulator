@@ -405,6 +405,8 @@ test('save validation rejects corrupt recipes, volumes, line references and rele
 
 test('large release histories stop safely before producing an unreadable save', () => {
   let s = newGame();
+  // Isolate the save-size guard from the physical bottle-storage limit.
+  s.bottleStorage.warehouse = 199;
   s.week = 1200;
   s.kits = 100000;
   s.lines = [{ id: 1, name: 'Century', founded: 1, design: DEFAULT_DESIGN }];

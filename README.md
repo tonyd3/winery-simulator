@@ -31,7 +31,7 @@ Requires Node.js 22 or newer. Built with React, TypeScript, Vite, and Zod. All a
 2. Select **South slope**. Tend the vines if you like, then harvest its ripe regional grape.
 3. In **Cellar**, review each harvest's fermentation options, available tanks, and processing cost. Steel is the default; French oak fermentation is an optional choice for that harvest. Large harvests fill multiple tanks; if only part fits, start that portion and process or sell the remaining grapes later. Fresh grapes keep their original three-week spoilage deadline.
 4. Advance two weeks, plus any selected technique time. Move the finished wine directly to reserves, or choose **stainless steel, neutral oak, or French oak maturation** for that batch. Follow its suggested release window and optionally schedule an automatic transfer. Transfer frees all tanks used by the batch. In **Reserves & blending**, store the wine, blend it with other grapes and vintages, or bottle it on its own.
-5. Bottle any amount into a new or existing wine line. Preview its likely tasting notes, choose a bottle and label for a new line, then watch its tasting score appear. In **Wine shop**, set its price and list the release. Customers buy each game week. Wholesale sells the entire remaining stock immediately at a lower price.
+5. Bottle into a new or existing wine line, up to your available kits and warehouse space. Preview its likely tasting notes, choose a bottle and label for a new line, then watch its tasting score appear. In **Wine shop**, set its price and shelf allocation, then list the release. Customers buy each game week, limited by its shelf stock. Wholesale sells the entire remaining stock immediately at a lower price.
 6. Review income and expenses in **Journal**, plant your empty parcel, buy more land, and research investments that suit your estate.
 
 The year has 12 game weeks: spring 1–3, summer 4–6, autumn 7–9, winter 10–12. Harvest each parcel once per year at 80%+ ripeness, before winter. Grapes regrow each spring. Regional climate, grape resilience, vine health, ripeness, soil match, and inherited traits affect production. The calendar is deliberately compressed for play, not a realistic winemaking schedule.
@@ -39,6 +39,12 @@ The year has 12 game weeks: spring 1–3, summer 4–6, autumn 7–9, winter 10�
 Weather varies by region and year, with a wider temperature range. Sunshine adds one point to weekly ripening; overcast weather subtracts one and dry spells subtract two. Dry spells still stress vine health, with irrigation and resilient grapes providing protection. Spring and summer weather also adjust harvest quality by up to **−3 to +3 points**, so equally well-tended grapes can differ between vintages. That adjustment stays fixed through autumn. Reloading or unrelated actions cannot reroll weather, and already-harvested grapes and recorded wine scores keep their quality.
 
 **Next week** advances one turn. The 1×, 2×, and 4× controls advance every 6, 3, and 1.5 seconds. Switching away from the tab pauses the game; reopening a save always starts paused. There is no offline simulation.
+
+## Warehouse and shelf space
+
+Start with **600 warehouse bottle spaces** and **120 shop shelf spaces**, shared by all estates. Warehouse capacity counts every unsold bottle, including those on the shelf. Partial bottling leaves unused wine in reserves. Assign shelf space to each listed release; it refills automatically each week and caps that release's retail sales. Pausing frees shelf space, and sales free warehouse space.
+
+Add **600 warehouse spaces for $2,400** in the Cellar or Wine shop, or **60 shelf spaces for $900** in the Wine shop. Later purchases cost more; both are permanent investments with no extra upkeep. Wholesale can clear a release's entire stock. Old saves keep all their wine, even above warehouse capacity. See [storage rules and save behavior](docs/bottle-storage.md).
 
 ## Regions, research, and breeding
 
@@ -207,6 +213,8 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `tests/investments.test.ts`: investment economy, prerequisites, suspension, production and sales benefits, and save compatibility.
 - `src/winemaking.ts`: reserve, recipe, label, and line schemas; exact volume allocation and blending quality.
 - `src/Reserves.tsx`: reserve storage, blending bench, and bottling form.
+- `src/bottleStorage.ts`: bottled-stock capacity, shelf allocations, expansion terms, and legacy initialization.
+- `src/BottleStoragePanel.tsx`, `src/ShelfAllocation.tsx`: warehouse and shelf controls in the cellar and shop.
 - `src/WineLines.tsx`: searchable wine-line ledger and expandable release history, shared by the cellar and wine shop.
 - `src/BlendAnalysis.tsx`: live recipe analysis, source-quality advice, and paid cellar tasting.
 - `src/WinePresentation.tsx`: bottle artwork, provenance, and animated score reveal.

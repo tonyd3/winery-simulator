@@ -33,6 +33,7 @@ import {
   sortReserves,
 } from './reserveSort';
 import type { ReserveSort } from './reserveSort';
+import { warehouseRoom } from './bottleStorage';
 
 function BottlingForm({
   reserve,
@@ -55,7 +56,9 @@ function BottlingForm({
   const [design, setDesign] = useState<LabelDesign>({ ...DEFAULT_DESIGN });
   const total = volume(reserve.components);
   const max = Math.floor(total / 750);
-  const [count, setCount] = useState(String(Math.min(max, state.kits)));
+  const room = warehouseRoom(state);
+  const limit = Math.min(max, state.kits, room);
+  const [count, setCount] = useState(String(limit));
   const line = state.lines.find((l) => String(l.id) === lineId);
   const activeDesign = line?.design ?? design;
   const q = assess(reserve.components, state.hybrids);
@@ -69,6 +72,7 @@ function BottlingForm({
     bottles > 0 &&
     bottles <= max &&
     bottles <= state.kits &&
+    bottles <= room &&
     (line || (lineId === 'new' && name.trim()));
   return (
     <section
@@ -238,7 +242,7 @@ function BottlingForm({
                 id="bottle-count"
                 type="number"
                 min="1"
-                max={Math.min(max, state.kits)}
+                max={Math.max(1, limit)}
                 step="1"
                 value={count}
                 onChange={(e) => setCount(e.target.value)}
@@ -251,6 +255,11 @@ function BottlingForm({
               750 mL per bottle · {max.toLocaleString()} possible
             </p>
           </div>
+          <p className="bottling-storage-note" role="status">
+            {room === 0
+              ? 'Warehouse full. Sell bottles in the wine shop or add storage above. This wine can stay in reserves.'
+              : `${room.toLocaleString()} bottle spaces free in the warehouse. You can bottle up to ${limit.toLocaleString()} with your current wine, kits and space.`}
+          </p>
           <p className="tasting-estimate">
             {reserve.score !== null
               ? `Assessed at ${reserve.score} points. Further bottles keep this score.`

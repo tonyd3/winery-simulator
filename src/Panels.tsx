@@ -15,6 +15,9 @@ import {
 } from './cellarTechniques';
 import { PlotExpansion } from './PlotExpansion';
 import { CellarEquipment } from './CellarEquipment';
+import { BottleStoragePanel } from './BottleStoragePanel';
+import { ShelfAllocation } from './ShelfAllocation';
+import { shelfStock } from './bottleStorage';
 import { ESTATE_LIMITS } from './estates';
 import { Holdings } from './Holdings';
 import { useState } from 'react';
@@ -438,6 +441,7 @@ export function Cellar(
           )}
         </div>
       </section>
+      <BottleStoragePanel state={state} dispatch={dispatch} />
       {tab === 'fermentation' ? (
         <Fermentation
           {...props}
@@ -871,10 +875,12 @@ function WineCard({
             <span className="subtle">
               ·{' '}
               {w.listed && w.bottles > 0
-                ? 'On the shelf'
+                ? shelfStock(w) > 0
+                  ? `${shelfStock(w).toLocaleString()} on the shelf · ${(w.bottles - shelfStock(w)).toLocaleString()} in warehouse`
+                  : 'Waiting for shelf space · all bottles in warehouse'
                 : w.bottles === 0
                   ? 'Sold out'
-                  : 'Not yet listed'}
+                  : 'In storage · not listed'}
             </span>
           </p>
           <p className="wine-sales">
@@ -973,7 +979,7 @@ function WineCard({
                   {forecast.low === forecast.high
                     ? forecast.low
                     : `${forecast.low}–${forecast.high}`}{' '}
-                  bottles next week
+                  bottles {w.listed ? 'next week' : 'next week after listing'}
                 </span>
               </div>
               <p className="fine-print">
@@ -984,22 +990,7 @@ function WineCard({
               <p className="fine-print">
                 {forecast.outlook}. Weekly sales vary.
               </p>
-              <button
-                className={`button ${w.listed ? 'secondary' : 'primary'} wide`}
-                onClick={() => dispatch({ type: 'list', id: w.id })}
-              >
-                {w.listed ? (
-                  <>
-                    <Check size={16} />
-                    On sale · Pause listing
-                  </>
-                ) : (
-                  <>
-                    List in the wine shop
-                    <ArrowRight size={16} />
-                  </>
-                )}
-              </button>
+              <ShelfAllocation wine={w} state={state} dispatch={dispatch} />
               <button
                 className="text-button wholesale"
                 onClick={() => dispatch({ type: 'wholesale', id: w.id })}
@@ -1060,6 +1051,7 @@ export function Market({ state, dispatch, navigate }: Props) {
               {state.stats.sold.toLocaleString()} bottles sold
             </span>
           </div>
+          <BottleStoragePanel state={state} dispatch={dispatch} shop />
           {stock.length ? (
             <div className="wine-grid">
               {[...stock].reverse().map((w) => (
