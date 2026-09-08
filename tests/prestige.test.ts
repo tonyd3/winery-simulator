@@ -14,6 +14,7 @@ import {
 import { hospitalityForecast } from '../src/investments.ts';
 import {
   PRESTIGE_TIERS,
+  qualityResponse,
   prestigeStanding,
   prestigeInfluence,
   formatPrestige,
@@ -72,7 +73,12 @@ test('retail sales cross 100 and tier boundaries without extra money or altering
     assert.ok(sold > 0);
     const next = act(s, { type: 'advance' });
     assert.deepEqual(s, copy);
-    assert.equal(next.reputation, Number((score + sold * 0.04).toFixed(2)));
+    assert.equal(
+      next.reputation,
+      Number(
+        (score + sold * qualityResponse(s.wines[0].quality).retail).toFixed(2),
+      ),
+    );
     assert.ok(next.reputation > 100);
     assert.equal(next.cash, s.cash + sold - upkeep(s));
     assert.equal(next.wines[0].quality, s.wines[0].quality);
@@ -93,7 +99,10 @@ test('wholesale sales keep earning beyond the final tier and cannot be collected
   const s = stocked(65000),
     wine = s.wines[0];
   const next = act(s, { type: 'wholesale', id: wine.id });
-  assert.equal(next.reputation, 65000 + wine.bottles * 0.01);
+  assert.equal(
+    next.reputation,
+    65000 + wine.bottles * qualityResponse(wine.quality).wholesale,
+  );
   assert.equal(
     next.cash,
     s.cash + wine.bottles * wholesalePrice(wine, s.reputation, s),
@@ -161,4 +170,43 @@ test('Prestige formatting keeps fractional gains and very large totals readable'
   assert.equal(formatPrestige(65000), '65,000');
   assert.equal(formatPrestige(65000, true), '65K');
   assert.ok(formatPrestige(Number.MAX_VALUE).length < 16);
+});
+
+test('buyers reward quality, disappointing wine loses confidence, and the floor is zero', () => {
+  for (const [quality, retail, wholesale] of [
+    [59, -0.01, 0],
+    [65, 0.01, 0],
+    [75, 0.03, 0.01],
+    [85, 0.06, 0.02],
+    [92, 0.1, 0.03],
+    [97, 0.16, 0.04],
+  ]) {
+    const s = stocked(12);
+    s.wines[0].quality = quality;
+    s.wines[0].bottles = 10;
+    const next = act(s, { type: 'advance' });
+    assert.equal(next.wines[0].bottles, 0);
+    assert.equal(next.reputation, Number((12 + 10 * retail).toFixed(2)));
+    assert.equal(next.stats.qualitySold, 10);
+    assert.equal(next.stats.qualityPoints, quality * 10);
+    const bulk = act(s, { type: 'wholesale', id: s.wines[0].id });
+    assert.equal(bulk.reputation, Number((12 + 10 * wholesale).toFixed(2)));
+    assert.equal(bulk.stats.qualitySold, 10);
+    assert.equal(bulk.stats.qualityPoints, quality * 10);
+    assert.deepEqual(deserialize(serialize(next)), next);
+  }
+  const s = stocked(0);
+  s.wines[0].quality = 30;
+  assert.equal(act(s, { type: 'advance' }).reputation, 0);
+});
+
+test('older saves preserve Prestige and start quality tracking without inventing history', () => {
+  const s = stocked(123);
+  const saved = JSON.parse(serialize(s));
+  delete saved.state.stats.qualitySold;
+  delete saved.state.stats.qualityPoints;
+  const restored = deserialize(JSON.stringify(saved));
+  assert.equal(restored.reputation, 123);
+  assert.equal(restored.stats.qualitySold, 0);
+  assert.equal(restored.stats.qualityPoints, 0);
 });

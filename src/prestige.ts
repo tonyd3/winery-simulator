@@ -73,7 +73,60 @@ export const PRESTIGE_TIERS = [
   },
 ] as const;
 
-export const PRESTIGE_EARNINGS = { retail: 0.04, wholesale: 0.01 };
+export const QUALITY_RESPONSES = [
+  {
+    minimum: 95,
+    range: '95–100',
+    name: 'Exceptional',
+    retail: 0.16,
+    wholesale: 0.04,
+    text: 'A memorable bottle that earns strong word of mouth.',
+  },
+  {
+    minimum: 90,
+    range: '90–94',
+    name: 'Outstanding',
+    retail: 0.1,
+    wholesale: 0.03,
+    text: 'Collectors recommend this release.',
+  },
+  {
+    minimum: 80,
+    range: '80–89',
+    name: 'Fine wine',
+    retail: 0.06,
+    wholesale: 0.02,
+    text: 'A confident recommendation that builds your name.',
+  },
+  {
+    minimum: 70,
+    range: '70–79',
+    name: 'Well made',
+    retail: 0.03,
+    wholesale: 0.01,
+    text: 'An enjoyable bottle that earns returning customers.',
+  },
+  {
+    minimum: 60,
+    range: '60–69',
+    name: 'Everyday wine',
+    retail: 0.01,
+    wholesale: 0,
+    text: 'Modest word of mouth. Riper fruit and maturation can improve the next vintage.',
+  },
+  {
+    minimum: 0,
+    range: '0–59',
+    name: 'Disappointing',
+    retail: -0.01,
+    wholesale: 0,
+    text: 'Shop customers lose confidence. Improve the fruit or blend before releasing more.',
+  },
+] as const;
+export const qualityResponse = (quality: number) =>
+  QUALITY_RESPONSES.find((band) => quality >= band.minimum)!;
+export const signedPrestige = (score: number) =>
+  `${score < 0 ? '−' : '+'}${Math.abs(score).toFixed(2)}`;
 
 export function prestigeStanding(score: number) {
   let index = 0;

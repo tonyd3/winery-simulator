@@ -159,7 +159,7 @@ Campaign countdowns and judging results persist in saves. The panel's outcome is
 
 ## Prestige
 
-**Prestige** replaces Reputation with a score that has no gameplay ceiling. Click it in the resource bar to see 16 named tiers, from **Two-Buck Beginning** and **Grocery Aisle Darling** to **Pétrus Pantheon**. Wine sales earn 0.04 Prestige per shop bottle or 0.01 per wholesale bottle. Tier titles follow the current total; they provide no cash awards or purchase unlocks.
+**Prestige** replaces Reputation with a score that has no gameplay ceiling. Click it in the resource bar to see 16 named tiers, from **Two-Buck Beginning** and **Grocery Aisle Darling** to **Pétrus Pantheon**. Wine sales earn Prestige according to quality: shop sales range from -0.01 per disappointing bottle to +0.16 per exceptional bottle; wholesale ranges from 0 to +0.04. The shop explains buyer response, and the Journal tracks average quality sold. Tier titles follow the current total; they provide no cash awards or purchase unlocks.
 
 Prestige improves suggested prices, shopper interest, and hospitality attendance. Benefits grow more slowly above 100, while the score continues accumulating beyond the last tier. Wine quality retains its separate 100-point rating. Existing saves keep their current score and assets. See the [Prestige rules and tier ladder](docs/prestige.md).
 

@@ -65,7 +65,7 @@ import {
   weeklyDemandMultiplier,
 } from './market';
 
-import { PRESTIGE_EARNINGS, prestigeInfluence } from './prestige';
+import { qualityResponse, signedPrestige, prestigeInfluence } from './prestige';
 import { tastingProfile, tastingNotesSchema } from './wineSensory';
 
 export const SAVE_KEY = 'terroir.save.v1';
@@ -418,6 +418,8 @@ export const stateSchema = z
         sold: integer(),
         revenue: bounded(),
         best: bounded(100),
+        qualitySold: integer().default(0),
+        qualityPoints: bounded(1e11).default(0),
       })
       .strict(),
     // Legacy save metadata only; no gameplay reads or writes achievements.
@@ -801,7 +803,15 @@ export function newGame(
       },
     ],
     ledger: [{ week: 6, label: 'Your starting capital', amount: 12500 }],
-    stats: { harvested: 0, bottled: 0, sold: 0, revenue: 0, best: 0 },
+    stats: {
+      harvested: 0,
+      bottled: 0,
+      sold: 0,
+      revenue: 0,
+      best: 0,
+      qualitySold: 0,
+      qualityPoints: 0,
+    },
     nextId: 1,
     seed: 2026,
     marketSeed: MARKET_SEED,
@@ -1184,6 +1194,10 @@ function note(
     s.pendingEvents = Math.min(200, (s.pendingEvents ?? 0) + 1);
   }
 }
+function trackQualitySales(s: GameState, wine: Wine, count: number) {
+  s.stats.qualitySold = (s.stats.qualitySold ?? 0) + count;
+  s.stats.qualityPoints = (s.stats.qualityPoints ?? 0) + count * wine.quality;
+}
 function transaction(s: GameState, label: string, amount: number) {
   s.cash += amount;
   s.ledger.unshift({ week: s.week, label, amount });
@@ -1489,6 +1503,7 @@ export function act(current: GameState, action: Action): GameState {
       s.deliveries = s.deliveries.filter((d) => d.arrival > s.week);
       let sales = 0;
       let bottles = 0;
+      let prestige = 0;
       for (const w of s.wines) {
         if (
           w.judging &&
@@ -1513,6 +1528,8 @@ export function act(current: GameState, action: Action): GameState {
         w.bottles -= count;
         sales += count * w.price;
         bottles += count;
+        prestige += count * qualityResponse(w.quality).retail;
+        trackQualitySales(s, w, count);
         if ((w.marketingWeeks ?? 0) > 0 && --w.marketingWeeks === 0)
           note(
             s,
@@ -1523,12 +1540,14 @@ export function act(current: GameState, action: Action): GameState {
         transaction(s, 'Wine shop sales', sales);
         s.stats.sold += bottles;
         s.stats.revenue += sales;
-        s.reputation = Number(
-          (s.reputation + bottles * PRESTIGE_EARNINGS.retail).toFixed(2),
+        const previousPrestige = s.reputation;
+        s.reputation = Math.max(
+          0,
+          Number((s.reputation + prestige).toFixed(2)),
         );
         note(
           s,
-          `${bottles} bottles found a home. ${money(sales)} in wine sales.`,
+          `${bottles} bottles found a home. ${money(sales)} in wine sales. ${signedPrestige(s.reputation - previousPrestige)} Prestige from their quality.`,
           'good',
         );
       }
@@ -2273,8 +2292,12 @@ export function act(current: GameState, action: Action): GameState {
       s.stats.sold += w.bottles;
       s.stats.revenue += revenue;
       s.reputation = Number(
-        (s.reputation + w.bottles * PRESTIGE_EARNINGS.wholesale).toFixed(2),
+        (
+          s.reputation +
+          w.bottles * qualityResponse(w.quality).wholesale
+        ).toFixed(2),
       );
+      trackQualitySales(s, w, w.bottles);
       if (w.produced === null)
         w.salesSinceTracking = (w.salesSinceTracking ?? 0) + w.bottles;
       w.bottles = 0;
