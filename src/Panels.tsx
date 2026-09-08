@@ -557,14 +557,14 @@ function Fermentation({
                     : `TANK${ids.length > 1 ? 'S' : ''} ${ids.map((id) => String(id).padStart(2, '0')).join(' + ')}`}
                 </span>
                 <span
-                  className={`status-tag ${b?.stage === 'ready' ? 'ripe' : ''}`}
+                  className={`status-tag ${b && b.stage !== 'fermenting' && b.age === 8 ? 'ripe' : ''}`}
                 >
                   {b
                     ? b.stage === 'fermenting'
                       ? 'Fermenting'
-                      : b.stage === 'aging'
-                        ? 'Aging'
-                        : 'Ready for reserves'
+                      : b.age === 8
+                        ? 'Peak maturity'
+                        : 'Aging automatically'
                     : 'Available'}
                 </span>
               </div>
@@ -691,9 +691,7 @@ function Fermentation({
                     <span>
                       {b.stage === 'fermenting'
                         ? `${b.remaining} weeks remaining`
-                        : b.stage === 'aging'
-                          ? `${b.age} / 8 weeks aged`
-                          : 'Fermentation complete'}
+                        : `${b.age} / 8 weeks aged`}
                     </span>
                     <b>
                       {quality(b)}
@@ -704,22 +702,10 @@ function Fermentation({
                     value={
                       b.stage === 'fermenting'
                         ? (2 - b.remaining) * 50
-                        : b.stage === 'aging'
-                          ? (b.age / 8) * 100
-                          : 100
+                        : (b.age / 8) * 100
                     }
                   />
                   <div className="tank-actions">
-                    {b.stage === 'ready' && (
-                      <button
-                        className="button secondary"
-                        onClick={() => dispatch({ type: 'age', id: b.id })}
-                      >
-                        {ids.length > 1
-                          ? `Age all ${ids.length} tanks`
-                          : 'Let it age'}
-                      </button>
-                    )}
                     <button
                       className="button primary"
                       disabled={
@@ -786,7 +772,8 @@ function Fermentation({
           Great wine starts with healthy, fully ripe grapes suited to their
           site. New batches gain up to {CELLAR_QUALITY.oakMaturity} points from
           oak aging or {CELLAR_QUALITY.steelMaturity} in steel over 8 weeks.
-          Move finished wine to reserves to free all of its tanks.
+          Maturation begins automatically after fermentation. Move wine to
+          reserves to stop maturation and free all of its tanks.
         </p>
       </div>
     </div>

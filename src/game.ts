@@ -1477,15 +1477,16 @@ export function act(current: GameState, action: Action): GameState {
         if (b.stage === 'fermenting') {
           b.remaining--;
           if (b.remaining === 0) {
-            b.stage = 'ready';
+            b.stage = 'aging';
             note(
               s,
-              `${getVariety(s, b.variety).name} finished fermenting. Age it or bottle it.`,
+              `${getVariety(s, b.variety).name} finished fermenting. Maturation has begun automatically; store it whenever you are ready.`,
               'good',
               true,
             );
           }
-        } else if (b.stage === 'aging' && b.age < 8) {
+        } else if (b.age < 8) {
+          b.stage = 'aging';
           b.age++;
           if (b.age === 8)
             note(
@@ -1867,7 +1868,7 @@ export function act(current: GameState, action: Action): GameState {
     }
     case 'age': {
       const b = getBatch(action.id);
-      if (b.stage !== 'ready')
+      if (b.stage === 'fermenting')
         throw new Error('Only finished fermentations can begin aging.');
       b.stage = 'aging';
       note(

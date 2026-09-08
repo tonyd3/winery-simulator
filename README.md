@@ -30,7 +30,7 @@ Requires Node.js 22 or newer. Built with React, TypeScript, Vite, and Zod. All a
 1. Pick or randomize one of eight wine regions and name your estate. Start with $12,500, three parcels, two regional grapes, two 150 L tanks in a four-bay cellar, and 600 bottling kits. Time is paused.
 2. Select **South slope**. Tend the vines if you like, then harvest its ripe regional grape.
 3. In **Cellar**, choose stainless steel or French oak and review the required tanks and processing cost. Large harvests fill multiple tanks. Fresh grapes spoil after three game weeks.
-4. Advance two weeks. Age for up to eight weeks if you like, then **Move to reserves** to free all tanks used by that harvest. In **Reserves & blending**, store the wine, blend it with other grapes and vintages, or bottle it on its own.
+4. Advance two weeks. Maturation then begins automatically, improving wine for up to eight weeks. **Move to reserves** whenever you are ready to stop maturation and to free all tanks used by that harvest. In **Reserves & blending**, store the wine, blend it with other grapes and vintages, or bottle it on its own.
 5. Bottle any amount into a new or existing wine line. Preview its likely tasting notes, choose a bottle and label for a new line, then watch its tasting score appear. In **Wine shop**, set its price and list the release. Customers buy each game week. Wholesale sells the entire remaining stock immediately at a lower price.
 6. Review income and expenses in **Journal**, plant your empty parcel, buy more land, and research investments that suit your estate.
 
