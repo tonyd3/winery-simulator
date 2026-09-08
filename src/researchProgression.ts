@@ -83,8 +83,5 @@ export function breedingPermission(
     return 'Research Aroma & finesse selection for the Wine quality trait.';
   return null;
 }
-export const researchDuration = (weeks: number) => {
-  const years = Math.floor(weeks / 12),
-    rest = weeks % 12;
-  return `${weeks} ${weeks === 1 ? 'week' : 'weeks'}${years ? ` · ${years} game ${years === 1 ? 'year' : 'years'}${rest ? ` ${rest}w` : ''}` : ''}`;
-};
+export const researchDuration = (weeks: number) =>
+  `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
