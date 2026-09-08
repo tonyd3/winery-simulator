@@ -1,0 +1,334 @@
+import { bottleBatch } from './helpers.ts';
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  act,
+  calendar,
+  demand,
+  deserialize,
+  fairPrice,
+  grapeLiters,
+  newGame,
+  missions,
+  quality,
+  readyToHarvest,
+  serialize,
+  stateSchema,
+  tankCount,
+  upkeep,
+} from '../src/game.ts';
+import type { Action, GameState } from '../src/game.ts';
+
+function tick(state: GameState, weeks = 1) {
+  for (let i = 0; i < weeks; i++) state = act(state, { type: 'advance' });
+  return state;
+}
+function ferment(oak = false) {
+  let s = act(newGame(), { type: 'harvest', id: 1 });
+  return act(s, { type: 'ferment', id: s.grapes[0].id, oak });
+}
+function bottle() {
+  let s = tick(ferment(), 2);
+  return bottleBatch(s, s.batches[0].id);
+}
+
+test('complete harvest to retail loop conserves liquid, bottles and cash', () => {
+  let s = newGame();
+  s = act(s, { type: 'tend', id: 1 });
+  s = act(s, { type: 'harvest', id: 1 });
+  assert.equal(s.grapes[0].kg, 360);
+  s = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
+  assert.equal(s.batches[0].liters, 252);
+  s = tick(s, 2);
+  s = bottleBatch(s, s.batches[0].id);
+  assert.equal(s.wines[0].bottles, 336);
+  assert.equal(s.kits, 264);
+  assert.equal(s.batches.length, 0);
+  s = act(s, { type: 'list', id: s.wines[0].id });
+  const before = s;
+  const expected = demand(s.wines[0], s);
+  s = tick(s);
+  assert.equal(s.wines[0].bottles, before.wines[0].bottles - expected);
+  assert.equal(
+    s.cash,
+    before.cash + expected * before.wines[0].price - upkeep(before),
+  );
+  assert.equal(s.stats.sold, expected);
+  assert.deepEqual(deserialize(serialize(s)), s);
+});
+test('actions are immutable and failed purchases cannot charge money', () => {
+  const s = newGame();
+  const copy = structuredClone(s);
+  act(s, { type: 'harvest', id: 1 });
+  assert.deepEqual(s, copy);
+  s.cash = 1;
+  assert.throws(() => act(s, { type: 'buyPlot', id: 4 }), /more/);
+  assert.equal(s.cash, 1);
+  assert.equal(s.plots[3].owned, false);
+});
+test('harvest requires ripeness and only happens once per year', () => {
+  assert.throws(() => act(newGame(), { type: 'harvest', id: 2 }), /80%/);
+  const s = act(newGame(), { type: 'harvest', id: 1 });
+  assert.throws(() => act(s, { type: 'harvest', id: 1 }), /80%/);
+  assert.equal(readyToHarvest(tick(s).plots[0], 7), false);
+});
+test('winter loses unpicked fruit and spring restarts the next vintage', () => {
+  const s = tick(newGame(), 4);
+  assert.equal(calendar(s.week).season, 'Winter');
+  assert.equal(s.plots[0].growth, 0);
+  assert.ok(s.log.some((l) => l.text.includes('Unpicked fruit')));
+  const spring = tick(s, 3);
+  assert.equal(calendar(spring.week).year, 2);
+  assert.equal(calendar(spring.week).season, 'Spring');
+  assert.ok(spring.plots[0].growth > 0);
+});
+test('fresh grapes expire after exactly three weeks', () => {
+  const s = act(newGame(), { type: 'harvest', id: 1 });
+  assert.equal(tick(s, 2).grapes.length, 1);
+  assert.equal(tick(s, 3).grapes.length, 0);
+});
+test('all occupied tanks block another fermentation until an upgrade', () => {
+  let s = tick(ferment(), 2);
+  s = act(s, { type: 'harvest', id: 2 });
+  s = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
+  const id = s.nextId++;
+  s.grapes.push({ id, variety: 'pinot', kg: 200, quality: 75, picked: s.week });
+  assert.throws(() => act(s, { type: 'ferment', id, oak: false }), /occupied/);
+  s = act(s, { type: 'upgrade', upgrade: 'cellar' });
+  assert.equal(tankCount(s), 4);
+  s = act(s, { type: 'ferment', id, oak: false });
+  assert.equal(s.batches.length, 3);
+});
+test('unfinished wine cannot be bottled; oak aging stops improving at eight weeks', () => {
+  let s = ferment(true);
+  assert.throws(() => bottleBatch(s, s.batches[0].id), /finish/);
+  s = tick(s, 2);
+  s = act(s, { type: 'age', id: s.batches[0].id });
+  const q = quality(s.batches[0]);
+  s = tick(s, 8);
+  assert.equal(s.batches[0].age, 8);
+  assert.ok(quality(s.batches[0]) > q);
+  const q8 = quality(s.batches[0]);
+  s = tick(s, 10);
+  assert.equal(s.batches[0].age, 8);
+  assert.equal(quality(s.batches[0]), q8);
+});
+test('bottling requires supplies and deliveries take one week', () => {
+  let s = tick(ferment(), 2);
+  s.kits = 0;
+  assert.throws(() => bottleBatch(s, s.batches[0].id), /kits/);
+  s = act(s, { type: 'supplies' });
+  assert.equal(s.kits, 0);
+  s = tick(s);
+  assert.equal(s.kits, 600);
+  assert.equal(s.deliveries.length, 0);
+  assert.ok(bottleBatch(s, s.batches[0].id).kits < 600);
+});
+test('pricing affects demand; unlisted bottles do not sell; wholesale cannot double sell', () => {
+  let s = bottle();
+  const w = s.wines[0];
+  assert.equal(demand(w, s), 0);
+  assert.ok(
+    demand({ ...w, listed: true, price: 10 }, s) >
+      demand({ ...w, listed: true, price: 40 }, s),
+  );
+  assert.equal(tick(s).wines[0].bottles, w.bottles);
+  const value = w.bottles * Math.round(fairPrice(w, s.reputation) * 0.6);
+  const cash = s.cash;
+  s = act(s, { type: 'wholesale', id: w.id });
+  assert.equal(s.cash, cash + value);
+  assert.equal(s.wines[0].bottles, 0);
+  assert.throws(() => act(s, { type: 'wholesale', id: w.id }), /sold out/);
+});
+test('expanded bottle prices survive saves and reject invalid changes without side effects', () => {
+  const before = bottle();
+  const copy = structuredClone(before);
+  for (const price of [1, 5, 6, 50, 75, 250, 1000]) {
+    const changed = act(before, {
+      type: 'price',
+      id: before.wines[0].id,
+      price,
+    });
+    assert.equal(changed.wines[0].price, price);
+    assert.equal(changed.cash, before.cash);
+    assert.equal(changed.week, before.week);
+    assert.equal(changed.wines[0].bottles, before.wines[0].bottles);
+    assert.deepEqual(deserialize(serialize(changed)), changed);
+  }
+  for (const price of [0, -1, 1001, 999.5, NaN, Infinity]) {
+    assert.throws(
+      () => act(before, { type: 'price', id: before.wines[0].id, price }),
+      /whole-dollar price/,
+    );
+    const malformed = structuredClone(before);
+    malformed.wines[0].price = price;
+    assert.equal(stateSchema.safeParse(malformed).success, false);
+  }
+  assert.deepEqual(before, copy);
+});
+test('wide pricing keeps demand bounded and weekly sales use the chosen amount', () => {
+  let base = bottle();
+  base = act(base, { type: 'list', id: base.wines[0].id });
+  const prices = [1, 5, 25, 50, 75, 250, 1000];
+  let previousDemand = base.wines[0].bottles;
+  for (const price of prices) {
+    const s = act(base, { type: 'price', id: base.wines[0].id, price });
+    const expected = demand(s.wines[0], s);
+    assert.ok(expected >= 0 && expected <= previousDemand);
+    assert.ok(expected <= s.wines[0].bottles);
+    const next = tick(s);
+    assert.equal(next.wines[0].bottles, s.wines[0].bottles - expected);
+    assert.equal(next.cash, s.cash + expected * price - upkeep(s));
+    assert.equal(next.stats.sold, s.stats.sold + expected);
+    previousDemand = expected;
+  }
+  assert.equal(previousDemand, 0);
+});
+test('tending and neighbor work cannot be repeated', () => {
+  let s = act(newGame(), { type: 'tend', id: 1 });
+  assert.throws(() => act(s, { type: 'tend', id: 1 }), /already/);
+  s = act(s, { type: 'harvest', id: 1 });
+  s = act(s, { type: 'work' });
+  assert.throws(() => act(s, { type: 'work' }), /already/);
+});
+test('matching soil improves harvest quality', () => {
+  const s = newGame();
+  const matched = act(s, { type: 'harvest', id: 1 }).grapes[0].quality;
+  // Hold climate, grape traits, and health constant; only change the parcel soil.
+  s.plots[1] = { ...s.plots[0], id: 2 };
+  assert.equal(
+    act(s, { type: 'harvest', id: 2 }).grapes[0].quality,
+    matched - 8,
+  );
+});
+test('builds and land purchases cannot be duplicated; upgrades affect production', () => {
+  let s = act(newGame(), { type: 'buyPlot', id: 4 });
+  assert.throws(() => act(s, { type: 'buyPlot', id: 4 }), /already/);
+  s = act(s, { type: 'plant', id: 4, variety: 'pinot' });
+  assert.throws(
+    () => act(s, { type: 'plant', id: 4, variety: 'merlot' }),
+    /empty/,
+  );
+  s = act(s, { type: 'upgrade', upgrade: 'lab' });
+  assert.throws(() => act(s, { type: 'upgrade', upgrade: 'lab' }), /already/);
+  s = act(s, { type: 'harvest', id: 1 });
+  const qualityBefore = s.grapes[0].quality;
+  s = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
+  assert.equal(s.batches[0].quality, Math.min(100, qualityBefore + 8));
+});
+test('save importer rejects malformed, incompatible and unsafe nested state', () => {
+  assert.throws(() => deserialize('{bad'), /valid JSON/);
+  const initial = newGame();
+  for (const change of [
+    (s: any) => (s.version = 9),
+    (s: any) => (s.cash = -100),
+    (s: any) => (s.plots[0].id = 2),
+    (s: any) => (s.plots[0].variety = 'poison'),
+    (s: any) => (s.log = []),
+    (s: any) => (s.upgrades = ['tasting', 'tasting']),
+    (s: any) => (s.extra = true),
+  ]) {
+    const s = structuredClone(initial);
+    change(s);
+    assert.throws(() => deserialize(serialize(s)), /compatible/);
+  }
+  const badBatch = ferment();
+  badBatch.batches[0].remaining = 0;
+  assert.throws(() => deserialize(serialize(badBatch)), /compatible/);
+  assert.deepEqual(initial, newGame());
+});
+test('save roundtrip preserves deterministic subsequent weather and outcomes', () => {
+  const state = ferment();
+  const loaded = deserialize(serialize(state));
+  assert.deepEqual(tick(state, 12), tick(loaded, 12));
+});
+test('extreme overhead and empty funds recover without invalid negative balance', () => {
+  let s = newGame();
+  s.cash = 0;
+  s.debt = 3000;
+  s.upgrades = ['irrigation', 'cellar', 'lab'];
+  s.plots.forEach((p) => (p.owned = true));
+  s = tick(s);
+  assert.ok(s.cash >= 0);
+  assert.ok(stateSchema.safeParse(s).success);
+});
+test('100 years of neglected growth remains playable and serializable', () => {
+  const s = tick(newGame(), 1200);
+  assert.ok(s.cash >= 0);
+  assert.equal(s.log.length, 40);
+  assert.equal(s.ledger.length, 80);
+  assert.deepEqual(deserialize(serialize(s)), s);
+  assert.ok(act(s, { type: 'work' }).cash > s.cash);
+});
+test('loan interest ends only on repayment and principal cannot be duplicated', () => {
+  const s = act(newGame(), { type: 'loan' });
+  assert.equal(s.cash, 15500);
+  assert.equal(upkeep(s), 220);
+  assert.throws(() => act(s, { type: 'loan' }), /Repay/);
+  const paid = act(s, { type: 'repay' });
+  assert.equal(paid.cash, 12500);
+  assert.equal(paid.debt, 0);
+  assert.equal(upkeep(paid), 160);
+});
+test('volume conversion does not lose a liter to floating point multiplication', () => {
+  assert.equal(grapeLiters(360), 252);
+  assert.equal(grapeLiters(340), 238);
+  assert.equal(grapeLiters(280), 196);
+});
+
+test('milestones complete automatically without cash, revenue, or ledger bonuses', () => {
+  let s = newGame();
+  assert.equal(
+    missions(s).some((m) => m.done),
+    false,
+  );
+  s = act(s, { type: 'harvest', id: 1 });
+  assert.equal(missions(s).find((m) => m.id === 'harvest')!.done, true);
+  assert.equal(s.cash, 12500 - 180);
+  assert.equal(s.stats.revenue, 0);
+  assert.equal(s.ledger.length, 2);
+  assert.equal(s.ledger[0].amount, -180);
+  assert.equal(missions(s).find((m) => !m.done)!.id, 'vintage');
+  const before = structuredClone(s);
+  assert.throws(
+    () => act(s, { type: 'claim', id: 'harvest' } as unknown as Action),
+    /Unknown game action/,
+  );
+  assert.deepEqual(s, before);
+  s.stats.bottled = 100;
+  s.stats.sold = 100;
+  s.stats.best = 90;
+  s.plots[3].owned = true;
+  const cash = s.cash,
+    ledger = structuredClone(s.ledger);
+  assert.equal(
+    missions(s).every((m) => m.done),
+    true,
+  );
+  assert.equal(
+    missions(s).some((m) => 'reward' in m),
+    false,
+  );
+  assert.equal(s.cash, cash);
+  assert.deepEqual(s.ledger, ledger);
+  const loaded = deserialize(serialize(s));
+  assert.deepEqual(missions(loaded), missions(s));
+  assert.equal(loaded.cash, cash);
+});
+
+test('existing milestone payouts stay in saved balances and history without new rewards', () => {
+  const legacy = newGame();
+  legacy.claimed = ['harvest'];
+  legacy.cash += 350;
+  legacy.ledger.unshift({
+    week: legacy.week,
+    label: 'From the vine milestone',
+    amount: 350,
+  });
+  const loaded = deserialize(serialize(legacy));
+  assert.deepEqual(loaded, legacy);
+  assert.equal(missions(loaded).find((m) => m.id === 'harvest')!.done, true);
+  const renamed = act(loaded, { type: 'rename', name: 'Old estate' });
+  assert.equal(renamed.cash, legacy.cash);
+  assert.deepEqual(renamed.ledger, legacy.ledger);
+});
