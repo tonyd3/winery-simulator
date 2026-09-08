@@ -261,7 +261,7 @@ const legacyWineSchema = z
   .strict();
 const wineSchema = legacyWineSchema.extend({
   lineId: integer(),
-  release: integer(1000).min(1),
+  release: integer().min(1),
   produced: integer(1000000).nullable(),
   // Older releases lack production totals; count their sales from this update on.
   salesSinceTracking: integer(1000000).default(0),
@@ -595,7 +595,12 @@ export const stateSchema = z
         .filter((w) => w.lineId === line.id)
         .map((w) => w.release)
         .sort((a, b) => a - b);
-      if (numbers.some((n, i) => n !== i + 1))
+      const archived = line.archive?.releases ?? 0;
+      const total = archived + numbers.length;
+      if (
+        Math.max(0, line.archive?.lastRelease ?? 0, ...numbers) !== total ||
+        numbers.some((n) => n > total)
+      )
         fail('Invalid release sequence.');
     }
     if (s.batches.some((b) => b.year > calendar(s.week).year))
@@ -641,6 +646,36 @@ export function wineSales(wines: readonly Wine[]) {
     complete: wines.every((wine) => wine.produced !== null),
   };
 }
+export const releaseCount = (s: GameState) =>
+  s.wines.length +
+  s.lines.reduce((n, line) => n + (line.archive?.releases ?? 0), 0);
+
+function compactWineHistory(s: GameState) {
+  if (s.wines.length < 900) return;
+  const archived = new Set<number>();
+  for (const wine of s.wines) {
+    if (s.wines.length - archived.size < 750) break;
+    if (wine.bottles > 0 || (wine.judging?.remaining ?? 0) > 0) continue;
+    const line = s.lines.find((l) => l.id === wine.lineId)!;
+    const summary = (line.archive ??= {
+      releases: 0,
+      lastRelease: 0,
+      sold: 0,
+      produced: 0,
+      complete: true,
+      best: 0,
+    });
+    summary.releases++;
+    summary.lastRelease = Math.max(summary.lastRelease, wine.release);
+    summary.sold += wineSales([wine]).count;
+    summary.produced += wine.produced ?? 0;
+    summary.complete &&= wine.produced !== null;
+    summary.best = Math.max(summary.best, wine.quality);
+    archived.add(wine.id);
+  }
+  s.wines = s.wines.filter((w) => !archived.has(w.id));
+}
+
 export type Action =
   | { type: 'expandCellar' }
   | { type: 'buyTank'; count?: number }
@@ -1938,9 +1973,10 @@ export function act(current: GameState, action: Action): GameState {
         throw new Error(
           `You need ${count - s.kits} more bottling kits. Order supplies in the cellar.`,
         );
+      compactWineHistory(s);
       if (s.wines.length >= 1000)
         throw new Error(
-          'Your estate archive has reached 1,000 releases. Export your estate to preserve its history.',
+          'There are 1,000 active releases. Sell some stock or wait for pending judging before bottling again.',
         );
       let line;
       if ('id' in action.line) {
@@ -1948,6 +1984,10 @@ export function act(current: GameState, action: Action): GameState {
         line = s.lines.find((l) => l.id === lineId);
         if (!line) throw new Error('Wine line not found.');
       } else {
+        if (s.lines.length >= 1000)
+          throw new Error(
+            'Your estate has 1,000 wine lines. Select an existing line for this release.',
+          );
         const name = action.line.name.trim();
         if (!name || name.length > 40)
           throw new Error('Name your wine line using 1–40 characters.');
@@ -1973,7 +2013,12 @@ export function act(current: GameState, action: Action): GameState {
       // Assess once per stored lot; partial bottlings and reloads keep that score.
       const q = scoreReserve(s, r);
       const components = combine(take(r, count * 750));
-      const release = s.wines.filter((w) => w.lineId === line.id).length + 1;
+      const release =
+        Math.max(
+          line.archive?.lastRelease ?? 0,
+          ...s.wines.filter((w) => w.lineId === line.id).map((w) => w.release),
+          0,
+        ) + 1;
       s.kits -= count;
       s.wines.push({
         id: s.nextId++,

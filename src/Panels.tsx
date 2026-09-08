@@ -1,3 +1,4 @@
+import { releaseCount } from './game';
 import type { ResearchId } from './catalog';
 import { Investments } from './EstateInvestments';
 import { grapeStorageWeeks } from './investments';
@@ -1025,7 +1026,7 @@ export function Market({ state, dispatch, navigate }: Props) {
           aria-current={tab === 'history' ? 'page' : undefined}
           onClick={() => setTab('history')}
         >
-          Wine history <span>{state.wines.length}</span>
+          Wine history <span>{releaseCount(state)}</span>
         </button>
       </nav>
       {tab === 'history' ? (

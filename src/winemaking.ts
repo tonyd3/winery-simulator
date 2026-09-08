@@ -49,12 +49,24 @@ export const reserveSchema = z
     score: count(100).nullable(),
   })
   .strict();
+export const archiveSummarySchema = z
+  .object({
+    releases: count(),
+    lastRelease: count(),
+    sold: count(),
+    produced: count(),
+    complete: z.boolean(),
+    best: count(100),
+  })
+  .strict();
+export type ArchiveSummary = z.infer<typeof archiveSummarySchema>;
 export const wineLineSchema = z
   .object({
     id: count(),
     name: z.string().trim().min(1).max(40),
     founded: count(10000),
     design: labelDesignSchema,
+    archive: archiveSummarySchema.optional(),
   })
   .strict();
 export type LabelDesign = z.infer<typeof labelDesignSchema>;

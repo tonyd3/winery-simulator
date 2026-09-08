@@ -4,12 +4,20 @@ import { Modal } from './components';
 import { getVariety, getEstate, wineSales } from './game';
 import type { GameState, Wine } from './game';
 import { LABEL_COLORS, vintage, volume } from './winemaking';
-import type { LabelDesign, WineComponent } from './winemaking';
+import type { ArchiveSummary, LabelDesign, WineComponent } from './winemaking';
 import { TastingNotes } from './TastingNotes';
 import { releaseTasting } from './wineSensory';
 
-export function SalesCount({ wines }: { wines: readonly Wine[] }) {
-  const { count, complete } = wineSales(wines);
+export function SalesCount({
+  wines,
+  archive,
+}: {
+  wines: readonly Wine[];
+  archive?: ArchiveSummary;
+}) {
+  const live = wineSales(wines);
+  const count = live.count + (archive?.sold ?? 0);
+  const complete = live.complete && (archive?.complete ?? true);
   return (
     <span
       title={

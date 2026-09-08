@@ -1,3 +1,4 @@
+import { releaseCount } from './game';
 import type { ResearchId } from './catalog';
 import { blendResearchMissing } from './researchProgression';
 import { RESEARCH } from './catalog';
@@ -94,7 +95,9 @@ function BottlingForm({
               year={vintage(reserve.components)}
               release={
                 line
-                  ? state.wines.filter((w) => w.lineId === line.id).length + 1
+                  ? state.wines.filter((w) => w.lineId === line.id).length +
+                    (line.archive?.releases ?? 0) +
+                    1
                   : 1
               }
               white={
@@ -142,9 +145,11 @@ function BottlingForm({
           {line ? (
             <p className="line-inheritance">
               Release{' '}
-              {state.wines.filter((w) => w.lineId === line.id).length + 1} will
-              carry this line’s original bottle and label. Earlier releases stay
-              in its history.
+              {state.wines.filter((w) => w.lineId === line.id).length +
+                (line.archive?.releases ?? 0) +
+                1}{' '}
+              will carry this line’s original bottle and label. Earlier releases
+              stay in its history.
             </p>
           ) : (
             <>
@@ -673,9 +678,9 @@ export function WineLines({
             {history ? 'Every vintage lives on.' : 'Labels with a history.'}
           </h2>
           <p>
-            Every release, including sold-out wines. Follow its grapes,
-            vintages, tasting score, and bottles sold through the shop or
-            wholesale.
+            Recent releases keep their full tasting records. Older sold-out
+            releases are summarized by wine line as the archive grows,
+            preserving production, sales and best quality.
           </p>
         </div>
       </div>
@@ -683,7 +688,7 @@ export function WineLines({
         <dl className="history-totals">
           <div>
             <dt>Releases in the archive</dt>
-            <dd>{state.wines.length.toLocaleString()}</dd>
+            <dd>{releaseCount(state).toLocaleString()}</dd>
           </div>
           <div>
             <dt>Bottles sold · all time</dt>
@@ -712,7 +717,8 @@ export function WineLines({
       ) : (
         state.lines.map((line) => {
           const releases = state.wines.filter((w) => w.lineId === line.id);
-          const latest = releases.at(-1)!;
+          const latest = releases.at(-1);
+          const totalReleases = releases.length + (line.archive?.releases ?? 0);
           return (
             <article className="line-archive" key={line.id}>
               <div className="line-identity">
@@ -724,7 +730,7 @@ export function WineLines({
                   year={
                     latest ? vintage(latest.components) : `Year ${line.founded}`
                   }
-                  release={releases.length}
+                  release={totalReleases}
                   white={
                     latest &&
                     getVariety(state, latest.variety).wineType === 'White'
@@ -736,8 +742,8 @@ export function WineLines({
                   </span>
                   <h3>{line.name}</h3>
                   <p>
-                    {releases.length}{' '}
-                    {releases.length === 1 ? 'release' : 'releases'} ·{' '}
+                    {totalReleases}{' '}
+                    {totalReleases === 1 ? 'release' : 'releases'} ·{' '}
                     {releases
                       .reduce((n, w) => n + w.bottles, 0)
                       .toLocaleString()}{' '}
@@ -745,13 +751,23 @@ export function WineLines({
                   </p>
                   <p className="line-sales">
                     <strong>
-                      <SalesCount wines={releases} />
+                      <SalesCount wines={releases} archive={line.archive} />
                     </strong>{' '}
                     bottles sold
                   </p>
                 </div>
               </div>
               <div className="release-history">
+                {line.archive && (
+                  <p className="history-note">
+                    {line.archive.releases.toLocaleString()} earlier sold-out
+                    releases summarized ·{' '}
+                    {line.archive.produced.toLocaleString()}
+                    {line.archive.complete ? '' : '+'} bottles produced · best{' '}
+                    {line.archive.best}/100. Individual tasting records were
+                    compacted.
+                  </p>
+                )}
                 {[...releases].reverse().map((w) => (
                   <details key={w.id}>
                     <summary>
