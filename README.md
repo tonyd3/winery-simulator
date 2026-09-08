@@ -42,7 +42,7 @@ The year has 12 game weeks: spring 1–3, summer 4–6, autumn 7–9, winter 10�
 
 Choose Bordeaux, Burgundy, Napa Valley, Mosel, Tuscany, Rioja, Mendoza, or Barossa. New estates know only their region’s **two founding grapes**. Every other grape has an individual field study. Regional favorites keep their growing advantages and 15% planting discount, and their studies cost 20% less cash and take two fewer study weeks. Buying another estate does not unlock grapes.
 
-**Research** contains **64 studies**: 30 techniques across vineyard science, cellar techniques, tourism/hospitality, and commerce/discovery, plus 34 individual grape studies. Search by technique, grape, or unlock; follow clickable prerequisites; filter by availability. Studies range from **6–72 weeks** and **$1,200–$180,000**. A game year has 12 weeks. Research costs are separate from buildings, teams, and planting.
+**Research** contains **64 studies**: 30 techniques across vineyard science, cellar techniques, tourism/hospitality, and commerce/discovery, plus 34 individual grape studies. Search by technique, grape, or unlock; follow clickable prerequisites; filter by availability. Studies range from **6–60 weeks** and **$1,200–$140,000**. A game year has 12 weeks. Research costs are separate from buildings, teams, and planting.
 
 The 34-grape library includes Gamay, Carménère, Graciano, Petite Sirah / Durif, Pinot Gris / Pinot Grigio, Viognier, Albariño, Grüner Veltliner, Marsanne, and Roussanne. Each has its own field study, growing traits, and blending affinities. Search accepts names without accents. See the [grape expansion guide](docs/grape-library.md) for costs and recipe ideas.
 
@@ -52,7 +52,7 @@ Cellar foundations unlocks same-grape, same-vintage, same-estate lot blending. V
 
 For example: **Wine tourism → Visitor services → Hosted tastings** unlocks a tasting terrace, visitor center, and tasting room for separate purchase. The tasting room also needs an operating visitor center. Sommelier training additionally requires Sensory science; Wine & gastronomy and Destination stays open later hospitality options.
 
-Complete **Vine science → Nursery propagation → Cross-pollination** to breed. Trials cost **$7,500 and 160 knowledge**, and take **24 weeks** (18 after Field selection). Generational crosses unlocks hybrid parents; Aroma & finesse selection unlocks the Wine quality trait. Finished offspring can be planted, bottled, and sold. An estate can keep 60 custom varieties.
+Complete **Vine science → Nursery propagation → Cross-pollination** to breed. Trials cost **$2,000 and 80 knowledge**, and take **8 weeks** (6 after Field selection). Generational crosses unlocks hybrid parents; Aroma & finesse selection unlocks the Wine quality trait. The introductory chain plus a trial costs $9,000 and takes 28 study/trial weeks, before any waits for cash or knowledge; upkeep and planting are additional. Finished offspring can be planted, bottled, and sold. An estate can keep 60 custom varieties.
 
 Use **Replace grape variety** on a planted parcel to remove its vines for $120 at original plot size, then buy replacement vines. Removal and planting costs scale with expanded acreage. Removing vines loses any unpicked crop and never grants a second harvest in the same year.
 

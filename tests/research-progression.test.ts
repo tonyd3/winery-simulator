@@ -87,8 +87,8 @@ test('64 studies form an acyclic graph and every capital investment has a resear
   }
   for (const upgrade of Object.values(UPGRADES).filter((u) => !u.legacy))
     assert.ok(upgrade.research && RESEARCH[upgrade.research]);
-  assert.equal(RESEARCH.genomics.weeks, 72);
-  assert.equal(RESEARCH.genomics.cost, 180000);
+  assert.equal(RESEARCH.genomics.weeks, 16);
+  assert.equal(RESEARCH.genomics.cost, 12000);
 });
 
 test('new estates begin with only their two founders and acquisition does not bypass individual studies', () => {
@@ -416,4 +416,35 @@ test('a paid legacy breeding trial retains its original remaining time and saved
     offspring,
   );
   valid(ready);
+});
+
+test('introductory creative paths fit the early estate and paid projects retain their clocks', () => {
+  const breedingPath = ['ampelography', 'heritage', 'breeding'] as const;
+  assert.equal(
+    breedingPath.reduce((n, id) => n + RESEARCH[id].weeks, 0) + BREEDING.weeks,
+    28,
+  );
+  assert.equal(
+    breedingPath.reduce((n, id) => n + RESEARCH[id].cost, 0) + BREEDING.cost,
+    9000,
+  );
+  const blendPath = ['oenology', 'assemblage', 'rose_trials'] as const;
+  assert.equal(
+    blendPath.reduce((n, id) => n + RESEARCH[id].weeks, 0),
+    20,
+  );
+  assert.equal(
+    blendPath.reduce((n, id) => n + RESEARCH[id].cost, 0),
+    8000,
+  );
+  const old = learn(funded(), 'heritage');
+  old.researchProject = {
+    id: 'breeding',
+    duration: 24,
+    remaining: 19,
+    paused: false,
+  };
+  const loaded = deserialize(serialize(old));
+  assert.equal(act(loaded, { type: 'advance' }).researchProject!.remaining, 18);
+  assert.equal(loaded.researchProject!.duration, 24);
 });
