@@ -155,8 +155,8 @@ test('older balanced and original batches retain their saved aging curves', () =
   assert.equal(stateSchema.safeParse(malformed).success, false);
 });
 
-test('value accelerates above 90 and reputation strengthens only the exceptional premium', () => {
-  for (const score of [40, 70, 85, 90])
+test('quality premiums rise smoothly without turning one tasting point into a jackpot', () => {
+  for (const score of [40, 70, 80])
     assert.equal(
       fairPrice({ quality: score }, 50),
       Math.round(7 + score * 0.24 + 50 * 0.055),
@@ -165,9 +165,17 @@ test('value accelerates above 90 and reputation strengthens only the exceptional
     fairPrice({ quality: 90 + i }, 50),
   );
   const increments = prices.slice(1).map((price, i) => price - prices[i]);
-  assert.ok(increments.every((gain, i) => i === 0 || gain > increments[i - 1]));
-  assert.ok(prices[5] > prices[0] * 5);
-  assert.ok(prices[10] > prices[5] * 3);
+  assert.ok(increments.every((gain) => gain > 0 && gain <= 8));
+  assert.ok(prices[10] > prices[0] * 2);
+  assert.ok(prices[10] < prices[0] * 3);
+  for (const prestige of [0, 12, 100, 1000]) {
+    for (let score = 80; score < 100; score++) {
+      const a = fairPrice({ quality: score }, prestige),
+        b = fairPrice({ quality: score + 1 }, prestige);
+      assert.ok(b >= a && b - a <= 12);
+      assert.ok(b <= a * 1.15);
+    }
+  }
   assert.ok(
     fairPrice({ quality: 95 }, 90) - fairPrice({ quality: 95 }, 10) >
       fairPrice({ quality: 85 }, 90) - fairPrice({ quality: 85 }, 10),

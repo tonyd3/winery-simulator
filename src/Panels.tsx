@@ -1117,8 +1117,8 @@ export function Market({ state, dispatch, navigate }: Props) {
               <Icon name="shop" />
               <h3>The wine shop</h3>
               <p>
-                Above 90 points, each extra point commands a larger price
-                premium. Prestige strengthens that premium. Use the suggested
+                Above 80 points, a gradual quality premium rewards finer wine.
+                Prestige strengthens that premium. Use the suggested
                 price and sales forecast to find your market. Interest fades
                 gradually over several years. Seasons, grape trends, and visitor
                 surges or slumps move demand up and down. The range allows for

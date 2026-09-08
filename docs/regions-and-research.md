@@ -27,7 +27,7 @@ Harvest quality is `round(-10 + 0.4 × health + 0.3 × ripeness + site-and-grape
 
 New fermentations receive +3 from temperature control. Aging adds `maximum × sqrt(age / 8)`, with a maximum of 6 for oak or 3 for steel, capped at eight weeks and rounded with the batch quality. Existing batches without the saved `agingProfile: balanced` marker retain their old maturation curve; existing grapes, reserves, and scored wines are not regraded.
 
-For market value, Prestige influence equals the score through 100 and `100 + 25 × log2(Prestige / 100)` above 100. Wine scores above 90 add `6 × (score − 90)² × (0.6 + influence × 0.008)` to the original base value before rounding. Medal and marketing bonuses are then added. The premium uses the bottle's original score and applies to both retail valuation and wholesale; temporary marketing remains retail-only. Suggested values stay within the supported $1–$1,000 range, and a saved shelf price changes only when the player changes it.
+For market value, Prestige influence equals the score through 100 and `100 + 25 × log2(Prestige / 100)` above 100. Wine scores above 80 add `0.22 × (score − 80)² × (0.7 + influence × 0.003)` to the original base value before rounding. Medal and marketing bonuses are then added. The premium uses the bottle's original score and applies to both retail valuation and wholesale; temporary marketing remains retail-only. Suggested values stay within the supported $1–$1,000 range, and a saved shelf price changes only when the player changes it.
 
 ## Research progression
 
