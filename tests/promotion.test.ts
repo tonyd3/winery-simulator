@@ -15,6 +15,7 @@ import {
 import type { GameState } from '../src/game.ts';
 import { JUDGING, MARKETING, wineAward } from '../src/promotion.ts';
 import { DEFAULT_DESIGN } from '../src/winemaking.ts';
+import { marketConditions, weeklyDemandMultiplier } from '../src/market.ts';
 
 function bottled(quality = 96) {
   let s = newGame();
@@ -22,6 +23,7 @@ function bottled(quality = 96) {
   s.batches = [
     {
       id: 1,
+      tankIds: [1, 2],
       variety: 'merlot',
       liters: 300,
       quality,
@@ -222,7 +224,12 @@ test('medal thresholds and combined boosts apply to each release without compoun
   assert.equal(combined.price, fairPrice(w, s.reputation) + 8);
   assert.equal(
     demand(combined, s),
-    Math.floor((18 + s.reputation * 0.55) * 1.7),
+    Math.floor(
+      (18 + s.reputation * 0.55) *
+        1.7 *
+        marketConditions(combined, s).multiplier *
+        weeklyDemandMultiplier(combined, s),
+    ),
   );
   assert.equal(demand({ ...combined, listed: false }, s), 0);
   assert.equal(demand({ ...combined, bottles: 1 }, s), 1);

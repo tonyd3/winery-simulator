@@ -1,3 +1,7 @@
+import type { ResearchId } from './catalog';
+import { blendResearchMissing } from './researchProgression';
+import { RESEARCH } from './catalog';
+import { ESTATE_LIMITS } from './estates';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Plus, Shuffle, X } from 'lucide-react';
 import { generateBlendName } from './blendNames';
@@ -44,7 +48,7 @@ function BottlingForm({
   const [count, setCount] = useState(String(Math.min(max, state.kits)));
   const line = state.lines.find((l) => String(l.id) === lineId);
   const activeDesign = line?.design ?? design;
-  const q = assess(reserve.components);
+  const q = assess(reserve.components, state.hybrids);
   const bottles = Number(count);
   const valid =
     Number.isInteger(bottles) &&
@@ -248,9 +252,11 @@ function BottlingForm({
 export default function Reserves({
   state,
   dispatch,
+  onResearch,
 }: {
   state: GameState;
   dispatch: Dispatch;
+  onResearch: (id?: ResearchId) => void;
 }) {
   const [amounts, setAmounts] = useState<Record<number, string>>({});
   const [blendName, setBlendName] = useState('');
@@ -276,6 +282,7 @@ export default function Reserves({
         ),
       )
     : [];
+  const missingResearch = blendResearchMissing(state, preview);
   const bottleReserve = state.reserves.find((r) => r.id === bottling);
   const tastingReserve = state.reserves.find((r) => r.id === tasting);
   return (
@@ -294,7 +301,7 @@ export default function Reserves({
           {liters(
             state.reserves.reduce((n, r) => n + volume(r.components), 0),
           )}{' '}
-          L · {state.reserves.length} / 64 lots
+          L · {state.reserves.length} / {ESTATE_LIMITS.reserves} lots
         </span>
       </div>
       {state.reserves.length === 0 ? (
@@ -349,7 +356,7 @@ export default function Reserves({
                       <span>
                         {r.score !== null
                           ? `${r.score} points · assessed`
-                          : `${assess(r.components).expected} potential points`}{' '}
+                          : `${assess(r.components, state.hybrids).expected} potential points`}{' '}
                         · stored {state.week - r.stored}{' '}
                         {state.week - r.stored === 1 ? 'week' : 'weeks'}
                       </span>
@@ -418,11 +425,30 @@ export default function Reserves({
                   </span>
                 </div>
               )}
+              {missingResearch.length > 0 && (
+                <div className="blend-research-lock">
+                  <p>
+                    <b>Research needed</b>
+                    <br />
+                    {missingResearch.map((id) => RESEARCH[id].name).join(' · ')}
+                  </p>
+                  <p>
+                    You can still analyze a recipe or bottle a single reserve.
+                  </p>
+                  <button
+                    className="text-button"
+                    onClick={() => onResearch(missingResearch[0])}
+                  >
+                    Go to research <ArrowRight size={14} />
+                  </button>
+                </div>
+              )}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (
                     valid &&
+                    !missingResearch.length &&
                     dispatch({ type: 'blend', name: blendName, portions })
                   ) {
                     setAmounts({});
@@ -457,7 +483,9 @@ export default function Reserves({
                 />
                 <button
                   className="button primary wide"
-                  disabled={!valid || !blendName.trim()}
+                  disabled={
+                    !valid || !blendName.trim() || missingResearch.length > 0
+                  }
                 >
                   <Plus size={16} /> Create blend in reserves
                 </button>

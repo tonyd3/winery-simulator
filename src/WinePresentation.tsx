@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check, Sparkles } from 'lucide-react';
 import { Modal } from './components';
-import { getVariety, wineSales } from './game';
+import { getVariety, getEstate, wineSales } from './game';
 import type { GameState, Wine } from './game';
 import { LABEL_COLORS, vintage, volume } from './winemaking';
 import type { LabelDesign, WineComponent } from './winemaking';
@@ -33,9 +33,12 @@ export function Composition({
   state: GameState;
 }) {
   const total = volume(parts);
-  const rows = new Map<string, { variety: string; year: number; ml: number }>();
+  const rows = new Map<
+    string,
+    { variety: string; year: number; ml: number; estateId?: number }
+  >();
   for (const p of parts) {
-    const key = `${p.variety}:${p.year}`;
+    const key = `${p.variety}:${p.year}:${p.estateId ?? 1}`;
     const row = rows.get(key);
     if (row) row.ml += p.ml;
     else rows.set(key, { ...p });
@@ -65,7 +68,12 @@ export function Composition({
               }}
             />
             <span>
-              {getVariety(state, p.variety).name} <small>· Year {p.year}</small>
+              {getVariety(state, p.variety).name}{' '}
+              <small>
+                · Year {p.year}
+                {state.estates.length > 1 &&
+                  ` · ${getEstate(state, p.estateId ?? 1).name}`}
+              </small>
             </span>
             <b>
               {((p.ml / total) * 100).toLocaleString('en-US', {

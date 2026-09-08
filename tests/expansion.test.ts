@@ -1,3 +1,5 @@
+import { learn } from './helpers.ts';
+import { researchTerms } from '../src/researchProgression.ts';
 import { bottleBatch } from './helpers.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,13 +27,14 @@ const tick = (s: GameState, n = 1): GameState => {
   return s;
 };
 function research(s: GameState, id: ResearchId) {
-  return tick(act(s, { type: 'research', id }), RESEARCH[id].weeks);
+  return tick(act(s, { type: 'research', id }), researchTerms(s, id).weeks);
 }
 function nursery() {
   let s = newGame('mosel');
-  s.cash = 30000;
+  s.cash = 200000;
   s.knowledge = 500;
-  return research(research(s, 'ampelography'), 'breeding');
+  s = research(research(research(s, 'ampelography'), 'heritage'), 'breeding');
+  return research(s, 'grape_cabernet');
 }
 const crossing = (
   s: GameState,
@@ -51,7 +54,7 @@ test('all eight regions start with local vines, distinct soils, and equal capita
       REGIONS[id].starters,
     );
     assert.ok(
-      REGIONS[id].signature.every((v) =>
+      REGIONS[id].starters.every((v) =>
         availableVarieties(s).some(([g]) => g === v),
       ),
     );
@@ -69,7 +72,7 @@ test('all eight regions start with local vines, distinct soils, and equal capita
 });
 test('imported grapes remain plantable; climate changes growth and quality, not access', () => {
   const cool = newGame('mosel'),
-    warm = newGame('barossa');
+    warm = learn(newGame('barossa'), 'grape_pinot');
   assert.equal(suitability(cool, 'pinot').label, 'Excellent');
   assert.equal(suitability(warm, 'pinot').label, 'Challenging');
   const a = act(cool, { type: 'plant', id: 3, variety: 'pinot' }),
@@ -98,29 +101,31 @@ test('soil bonus is independent of region fit and grape finesse', () => {
 });
 test('research enforces prerequisites, cost, exclusivity and exact completion time', () => {
   const original = newGame();
+  original.knowledge = 40;
   assert.throws(
     () => act(original, { type: 'research', id: 'breeding' }),
     /Requires/,
   );
   let s = act(original, { type: 'research', id: 'ampelography' });
-  assert.equal(s.cash, 12150);
+  assert.equal(s.cash, 11300);
   assert.equal(s.knowledge, 0);
-  assert.equal(original.knowledge, 30);
-  assert.throws(() => act(s, { type: 'research', id: 'heritage' }), /Finish/);
-  assert.equal(tick(s).research.length, 0);
-  s = tick(s, 2);
+  assert.equal(original.knowledge, 40);
+  assert.throws(() => act(s, { type: 'research', id: 'oenology' }), /slot/);
+  assert.equal(tick(s, 5).research.length, 0);
+  s = tick(s, 6);
   assert.deepEqual(s.research, ['ampelography']);
-  assert.equal(s.knowledge, 12);
-  assert.equal(tick(s).knowledge, 20);
+  assert.equal(s.knowledge, 36);
+  assert.equal(tick(s).knowledge, 44);
   assert.throws(
     () => act(s, { type: 'research', id: 'ampelography' }),
     /Completed/,
   );
   assert.throws(
-    () => act(s, { type: 'research', id: 'breeding' }),
+    () => act(s, { type: 'research', id: 'heritage' }),
     /knowledge/,
   );
 });
+
 test('knowledge rewards accompany production once, with no failed-action rewards', () => {
   let s = newGame();
   s = act(s, { type: 'harvest', id: 1 });
@@ -132,23 +137,31 @@ test('knowledge rewards accompany production once, with no failed-action rewards
   s = bottleBatch(s, s.batches[0].id);
   assert.equal(s.knowledge, 62);
 });
-test('collections unlock globally and adaptation improves difficult grapes', () => {
+test('individual grape studies unlock one grape and adaptation improves difficult grapes', () => {
   let s = newGame('barossa');
-  s.knowledge = 500;
+  s.cash = 300000;
+  s.knowledge = 1000;
   assert.throws(
     () => act(s, { type: 'plant', id: 3, variety: 'nebbiolo' }),
     /Research/,
   );
   const before = suitability(s, 'pinot');
-  s = research(s, 'ampelography');
-  s = research(s, 'adaptation');
-  assert.ok(suitability(s, 'pinot').growth > before.growth);
+  for (const id of [
+    'ampelography',
+    'heritage',
+    'adaptation',
+    'discovery',
+  ] as const)
+    s = research(s, id);
   assert.ok(suitability(s, 'pinot').quality > before.quality);
-  s = research(s, 'heritage');
-  assert.ok(availableVarieties(s).some(([id]) => id === 'riesling'));
-  assert.ok(!availableVarieties(s).some(([id]) => id === 'nebbiolo'));
-  s = research(s, 'discovery');
-  assert.equal(availableVarieties(s).length, 24);
+  assert.equal(
+    availableVarieties(s).length,
+    2,
+    'Technique research does not grant grape collections',
+  );
+  s = research(s, 'grape_nebbiolo');
+  assert.equal(availableVarieties(s).length, 3);
+  assert.ok(!availableVarieties(s).some(([id]) => id === 'riesling'));
   assert.equal(
     act(s, { type: 'plant', id: 3, variety: 'nebbiolo' }).plots[2].variety,
     'nebbiolo',
@@ -157,15 +170,15 @@ test('collections unlock globally and adaptation improves difficult grapes', () 
 test('breeding saves its outcome upfront, survives reload and completes once', () => {
   const ready = nursery(),
     s = crossing(ready);
-  assert.equal(s.cash, ready.cash - 900);
-  assert.equal(s.knowledge, ready.knowledge - 60);
+  assert.equal(s.cash, ready.cash - 7500);
+  assert.equal(s.knowledge, ready.knowledge - 160);
   assert.throws(() => crossing(s), /in progress/);
-  assert.equal(tick(s, 3).hybrids.length, 0);
-  const complete = tick(s, 4);
+  assert.equal(tick(s, 23).hybrids.length, 0);
+  const complete = tick(s, 24);
   assert.equal(complete.hybrids.length, 1);
   assert.equal(complete.breedingProject, null);
   assert.equal(tick(complete).hybrids.length, 1);
-  assert.deepEqual(tick(deserialize(serialize(s)), 4), complete);
+  assert.deepEqual(tick(deserialize(serialize(s)), 24), complete);
   assert.deepEqual(complete.hybrids[0].parents, ['riesling', 'cabernet']);
   assert.ok(
     suitability(complete, complete.hybrids[0].id).mismatch <
@@ -173,14 +186,15 @@ test('breeding saves its outcome upfront, survives reload and completes once', (
   );
 });
 test('breeding traits trade yield, resilience, and finesse; field selection shortens new trials', () => {
-  const s = nursery(),
-    hardy = crossing(s, 'resilience').breedingProject!.result,
-    fine = crossing(s, 'finesse').breedingProject!.result;
+  const s = nursery();
+  const fineState = learn(structuredClone(s), 'genomics');
+  const hardy = crossing(s, 'resilience').breedingProject!.result;
+  const fine = crossing(fineState, 'finesse').breedingProject!.result;
   assert.ok(hardy.resilience > fine.resilience);
   assert.ok(fine.finesse > hardy.finesse);
   assert.ok(fine.yieldFactor < hardy.yieldFactor);
-  const selected = research(s, 'selection');
-  assert.equal(crossing(selected).breedingProject!.remaining, 3);
+  const selected = learn(structuredClone(s), 'selection');
+  assert.equal(crossing(selected).breedingProject!.remaining, 18);
   const control = structuredClone(s);
   control.week = 16;
   control.plots[0].variety = 'pinot';
@@ -232,12 +246,12 @@ test('invalid breeding inputs cannot charge funds or mutate knowledge', () => {
   assert.deepEqual(s, snapshot);
   s.knowledge = 0;
   assert.throws(() => crossing(s), /knowledge/);
-  s.knowledge = 60;
+  s.knowledge = 160;
   s.cash = 0;
   assert.throws(() => crossing(s), /more/);
 });
 test('custom grape completes the full estate loop and can be a parent again', () => {
-  let s = tick(crossing(nursery()), 4),
+  let s = tick(crossing(nursery()), 24),
     id = s.hybrids[0].id;
   s = act(s, { type: 'plant', id: 3, variety: id });
   for (let i = 0; i < 24 && s.plots[2].growth < 80; i++) s = tick(s);
@@ -255,13 +269,14 @@ test('custom grape completes the full estate loop and can be a parent again', ()
   s = tick(s);
   assert.ok(s.stats.sold > 0);
   assert.deepEqual(deserialize(serialize(s)), s);
+  learn(s, 'backcrossing', 'grape_merlot');
   s = act(s, {
     type: 'breed',
     parents: [id, 'merlot'],
     trait: 'resilience',
     name: 'Second generation',
   });
-  s = tick(s, 4);
+  s = tick(s, 24);
   assert.equal(s.hybrids.length, 2);
   assert.equal(getVariety(s, 'cross-2').name, 'Second generation');
   assert.deepEqual(deserialize(serialize(s)), s);
@@ -273,6 +288,7 @@ test('replanting clears crops and costs money but cannot grant a second yearly h
   s = act(s, { type: 'uproot', id: 1 });
   assert.equal(s.cash, cash - 120);
   assert.equal(s.plots[0].variety, null);
+  learn(s, 'grape_pinot');
   s = act(s, { type: 'plant', id: 1, variety: 'pinot' });
   assert.equal(s.plots[0].harvestedYear, year);
   assert.equal(tick(s).plots[0].growth, 15);
@@ -280,6 +296,9 @@ test('replanting clears crops and costs money but cannot grant a second yearly h
 });
 test('v1 saves migrate all existing assets without a reset or reinterpreting soils', () => {
   let existing = newGame();
+  existing.cellar.tanks.forEach((t) => {
+    t.capacity = 400;
+  });
   existing = act(existing, { type: 'harvest', id: 1 });
   existing = act(existing, {
     type: 'ferment',
@@ -289,6 +308,7 @@ test('v1 saves migrate all existing assets without a reset or reinterpreting soi
   existing.cash = 4321;
   existing.plots[1].variety = 'chardonnay';
   const {
+    grapeLicenses,
     region,
     legacyLand,
     knowledge,
@@ -307,6 +327,7 @@ test('v1 saves migrate all existing assets without a reset or reinterpreting soi
     }),
   );
   const {
+    grapeLicenses: licensed,
     region: r,
     legacyLand: l,
     knowledge: k,
@@ -317,14 +338,14 @@ test('v1 saves migrate all existing assets without a reset or reinterpreting soi
     nextHybrid: nh,
     ...rest
   } = migrated;
-  assert.deepEqual(rest, { ...legacy, version: 3 });
+  assert.deepEqual(rest, { ...legacy, version: 6 });
   assert.equal(r, 'bordeaux');
   assert.equal(l, true);
   assert.equal(getLand(migrated, 3).soil, 'Chalk');
   assert.deepEqual(deserialize(serialize(migrated)), migrated);
 });
 test('save validation rejects unknown regions, impossible projects and broken custom lineage', () => {
-  const valid = tick(crossing(nursery()), 4);
+  const valid = tick(crossing(nursery()), 24);
   for (const change of [
     (s: any) => (s.region = 'mars'),
     (s: any) => (s.research = ['breeding']),

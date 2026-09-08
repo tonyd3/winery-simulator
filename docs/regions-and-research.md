@@ -19,24 +19,39 @@ Research checked September 7, 2026. Region identities borrow from real wine coun
 
 All numeric grape traits, soil assignments to individual parcels, weather temperatures, costs, and trait inheritance are invented for play. The regions are simplified and contain considerable real-world diversity. Northern and southern regions share an abstract spring-to-winter calendar; the game does not display Gregorian months.
 
-Each grape has preferred warmth (1–5), resilience (0–7), finesse (−2 to +8 quality), yield factor (75–110%), soil, wine color, and planting cost. A local favorite receives a 15% planting discount, one level of climate tolerance, and +3 quality. Soil match adds +8 quality. Climate adaptation research grants another level of tolerance.
+Each grape has preferred warmth (1–5), resilience (0–7), finesse (−2 to +8, contributing two harvest-quality points per finesse point), yield factor (75–110%), soil, wine color, and planting cost. A local favorite receives a 15% planting discount, one level of climate tolerance, and +3 quality. Soil match adds +8 quality. Climate adaptation research grants another level of tolerance.
 
 Effective mismatch is the difference between grape and region warmth after tolerance. It changes weekly growth by `round(2 − 2 × mismatch)` and harvest quality by `round(3 − 4 × mismatch)`. Health loss includes mismatch, reduced by resilience. Imported grapes remain plantable; difficult combinations may need care, irrigation, or research to ripen in time.
 
+Harvest quality is `round(-10 + 0.4 × health + 0.3 × ripeness + site-and-grape-quality)`, bounded to 0–100. The site-and-grape term combines climate, local-favorite, soil, and doubled finesse contributions above. Untended first harvests span 67–75 across the eight starts, instead of the previous 95–99. A fully healthy, ripe, correctly sited Burgundy Pinot Noir reaches 82 fruit quality; temperature control and full oak maturity take its potential to 91 before final tasting. Neglected fruit falls much lower.
+
+New fermentations receive +3 from temperature control. Aging adds `maximum × sqrt(age / 8)`, with a maximum of 6 for oak or 3 for steel, capped at eight weeks and rounded with the batch quality. Existing batches without the saved `agingProfile: balanced` marker retain their old maturation curve; existing grapes, reserves, and scored wines are not regraded.
+
+For market value, scores above 90 add `6 × (score − 90)² × (0.6 + reputation × 0.008)` to the original base value before rounding. Medal and marketing bonuses are then added. The premium uses the bottle's original score and applies to both retail valuation and wholesale; temporary marketing remains retail-only. Suggested values stay within the supported $1–$1,000 range, and a saved shelf price changes only when the player changes it.
+
 ## Research progression
 
-- **Vine science:** 30 knowledge, $350, 2 weeks. Opens the tree; weekly knowledge rises from 6 to 8.
-- **Heritage collection:** requires Vine science; 40 knowledge, $600, 3 weeks. Unlocks ten heritage grapes (regional favorites may already be available).
-- **Climate adaptation:** requires Vine science; 50 knowledge, $800, 3 weeks. Reduces climate mismatch by one level.
-- **Cross-pollination:** requires Vine science; 55 knowledge, $900, 3 weeks. Opens breeding.
-- **World collection:** requires Heritage collection; 65 knowledge, $1,000, 3 weeks. Unlocks every classic variety.
-- **Field selection:** requires Cross-pollination; 70 knowledge, $1,100, 4 weeks. Adds two effective resilience, capped at seven, and shortens new breeding trials to three weeks.
+The current catalog has 54 projects: 30 techniques and 24 individual grape field studies. See `src/catalog.ts` for the full cost/prerequisite table. The research ledger shows all costs, remaining time, prerequisites, and unlock descriptions. Each region starts with only its two founding grapes; technique nodes never grant an entire grape collection. All studied grapes can be planted across all owned regions, with region-specific climate and planting costs.
 
-One research project and one nursery trial may run simultaneously. Knowledge is also earned through harvests (+12) and bottling (+1 for every 40 bottles produced; updated with the reserves expansion). Failed or repeated actions do not grant rewards.
+| Branch | Progression and actual unlocks |
+| --- | --- |
+| Vineyard science | Vine science (+2 weekly knowledge) → Nursery propagation → Climate adaptation, Cross-pollination → Field selection (+2 resilience, shorter trials) → Generational crosses → Aroma & finesse selection. Soil & water mapping unlocks irrigation; Precision viticulture unlocks vineyard staff. |
+| Cellar techniques | Cellar foundations → Varietal assemblage → Perpetual reserves, Regional cuvées, Red & white experiments. Fermentation control unlocks the winemaker’s bench; Selective fruit handling unlocks optical sorting; Cold-chain logistics unlocks refrigeration. Sensory science is required for sommelier training. |
+| Tourism & hospitality | Wine tourism → Visitor services → Hosted tastings → Sommelier training / Wine & gastronomy → Destination stays. These permit separate purchases of terrace, visitor center, tasting room, sommelier team, restaurant, and guesthouse. |
+| Commerce & discovery | Estate storytelling → Cellar-door membership / Export trade. Experimental viticulture opens rare grape studies. Field notebooks adds 4 weekly knowledge. Research institute unlocks the lab. |
+| Individual grapes | Classic grapes require Vine science; heritage grapes require Nursery propagation; rare grapes require Experimental viticulture. Each variety has a separate duration and price based on rarity, planting cost, and finesse. Home-region favorites cost 20% less cash and require two fewer study weeks. Visiting or buying a different region does not change these study terms. |
+
+Technique studies cost $1,200–$180,000 and take 6–72 weeks; 12 weeks equal one game year. The field-study catalog adds ten base weeks, eight per rarity tier, and two per positive finesse point. Its cash and knowledge costs also increase by rarity and finesse. Local discounts apply before lab acceleration. Investment purchases remain separately priced, with their full ongoing operating costs.
+
+One prepaid study and one nursery trial can run simultaneously. Knowledge comes from weekly observation (6 base), harvests (+12), and bottling (+1 per 40 bottles produced). Vine science adds 2 weekly knowledge; Field notebooks adds 4. An operating research lab adds 10 and advances both studies and trials by two study weeks per game week. Pausing the lab restores normal speed. Pausing a study retains the occupied slot; abandoning frees it, loses progress, and refunds nothing. No cost is charged again during an active project.
+
+Basic harvest, fermentation, aging, reserve storage, analysis, single-lot bottling, marketing, judging, land, and tank purchases stay available. Every purchase in the 14-item capital investment catalog has a research prerequisite. Existing owned facilities can operate and resume without retroactive research charges.
+
+Blend creation checks all positive-volume recipe components, including those inside earlier blends. Different grapes, years, estate origins, and wine colors require separate studies. Failed attempts consume no wine, money, IDs, knowledge, or RNG. Permission does not improve a recipe’s score: compatibility and component quality still matter. Existing blends remain bottleable.
 
 ## Breeding
 
-A trial costs 60 knowledge and $900. Two distinct unlocked parents are required, including previously bred grapes. Choose a unique name up to 28 characters. An estate can retain 60 custom grapes; the cap is shown when reached.
+A trial costs 160 knowledge and $7,500, and lasts 24 weeks (18 after Field selection). Two distinct unlocked parents are required. Previously bred parents require Generational crosses; the Wine quality trait requires Aroma & finesse selection. Choose a unique name up to 28 characters. An estate can retain 60 custom grapes; the cap is shown when reached.
 
 The offspring inherits a randomly selected parent's color and preferred soil. Other traits begin from parent averages. Regional adaptation shifts warmth up to one point toward the estate climate and reduces yield by three percentage points. Hardiness adds two resilience and removes one finesse. Quality selection adds three finesse, removes one resilience, and reduces yield by eight percentage points. Trait bounds prevent endless improvement through repeated crossing. Breeding is an accelerated fictional model, not a prediction of actual grape genetics.
 
@@ -44,4 +59,8 @@ Inheritance is rolled when the trial starts and included in the save, preventing
 
 ## Persistence
 
-Version two extends the schema rather than replacing the save mechanism. The original localStorage key is retained. Version-one files and existing browser saves migrate to a Bordeaux estate with original parcel soils and all previous assets intact. New estates use regional soils. Validation checks region IDs, known grapes, unique hybrid IDs, parent ordering, inventory references, trait bounds, research prerequisites, and project progress. JSON export/import includes active trials and all finished lineages.
+Version six retains the original storage key and migrates versions one through five. Estates keep their land, inventory, prices, scores, facilities, funds, and calendar. A separate grape-license list preserves founding grapes and every grape an old save could plant. New grape discoveries are individually recorded in the completed-research list.
+
+Legacy collection studies retain original remaining time and grant the exact promised heritage or world collection when they finish. Other old in-flight research and breeding trials keep their remaining time. Completed legacy techniques gain the prerequisites required by the new tree; malformed old progression is rejected before migration. A future study uses the new price and duration.
+
+The saved project stores its contracted duration, remaining study weeks, and pause state. Save validation checks the project against its catalog maximum, completed prerequisites, duplicate licenses, known grapes, custom lineage, and inventory references. New-game studies and field trials persist across reloads without refunds or rerolls. See `tests/research-progression.test.ts` and `tests/expansion.test.ts`.

@@ -1,0 +1,22 @@
+// Deterministic parcel addresses keep old IDs 1–6 intact as estates grow.
+export const ESTATE_LIMITS = {
+  estates: 8,
+  districts: 4,
+  plotsPerDistrict: 6,
+  reserves: 256,
+};
+export const DISTRICTS = [
+  'Original vineyard',
+  'Upper vineyard',
+  'Valley vineyard',
+  'Far vineyard',
+];
+export const estateIdForPlot = (id: number) => Math.floor((id - 1) / 24) + 1;
+export const districtForPlot = (id: number) => Math.floor(((id - 1) % 24) / 6);
+export const localPlotId = (id: number) => ((id - 1) % 6) + 1;
+export const plotId = (estate: number, district = 0, local = 1) =>
+  (estate - 1) * 24 + district * 6 + local;
+export const districtCost = (districts: number) =>
+  18000 + (districts - 1) * 9000;
+export const acquisitionCost = (estates: number) =>
+  28000 + (estates - 1) * 8000;

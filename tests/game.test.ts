@@ -1,3 +1,4 @@
+import { learn, allGrapes } from './helpers.ts';
 import { bottleBatch } from './helpers.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -15,6 +16,7 @@ import {
   serialize,
   stateSchema,
   tankCount,
+  occupiedTankCount,
   upkeep,
 } from '../src/game.ts';
 import type { Action, GameState } from '../src/game.ts';
@@ -87,17 +89,26 @@ test('fresh grapes expire after exactly three weeks', () => {
   assert.equal(tick(s, 2).grapes.length, 1);
   assert.equal(tick(s, 3).grapes.length, 0);
 });
-test('all occupied tanks block another fermentation until an upgrade', () => {
+test('occupied tanks require a separate tank purchase, and floor expansion alone cannot process fruit', () => {
   let s = tick(ferment(), 2);
+  assert.equal(occupiedTankCount(s), 2);
   s = act(s, { type: 'harvest', id: 2 });
-  s = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
-  const id = s.nextId++;
-  s.grapes.push({ id, variety: 'pinot', kg: 200, quality: 75, picked: s.week });
-  assert.throws(() => act(s, { type: 'ferment', id, oak: false }), /occupied/);
-  s = act(s, { type: 'upgrade', upgrade: 'cellar' });
+  const id = s.grapes[0].id;
+  assert.throws(
+    () => act(s, { type: 'ferment', id, oak: false }),
+    /empty tanks/,
+  );
+  s = act(s, { type: 'expandCellar' });
+  assert.equal(tankCount(s), 2);
+  assert.throws(
+    () => act(s, { type: 'ferment', id, oak: false }),
+    /empty tanks/,
+  );
+  s = act(s, { type: 'buyTank', count: 2 });
   assert.equal(tankCount(s), 4);
   s = act(s, { type: 'ferment', id, oak: false });
-  assert.equal(s.batches.length, 3);
+  assert.equal(occupiedTankCount(s), 4);
+  assert.equal(s.batches.length, 2);
 });
 test('unfinished wine cannot be bottled; oak aging stops improving at eight weeks', () => {
   let s = ferment(true);
@@ -202,19 +213,23 @@ test('matching soil improves harvest quality', () => {
   );
 });
 test('builds and land purchases cannot be duplicated; upgrades affect production', () => {
-  let s = act(newGame(), { type: 'buyPlot', id: 4 });
+  let s = act(learn(allGrapes(newGame()), 'cellar_control'), {
+    type: 'buyPlot',
+    id: 4,
+  });
   assert.throws(() => act(s, { type: 'buyPlot', id: 4 }), /already/);
   s = act(s, { type: 'plant', id: 4, variety: 'pinot' });
   assert.throws(
     () => act(s, { type: 'plant', id: 4, variety: 'merlot' }),
     /empty/,
   );
+  s.cash = 30000; // The production test funds the higher capital cost.
   s = act(s, { type: 'upgrade', upgrade: 'lab' });
   assert.throws(() => act(s, { type: 'upgrade', upgrade: 'lab' }), /already/);
   s = act(s, { type: 'harvest', id: 1 });
   const qualityBefore = s.grapes[0].quality;
   s = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
-  assert.equal(s.batches[0].quality, Math.min(100, qualityBefore + 8));
+  assert.equal(s.batches[0].quality, Math.min(100, qualityBefore + 3));
 });
 test('save importer rejects malformed, incompatible and unsafe nested state', () => {
   assert.throws(() => deserialize('{bad'), /valid JSON/);

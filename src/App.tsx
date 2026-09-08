@@ -1,3 +1,7 @@
+import type { ResearchId } from './catalog';
+import { EstateToolbar } from './Holdings';
+import { plotId, estateIdForPlot } from './estates';
+import './holdings.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowDownToLine,
@@ -30,6 +34,7 @@ import type { View } from './Panels';
 import { Icon, Modal, Progress } from './components';
 import {
   act,
+  getEstate,
   REGIONS,
   BACKUP_KEY,
   calendar,
@@ -41,6 +46,7 @@ import {
   SAVE_KEY,
   serialize,
   tankCount,
+  occupiedTankCount,
   upkeep,
   weather,
 } from './game';
@@ -110,7 +116,14 @@ export default function App() {
   const [state, setState] = useState(initial.state);
   const current = useRef(state);
   const [view, setView] = useState<View>('estate');
-  const [selected, setSelected] = useState(1);
+  const [researchFocus, setResearchFocus] = useState<ResearchId | undefined>();
+  const [selection, setSelected] = useState(1);
+  const selected = state.plots.some(
+    (p) => p.id === selection && estateIdForPlot(p.id) === state.activeEstate,
+  )
+    ? selection
+    : plotId(state.activeEstate);
+  const [buildLand, setBuildLand] = useState(false);
   const [speed, setSpeed] = useState(0);
   const [modal, setModal] = useState<'help' | 'settings' | null>(null);
   const [reveal, setReveal] = useState<Wine | null>(null);
@@ -166,6 +179,10 @@ export default function App() {
       try {
         const next = act(current.current, action);
         replace(next);
+        if (action.type === 'expandEstate')
+          setSelected(plotId(next.activeEstate, getEstate(next).districts - 1));
+        if (action.type === 'visitEstate' || action.type === 'acquireEstate')
+          setSelected(plotId(next.activeEstate));
         if (action.type === 'bottle') {
           setSpeed(0);
           setToast(null);
@@ -177,7 +194,8 @@ export default function App() {
           action.type !== 'advance' &&
           action.type !== 'price' &&
           action.type !== 'rename' &&
-          action.type !== 'label'
+          action.type !== 'label' &&
+          action.type !== 'visitEstate'
         )
           notify(next.log[0].text);
         return true;
@@ -197,7 +215,8 @@ export default function App() {
     setModal(null);
     setPendingImport(null);
   }, []);
-  const navigate = useCallback((next: View) => {
+  const navigate = useCallback((next: View, study?: ResearchId) => {
+    setResearchFocus(study);
     setView(next);
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
@@ -246,7 +265,7 @@ export default function App() {
     };
   }, [notify]);
   const date = calendar(state.week);
-  const sky = weather(state.week, state.region);
+  const sky = weather(state.week, getEstate(state).region);
   const harvests = state.plots.filter((p) => readyToHarvest(p, state.week));
   const bottled = state.wines.reduce((n, w) => n + w.bottles, 0);
   const currentMission = missions(state).find((m) => !m.done);
@@ -364,7 +383,7 @@ export default function App() {
           >
             <Settings2 size={21} strokeWidth={1.7} />
           </button>
-          <span className="version">v0.3</span>
+          <span className="version">v0.7</span>
         </div>
       </aside>
       <div className="app-body" inert={modal !== null || reveal !== null}>
@@ -491,7 +510,7 @@ export default function App() {
               </strong>
             </div>
             <span className="resource-secondary">
-              {tankCount(state) - state.batches.length} free tanks
+              {tankCount(state) - occupiedTankCount(state)} free tanks
             </span>
           </div>
           <div className="resource">
@@ -538,7 +557,7 @@ export default function App() {
                       : view === 'improvements'
                         ? 'Thoughtful additions for the vintages ahead.'
                         : view === 'research'
-                          ? 'Explore the world of grapes. Develop a variety of your own.'
+                          ? 'Study new grapes. Master your craft. Shape the estate’s future.'
                           : 'Small beginnings. Measurable progress.'}
               </p>
             </div>
@@ -617,8 +636,19 @@ export default function App() {
           <div key={view} className="view-content">
             {view === 'estate' ? (
               <>
+                <EstateToolbar
+                  state={state}
+                  dispatch={dispatch}
+                  selected={selected}
+                  onSelect={setSelected}
+                  onExpand={() => {
+                    setBuildLand(true);
+                    navigate('improvements');
+                  }}
+                />
                 <div className="estate-workspace">
                   <EstateMap
+                    key={`${state.activeEstate}-${Math.floor((selected - 1) / 6)}`}
                     state={state}
                     selected={selected}
                     onSelect={(id) => {
@@ -662,8 +692,13 @@ export default function App() {
                       aria-label="Go to suggested next step"
                       onClick={() => {
                         navigate(nextStep.view);
-                        if (nextStep.view === 'estate' && harvests.length)
+                        if (nextStep.view === 'estate' && harvests.length) {
+                          dispatch({
+                            type: 'visitEstate',
+                            id: estateIdForPlot(harvests[0].id),
+                          });
                           setSelected(harvests[0].id);
+                        }
                       }}
                     >
                       <ArrowRight size={21} />
@@ -701,12 +736,19 @@ export default function App() {
               <Market state={state} dispatch={dispatch} navigate={navigate} />
             ) : view === 'improvements' ? (
               <Improvements
+                landOpen={buildLand}
+                onTabChange={setBuildLand}
                 state={state}
                 dispatch={dispatch}
                 navigate={navigate}
               />
             ) : view === 'research' ? (
-              <Research state={state} dispatch={dispatch} navigate={navigate} />
+              <Research
+                state={state}
+                dispatch={dispatch}
+                navigate={navigate}
+                focusId={researchFocus}
+              />
             ) : (
               <Journal state={state} dispatch={dispatch} navigate={navigate} />
             )}
@@ -768,8 +810,8 @@ export default function App() {
       {modal === 'settings' && (
         <Modal title="Make yourself at home." onClose={closeModal}>
           <p className="modal-intro">
-            Your estate, safely kept. Progress saves after every action in this
-            browser.
+            All your estates, safely kept. Progress saves after every action in
+            this browser.
           </p>
           <div className="save-summary">
             <div className="save-estate-icon">
@@ -779,7 +821,8 @@ export default function App() {
               <h3>{state.name}</h3>
               <p>
                 Year {date.year} · {date.season} · Week {date.week} ·{' '}
-                {money(state.cash)}
+                {money(state.cash)} · {state.estates.length}{' '}
+                {state.estates.length === 1 ? 'estate' : 'estates'}
               </p>
               <span>
                 <HardDrive size={12} />
@@ -917,7 +960,7 @@ export default function App() {
               }}
             >
               <RotateCcw size={14} />
-              Start a new estate
+              Start a new game
             </button>
           </div>
         </Modal>
@@ -937,25 +980,25 @@ export default function App() {
                 'sprout',
                 '01',
                 'Tend & harvest',
-                'Select a parcel on the map. Tend vines to improve health. Harvest at 80% ripeness or above, before winter in week 10. Each parcel yields once a year. Match grape and soil for better quality.',
+                'Harvest at 80% ripeness or above, before winter in week 10. Full ripeness, healthy vines, a suitable site, and grape finesse all matter. A 90+ wine takes exceptional fruit and careful cellar work. Each parcel yields once a year. Expand an owned plot to grow more of its grape; new rows on planted plots start producing next spring.',
               ],
               [
                 'barrel',
                 '02',
                 'Ferment & age',
-                'Take fresh grapes to the cellar within 3 weeks, before they spoil. Fermentation takes 2 weeks. Age for up to 8 weeks, then move finished wine into reserves to free its tank. Oak improves aging, but costs more.',
+                'Ferment fresh grapes within 3 weeks, or 5 with operating refrigerated storage, before they spoil. A harvest fills as many empty tanks as it needs; new tanks hold 150 L. Buy tanks and cellar floor space separately under Cellar → Space & tanks. Processing costs $140 per steel tank or $320 for oak. Fermentation takes 2 weeks. New batches gain up to 6 points from oak aging or 3 in steel over 8 weeks, with smaller gains as they mature. Temperature control adds 3 points. Store finished wine in reserves to free the tank.',
               ],
               [
                 'glass',
                 '03',
                 'Blend, bottle & share',
-                'Store reserves across years. Blend measured amounts of different grapes and vintages, then bottle into a new or existing wine line. Choose your label and reveal its tasting score. Each 750 mL bottle uses one kit; orders arrive next week. List releases in the shop to sell them.',
+                'Blend reserves across grapes and vintages, then bottle into a new or existing wine line. Each 750 mL bottle uses one kit; orders arrive next week. Above 90 points, each extra point earns a larger price premium. Reputation amplifies it; judging medals add value. Set your price and list the wine.',
               ],
               [
                 'trend',
                 '04',
                 'Grow at your own pace',
-                'Advance one week at a time, or press 1×, 2×, or 4×. A tasting terrace brings extra income. Your journal tracks milestones automatically and offers ways to earn money when cash is tight.',
+                'Advance one week at a time, or press 1×, 2×, or 4×. Build offers facilities and teams with substantial weekly costs. Visitor income depends on reputation and season. Suspend investments to cut their bills to 25%; their benefits stop. Your journal tracks milestones automatically and offers ways to earn money when cash is tight.',
               ],
             ].map(([icon, number, title, text]) => (
               <div className="guide-step" key={number}>

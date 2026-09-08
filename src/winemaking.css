@@ -256,6 +256,39 @@
   padding-left: 16px;
   color: #656b5b;
 }
+.grape-pairings h4 {
+  margin: 18px 0 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.grape-pairings p {
+  margin: 4px 0 10px;
+  color: #656b5b;
+}
+.grape-pairings ul {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.grape-pairings li {
+  border-bottom: 1px solid #e1ded3;
+  padding: 10px 0 2px;
+}
+.pairing-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.pairing-heading strong {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.pairing-heading span {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: #774b60;
+}
 .blend-advice li {
   margin: 9px 0;
 }
@@ -948,4 +981,168 @@
 }
 .release-history details[open] > summary::after {
   content: '−';
+}
+
+/* Cellar investment and harvest capacity */
+.cellar-equipment {
+  margin-bottom: 32px;
+}
+.equipment-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 56px;
+  margin: 24px 0;
+}
+.equipment-summary dt {
+  color: #757968;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.equipment-summary dd {
+  margin: 0;
+  font: 27px var(--serif);
+}
+.equipment-summary dd small {
+  font:
+    12px 'DM Sans',
+    sans-serif;
+}
+.equipment-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  border-top: 1px solid var(--line);
+  padding: 24px 0;
+}
+.equipment-row > svg {
+  flex-shrink: 0;
+  color: var(--green);
+}
+.equipment-description {
+  flex: 1;
+}
+.equipment-description h4 {
+  font: 23px var(--serif);
+  margin: 0 0 8px;
+}
+.equipment-description p,
+.equipment-note {
+  color: #757968;
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 0;
+}
+.equipment-purchase {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 330px;
+}
+.equipment-purchase label {
+  display: grid;
+  gap: 5px;
+  font-size: 11px;
+}
+.equipment-purchase input {
+  width: 65px;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 8px;
+  color: var(--ink);
+  background: var(--paper);
+}
+.equipment-purchase small {
+  flex-basis: 100%;
+  text-align: right;
+  color: #805b48;
+}
+.equipment-note {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.cellar-equipment-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0 0 24px;
+  color: #757968;
+  font-size: 12px;
+}
+.fermentation-order {
+  display: grid;
+  gap: 8px;
+  text-align: right;
+  max-width: 270px;
+}
+.fermentation-order small {
+  color: #805b48;
+  line-height: 1.5;
+}
+@media (max-width: 700px) {
+  .equipment-row {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .equipment-description {
+    min-width: 190px;
+  }
+  .equipment-purchase {
+    width: 100%;
+    max-width: none;
+    justify-content: flex-start;
+  }
+  .equipment-purchase small {
+    text-align: left;
+  }
+  .equipment-summary {
+    gap: 20px 28px;
+  }
+  .fermentation-order {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: none;
+    text-align: left;
+  }
+  .fermentation-order .button {
+    width: 100%;
+  }
+  .cellar-equipment .section-line {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+.tank-illustration.tank-vessels {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+}
+.tank-vessel {
+  min-width: 0;
+  flex: 0 1 170px;
+  text-align: center;
+}
+.tank-vessel svg {
+  width: 100%;
+  height: auto;
+  max-height: 140px;
+}
+.tank-vessel small {
+  display: block;
+  font-size: 11px;
+  color: #757968;
+}
+.tank-illustration.tank-vessels.many-tanks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  height: auto;
+  min-height: 171px;
+  gap: 16px 4px;
+  padding: 20px 0;
 }

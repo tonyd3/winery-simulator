@@ -1,0 +1,232 @@
+.research-principles {
+  max-width: 780px;
+  color: var(--ink);
+  line-height: 1.8;
+  margin: 0 0 24px;
+}
+.study-slot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 17px 0;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.study-slot svg {
+  flex-shrink: 0;
+  color: var(--wine);
+}
+.research-branches {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+  gap: 4px 22px;
+}
+.research-branches button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--ink);
+  padding: 15px 0;
+  text-align: left;
+  cursor: pointer;
+}
+.research-branches button.active {
+  border-bottom-color: var(--wine);
+  color: var(--wine);
+}
+.research-branches small {
+  display: block;
+  font-size: 11px;
+  margin-top: 7px;
+}
+.research-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 0;
+}
+.research-tools > label:last-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.research-tools select {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: inherit;
+  padding: 10px;
+  border-radius: 4px;
+}
+.research-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 40px;
+  padding: 27px 0;
+  border-bottom: 1px solid var(--line);
+}
+.study-description h3 {
+  font: 500 25px var(--serif);
+  margin: 7px 0 10px;
+}
+.study-description p {
+  line-height: 1.8;
+  margin: 0 0 15px;
+  max-width: 660px;
+}
+.study-prerequisites {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 11px;
+}
+.study-prerequisites button {
+  min-height: 30px;
+  text-align: left;
+}
+.study-prerequisites .learned {
+  color: var(--green);
+}
+.study-purchase {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+}
+.study-purchase > strong {
+  font: 500 25px var(--serif);
+}
+.study-purchase > span,
+.study-purchase small {
+  font-size: 11px;
+  line-height: 1.7;
+}
+.study-purchase .button {
+  min-height: 38px;
+  margin-top: 3px;
+}
+.research-row.learned .study-purchase {
+  color: var(--green);
+}
+.current-study {
+  color: var(--ink);
+}
+.current-study > div {
+  max-width: none;
+}
+.current-study > .study-controls {
+  flex: 0 0 auto;
+}
+.current-study span {
+  font-size: 12px;
+}
+.study-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.current-study .study-controls {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.grape-library .library-grape .study-purchase {
+  width: 230px;
+  flex-shrink: 0;
+}
+.grape-library .library-grape.locked {
+  opacity: 1;
+}
+.blend-research-lock {
+  border-top: 1px solid var(--line);
+  margin: 16px 0;
+  padding-top: 14px;
+  line-height: 1.8;
+}
+.blend-research-lock p {
+  margin: 0 0 8px;
+}
+@media (max-width: 700px) {
+  .research-row {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .study-purchase {
+    width: 100%;
+  }
+  .research-tools {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .research-branches {
+    gap: 4px 20px;
+  }
+  .research-branches button {
+    flex: 1 1 125px;
+  }
+  .current-study {
+    flex-wrap: wrap;
+    padding: 18px;
+    gap: 14px;
+  }
+  .current-study > div {
+    min-width: 0;
+  }
+  .current-study > .study-controls {
+    flex: 1 1 100%;
+    flex-direction: row;
+  }
+  .grape-library .library-grape .study-purchase {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+  .research-section-heading {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+/* The library keeps climate and study terms in separate columns. */
+.research-page .library-grape {
+  display: grid;
+  grid-template-columns: 40px minmax(180px, 1fr) 160px 250px;
+  gap: 22px;
+}
+.research-page .library-fit {
+  width: auto;
+  margin: 0;
+}
+.research-page .library-availability {
+  width: auto;
+  align-items: flex-start;
+  align-self: center;
+}
+.research-page .library-availability .study-purchase {
+  width: 100%;
+}
+.research-page .library-availability .study-purchase span {
+  text-align: left;
+  font-size: 11px;
+  color: var(--ink);
+}
+.research-page .library-grape small,
+.research-page .library-grape p {
+  color: #616957;
+  font-size: 11px;
+}
+@media (max-width: 900px) {
+  .research-page .library-grape {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 12px 16px;
+  }
+  .research-page .library-grape-name {
+    min-width: 0;
+  }
+  .research-page .library-fit,
+  .research-page .library-availability {
+    grid-column: 2;
+  }
+}

@@ -1,8 +1,15 @@
+import type { ResearchId } from './catalog';
+import {
+  ResearchProjects,
+  CurrentStudy,
+  StudyAction,
+} from './ResearchProjects';
+import { BREEDING, grapeResearchId } from './catalog';
+import { breedingWeeks, breedingPermission } from './researchProgression';
+import { studyWeeks } from './investments';
 import { useState } from 'react';
 import {
   ArrowRight,
-  Check,
-  Clock3,
   FlaskConical,
   GitBranch,
   LockKeyhole,
@@ -12,15 +19,12 @@ import {
 import { Icon, Progress } from './components';
 import {
   REGIONS,
-  RESEARCH,
-  RESEARCH_IDS,
   TRAITS,
   VARIETIES,
   availableVarieties,
   getVariety,
   money,
   plantingCost,
-  researchBlocked,
   suitability,
   weeklyKnowledge,
 } from './game';
@@ -31,10 +35,12 @@ export default function Research({
   state,
   dispatch,
   navigate,
+  focusId,
 }: {
   state: GameState;
   dispatch: Dispatch;
   navigate: (v: View) => void;
+  focusId?: ResearchId;
 }) {
   const [tab, setTab] = useState<'projects' | 'library' | 'nursery'>(
     'projects',
@@ -49,22 +55,21 @@ export default function Research({
   const unlocked = new Set(options.map(([id]) => id));
   const parentA = unlocked.has(chosenA) ? chosenA : options[0][0];
   const parentB = unlocked.has(chosenB) ? chosenB : options[1][0];
-  const active = state.researchProject;
   const trial = state.breedingProject;
   const all = [
     ...Object.entries(VARIETIES),
     ...state.hybrids.map((h) => [h.id, h] as const),
   ];
-  const breedingReason = !state.research.includes('breeding')
-    ? 'Research Cross-pollination to open your nursery.'
+  const breedingReason = breedingPermission(state, [parentA, parentB], trait)
+    ? breedingPermission(state, [parentA, parentB], trait)
     : trial
       ? 'A trial is already in progress.'
       : state.hybrids.length >= 60
         ? 'Your collection has reached 60 custom grapes.'
-        : state.knowledge < 60
-          ? 'You need 60 knowledge for a trial.'
-          : state.cash < 900
-            ? 'You need $900 for a trial.'
+        : state.knowledge < BREEDING.knowledge
+          ? `You need ${BREEDING.knowledge} knowledge for a trial.`
+          : state.cash < BREEDING.cost
+            ? `You need ${money(BREEDING.cost)} for a trial.`
             : parentA === parentB
               ? 'Choose two different parents.'
               : !name.trim()
@@ -118,97 +123,9 @@ export default function Research({
           </button>
         ))}
       </div>
+      <CurrentStudy state={state} dispatch={dispatch} />
       {tab === 'projects' && (
-        <section aria-label="Research projects">
-          <div className="research-section-heading">
-            <div>
-              <span className="eyebrow">THE WINEMAKER’S NOTEBOOK</span>
-              <h2>Knowledge takes root.</h2>
-            </div>
-            <span>{state.research.length} / 6 studies completed</span>
-          </div>
-          {active && (
-            <div className="active-study">
-              <FlaskConical size={24} />
-              <div>
-                <b>{RESEARCH[active.id].name}</b>
-                <span>
-                  Research in progress · {active.remaining}{' '}
-                  {active.remaining === 1 ? 'week' : 'weeks'} left
-                </span>
-                <Progress
-                  value={
-                    (1 - active.remaining / RESEARCH[active.id].weeks) * 100
-                  }
-                />
-              </div>
-              <Clock3 size={20} />
-            </div>
-          )}
-          <div className="research-projects">
-            {RESEARCH_IDS.map((id, index) => {
-              const r = RESEARCH[id],
-                done = state.research.includes(id),
-                running = active?.id === id,
-                reason = researchBlocked(state, id);
-              return (
-                <article
-                  className={`research-project ${done ? 'complete' : ''}`}
-                  key={id}
-                >
-                  <div className="project-number">
-                    {done ? (
-                      <Check size={19} />
-                    ) : (
-                      String(index + 1).padStart(2, '0')
-                    )}
-                  </div>
-                  <div>
-                    <span className="eyebrow">
-                      {!r.requires.length
-                        ? 'FOUNDATION'
-                        : r.requires.map((p) => RESEARCH[p].name).join(' + ')}
-                    </span>
-                    <h3>{r.name}</h3>
-                    <p>{r.text}</p>
-                    <div className="study-cost">
-                      <span>
-                        <FlaskConical size={13} />
-                        {r.knowledge} knowledge
-                      </span>
-                      <span>{money(r.cost)}</span>
-                      <span>
-                        <Clock3 size={13} />
-                        {r.weeks} weeks
-                      </span>
-                    </div>
-                    <button
-                      className={`button ${done ? 'secondary' : 'primary'}`}
-                      disabled={Boolean(reason)}
-                      onClick={() => dispatch({ type: 'research', id })}
-                    >
-                      {done ? (
-                        <>
-                          <Check size={15} />
-                          Completed
-                        </>
-                      ) : running ? (
-                        'In progress'
-                      ) : (
-                        reason || (
-                          <>
-                            Start research
-                            <ArrowRight size={15} />
-                          </>
-                        )
-                      )}
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
+        <ResearchProjects state={state} dispatch={dispatch} focusId={focusId} />
       )}
       {tab === 'library' && (
         <section aria-label="Grape library">
@@ -301,12 +218,11 @@ export default function Research({
                         </>
                       ) : (
                         <>
-                          <LockKeyhole size={15} />
-                          <span>
-                            {v.collection === 'heritage'
-                              ? 'Heritage collection'
-                              : 'World collection'}
-                          </span>
+                          <StudyAction
+                            state={state}
+                            dispatch={dispatch}
+                            id={grapeResearchId(id)}
+                          />
                         </>
                       )}
                     </div>
@@ -342,8 +258,9 @@ export default function Research({
               <LockKeyhole size={28} />
               <h3>Open your breeding nursery</h3>
               <p>
-                Complete Vine science, then Cross-pollination. Research and
-                breeding can run alongside your winery.
+                Complete Vine science, Nursery propagation, then
+                Cross-pollination. Research and breeding can run alongside your
+                winery.
               </p>
               <button
                 className="button primary"
@@ -365,7 +282,8 @@ export default function Research({
               </p>
               <Progress value={(1 - trial.remaining / trial.duration) * 100} />
               <b>
-                {trial.remaining} {trial.remaining === 1 ? 'week' : 'weeks'}{' '}
+                {studyWeeks(state, trial.remaining)}{' '}
+                {studyWeeks(state, trial.remaining) === 1 ? 'week' : 'weeks'}{' '}
                 until ready to plant
               </b>
               <p>
@@ -432,12 +350,21 @@ export default function Research({
                       type="radio"
                       name="trait"
                       value={id}
+                      disabled={
+                        id === 'finesse' && !state.research.includes('genomics')
+                      }
                       checked={trait === id}
                       onChange={() => setTrait(id)}
                     />
                     <span>
                       <b>{t.name}</b>
-                      <small>{t.text}</small>
+                      <small>
+                        {t.text}
+                        {id === 'finesse' &&
+                        !state.research.includes('genomics')
+                          ? ' Requires Aroma & finesse selection.'
+                          : ''}
+                      </small>
                     </span>
                   </label>
                 ))}
@@ -455,8 +382,8 @@ export default function Research({
                 </label>
                 <div>
                   <span>
-                    60 knowledge · $900 ·{' '}
-                    {state.research.includes('selection') ? 3 : 4} weeks
+                    {BREEDING.knowledge} knowledge · {money(BREEDING.cost)} ·{' '}
+                    {studyWeeks(state, breedingWeeks(state))} weeks
                   </span>
                   <button
                     className="button primary"
@@ -476,7 +403,8 @@ export default function Research({
             A playful model of grape breeding: years of crossing and field
             trials are compressed into weeks. Traits are fictional game values.
             Offspring inherit a parent’s soil preference and wine color; you can
-            cross your estate grapes again.
+            cross your estate grapes again after researching Generational
+            crosses.
           </p>
           {state.hybrids.length > 0 && (
             <div className="estate-crossings">

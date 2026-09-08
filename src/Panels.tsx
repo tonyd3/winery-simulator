@@ -1,3 +1,10 @@
+import type { ResearchId } from './catalog';
+import { Investments } from './EstateInvestments';
+import { grapeStorageWeeks } from './investments';
+import { PlotExpansion } from './PlotExpansion';
+import { CellarEquipment } from './CellarEquipment';
+import { ESTATE_LIMITS } from './estates';
+import { Holdings } from './Holdings';
 import { useState } from 'react';
 import Reserves, { WineLines } from './Reserves';
 import { WineBottle, Composition, SalesCount } from './WinePresentation';
@@ -16,14 +23,18 @@ import {
   availableVarieties,
   getVariety,
   getLand,
+  getEstate,
   suitability,
-  plantingCost,
+  plotPlantingCost,
+  plotHarvestCost,
+  plotTendCost,
+  plotRemovalCost,
   REGIONS,
-  UPGRADES,
   calendar,
-  demand,
-  fairPrice,
+  demandForecast,
+  retailPrice,
   BOTTLE_PRICE,
+  CELLAR_QUALITY,
   wholesalePrice,
   grapeLiters,
   missions,
@@ -31,16 +42,18 @@ import {
   quality,
   readyToHarvest,
   tankCount,
+  occupiedTankCount,
+  fermentationPlan,
   upkeep,
 } from './game';
-import type { GameState, Action, Variety, Upgrade, Wine } from './game';
+import type { GameState, Action, Variety, Wine } from './game';
 export type Dispatch = (action: Action) => boolean;
 export type View =
   'estate' | 'cellar' | 'market' | 'improvements' | 'research' | 'journal';
 type Props = {
   state: GameState;
   dispatch: Dispatch;
-  navigate: (view: View) => void;
+  navigate: (view: View, study?: ResearchId) => void;
 };
 
 export function PlotInspector({
@@ -52,10 +65,10 @@ export function PlotInspector({
   const plot = state.plots.find((p) => p.id === selected)!;
   const land = getLand(state, selected);
   const [clearing, setClearing] = useState(false);
-  const choices = availableVarieties(state).sort(
+  const choices = availableVarieties(state, land.region).sort(
     ([a], [b]) =>
-      Number(REGIONS[state.region].signature.includes(b)) -
-      Number(REGIONS[state.region].signature.includes(a)),
+      Number(REGIONS[land.region].signature.includes(b)) -
+      Number(REGIONS[land.region].signature.includes(a)),
   );
   const [variety, setVariety] = useState<Variety>(choices[0][0]);
   const ready = readyToHarvest(plot, state.week);
@@ -118,23 +131,51 @@ export function PlotInspector({
       {(plot.variety || plot.owned) && (
         <div className="parcel-fit">
           <span
-            className={`fit-label fit-${suitability(state, plot.variety || variety).label.toLowerCase()}`}
+            className={`fit-label fit-${suitability(state, plot.variety || variety, undefined, land.region).label.toLowerCase()}`}
           >
-            {suitability(state, plot.variety || variety).label} climate fit
+            {
+              suitability(
+                state,
+                plot.variety || variety,
+                undefined,
+                land.region,
+              ).label
+            }{' '}
+            climate fit
           </span>
           <small>
-            {REGIONS[state.region].name} ·{' '}
-            {suitability(state, plot.variety || variety).regional
+            {REGIONS[land.region].name} ·{' '}
+            {suitability(state, plot.variety || variety, undefined, land.region)
+              .regional
               ? 'Regional favorite'
               : 'Imported / estate variety'}
           </small>
           <span>
-            {suitability(state, plot.variety || variety).growth >= 0 ? '+' : ''}
-            {suitability(state, plot.variety || variety).growth} growth / week ·{' '}
-            {suitability(state, plot.variety || variety, land.soil).quality >= 0
+            {suitability(state, plot.variety || variety, undefined, land.region)
+              .growth >= 0
               ? '+'
               : ''}
-            {suitability(state, plot.variety || variety, land.soil).quality}{' '}
+            {
+              suitability(
+                state,
+                plot.variety || variety,
+                undefined,
+                land.region,
+              ).growth
+            }{' '}
+            growth / week ·{' '}
+            {suitability(state, plot.variety || variety, land.soil, land.region)
+              .quality >= 0
+              ? '+'
+              : ''}
+            {
+              suitability(
+                state,
+                plot.variety || variety,
+                land.soil,
+                land.region,
+              ).quality
+            }{' '}
             harvest quality
           </span>
         </div>
@@ -174,7 +215,7 @@ export function PlotInspector({
           </div>
           <button
             className="button primary wide"
-            disabled={!ready || state.cash < 180}
+            disabled={!ready || state.cash < plotHarvestCost(plot)}
             onClick={() => {
               if (dispatch({ type: 'harvest', id: selected }))
                 navigate('cellar');
@@ -186,7 +227,11 @@ export function PlotInspector({
               : ready
                 ? 'Harvest grapes'
                 : 'Waiting for ripeness'}
-            {ready && <span className="button-price">$180</span>}
+            {ready && (
+              <span className="button-price">
+                {money(plotHarvestCost(plot))}
+              </span>
+            )}
           </button>
           <button
             className="button secondary wide"
@@ -194,13 +239,13 @@ export function PlotInspector({
               winter ||
               harvested ||
               plot.tended === state.week ||
-              state.cash < 90
+              state.cash < plotTendCost(plot)
             }
             onClick={() => dispatch({ type: 'tend', id: selected })}
           >
             <Icon name="sprout" size={17} />
             {plot.tended === state.week ? 'Tended this week' : 'Tend the vines'}
-            <span className="button-price">$90</span>
+            <span className="button-price">{money(plotTendCost(plot))}</span>
           </button>
           <p className="fine-print">
             {harvested
@@ -210,18 +255,18 @@ export function PlotInspector({
           {clearing ? (
             <div className="replant-confirm">
               <p>
-                Remove these vines for $120? Any unpicked crop is lost. New
-                vines are purchased separately.
+                Remove these vines for {money(plotRemovalCost(plot))}? Any
+                unpicked crop is lost. New vines are purchased separately.
               </p>
               <button
                 className="button secondary wide"
-                disabled={state.cash < 120}
+                disabled={state.cash < plotRemovalCost(plot)}
                 onClick={() => {
                   if (dispatch({ type: 'uproot', id: selected }))
                     setClearing(false);
                 }}
               >
-                Remove vines · $120
+                Remove vines · {money(plotRemovalCost(plot))}
               </button>
               <button
                 className="text-button"
@@ -251,8 +296,8 @@ export function PlotInspector({
           >
             {choices.map(([id, v]) => (
               <option key={id} value={id}>
-                {v.name} · {money(plantingCost(state, id))}
-                {REGIONS[state.region].signature.includes(id) ? ' · Local' : ''}
+                {v.name} · {money(plotPlantingCost(state, plot, id))}
+                {REGIONS[land.region].signature.includes(id) ? ' · Local' : ''}
               </option>
             ))}
           </select>
@@ -267,13 +312,13 @@ export function PlotInspector({
           </div>
           <button
             className="button primary wide"
-            disabled={state.cash < plantingCost(state, variety)}
+            disabled={state.cash < plotPlantingCost(state, plot, variety)}
             onClick={() => dispatch({ type: 'plant', id: selected, variety })}
           >
             <Plus size={17} />
             Plant vines
             <span className="button-price">
-              {money(plantingCost(state, variety))}
+              {money(plotPlantingCost(state, plot, variety))}
             </span>
           </button>
           <p className="fine-print">
@@ -310,17 +355,21 @@ export function PlotInspector({
           <p className="fine-print">Adds $25 to weekly estate upkeep.</p>
         </>
       )}
+      {plot.owned && (
+        <PlotExpansion state={state} plot={plot} dispatch={dispatch} />
+      )}
       <div className="inspector-bottom">
-        <span className="tiny-dot" /> Part of {state.name}
+        <span className="tiny-dot" /> Part of{' '}
+        {getEstate(state, land.estateId).name}
       </div>
     </aside>
   );
 }
 
 export function Cellar(props: Props) {
-  const [tab, setTab] = useState<'fermentation' | 'reserves' | 'lines'>(
-    'fermentation',
-  );
+  const [tab, setTab] = useState<
+    'fermentation' | 'reserves' | 'lines' | 'equipment'
+  >('fermentation');
   return (
     <div className="cellar-workspace">
       <nav className="cellar-tabs" aria-label="Cellar departments">
@@ -329,6 +378,7 @@ export function Cellar(props: Props) {
             ['fermentation', 'Fermentation'],
             ['reserves', 'Reserves & blending'],
             ['lines', 'Wine lines'],
+            ['equipment', 'Space & tanks'],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -343,9 +393,21 @@ export function Cellar(props: Props) {
         ))}
       </nav>
       {tab === 'fermentation' ? (
-        <Fermentation {...props} onStored={() => setTab('reserves')} />
+        <Fermentation
+          {...props}
+          onStored={() => setTab('reserves')}
+          onEquipment={() => setTab('equipment')}
+        />
       ) : tab === 'reserves' ? (
-        <Reserves state={props.state} dispatch={props.dispatch} />
+        <Reserves
+          state={props.state}
+          dispatch={props.dispatch}
+          onResearch={(id) => props.navigate('research', id)}
+        />
+      ) : tab === 'equipment' ? (
+        <div className="operations-page">
+          <CellarEquipment state={props.state} dispatch={props.dispatch} />
+        </div>
       ) : (
         <WineLines state={props.state} />
       )}
@@ -357,8 +419,16 @@ function Fermentation({
   dispatch,
   navigate,
   onStored,
-}: Props & { onStored: () => void }) {
+  onEquipment,
+}: Props & { onStored: () => void; onEquipment: () => void }) {
   const [oak, setOak] = useState(false);
+  const used = new Set(state.batches.flatMap((b) => b.tankIds));
+  const groups = [
+    ...state.batches.map((batch) => ({ batch, ids: batch.tankIds })),
+    ...state.cellar.tanks
+      .filter((t) => !used.has(t.id))
+      .map((t) => ({ batch: undefined, ids: [t.id] })),
+  ].sort((a, b) => Math.min(...a.ids) - Math.min(...b.ids));
   return (
     <div className="operations-page">
       <div className="section-intro">
@@ -372,8 +442,17 @@ function Fermentation({
         </div>
         <span className="capacity-chip">
           <Icon name="barrel" />
-          {state.batches.length} / {tankCount(state)} tanks occupied
+          {occupiedTankCount(state)} / {tankCount(state)} tanks occupied
         </span>
+      </div>
+      <div className="cellar-equipment-link">
+        <span>
+          {state.cellar.bays - tankCount(state)} empty bays · New tanks hold 150
+          L each
+        </span>
+        <button className="text-button" onClick={onEquipment}>
+          Buy tanks & expand cellar <ArrowRight size={15} />
+        </button>
       </div>
       {state.grapes.length > 0 && (
         <section className="grape-arrivals">
@@ -388,58 +467,87 @@ function Fermentation({
                 checked={oak}
                 onChange={(e) => setOak(e.target.checked)}
               />{' '}
-              French oak · $320 <span className="subtle">/ steel · $140</span>
+              French oak · $320 per tank{' '}
+              <span className="subtle">/ steel · $140 per tank</span>
             </label>
           </div>
-          {state.grapes.map((g) => (
-            <div className="arrival" key={g.id}>
-              <div className="arrival-icon">
-                <Icon name="grape" size={27} />
+          {state.grapes.map((g) => {
+            const plan = fermentationPlan(state, g.kg, oak);
+            return (
+              <div className="arrival" key={g.id}>
+                <div className="arrival-icon">
+                  <Icon name="grape" size={27} />
+                </div>
+                <div className="arrival-description">
+                  <h4>{getVariety(state, g.variety).name}</h4>
+                  {state.estates.length > 1 && (
+                    <small>{getEstate(state, g.estateId ?? 1).name}</small>
+                  )}
+                  <p>
+                    {g.kg} kg · {g.quality}/100 quality · makes{' '}
+                    {grapeLiters(g.kg)} L
+                  </p>
+                  <span className="warning-text">
+                    <Clock3 size={12} />{' '}
+                    {state.week - g.picked >= grapeStorageWeeks(state)
+                      ? 'Process now — refrigeration stopped'
+                      : `Process within ${grapeStorageWeeks(state) - (state.week - g.picked)} weeks`}
+                  </span>
+                </div>
+                <button
+                  className="text-button"
+                  onClick={() => dispatch({ type: 'sellGrapes', id: g.id })}
+                >
+                  Sell grapes · {money(g.kg * 3)}
+                </button>
+                <div className="fermentation-order">
+                  <button
+                    className="button primary"
+                    disabled={plan.missing > 0 || state.cash < plan.cost}
+                    onClick={() => dispatch({ type: 'ferment', id: g.id, oak })}
+                  >
+                    {plan.missing > 0
+                      ? 'More tanks needed'
+                      : `Ferment · ${money(plan.cost)}`}
+                    <ArrowRight size={16} />
+                  </button>
+                  <small>
+                    {plan.missing > 0
+                      ? `Need ${plan.missing} L more empty tank capacity`
+                      : `${plan.fills.length} tank${plan.fills.length === 1 ? '' : 's'} · ${plan.fills.map((f) => `${f.liters} L`).join(' + ')}`}
+                  </small>
+                  {plan.missing === 0 && state.cash < plan.cost && (
+                    <small>Need {money(plan.cost - state.cash)} more</small>
+                  )}
+                </div>
               </div>
-              <div className="arrival-description">
-                <h4>{getVariety(state, g.variety).name}</h4>
-                <p>
-                  {g.kg} kg · {g.quality}/100 quality · makes{' '}
-                  {grapeLiters(g.kg)} L
-                </p>
-                <span className="warning-text">
-                  <Clock3 size={12} /> Process within{' '}
-                  {3 - (state.week - g.picked)} weeks
-                </span>
-              </div>
-              <button
-                className="text-button"
-                onClick={() => dispatch({ type: 'sellGrapes', id: g.id })}
-              >
-                Sell grapes · {money(g.kg * 3)}
-              </button>
-              <button
-                className="button primary"
-                disabled={
-                  state.batches.length >= tankCount(state) ||
-                  state.cash < (oak ? 320 : 140)
-                }
-                onClick={() => dispatch({ type: 'ferment', id: g.id, oak })}
-              >
-                Start fermentation
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </section>
       )}
       <div className="section-line">
         <h3>The cellar floor</h3>
-        <span className="subtle">400 L capacity per tank</span>
+        <span className="subtle">
+          Each harvest stays together through fermentation & aging
+        </span>
       </div>
       <div className="tank-grid">
-        {Array.from({ length: tankCount(state) }, (_, index) => {
-          const b = state.batches[index];
+        {groups.map(({ batch: b, ids }) => {
+          const capacity = ids.reduce(
+            (n, id) =>
+              n + state.cellar.tanks.find((t) => t.id === id)!.capacity,
+            0,
+          );
           return (
-            <div className={`tank-card ${b ? 'occupied' : ''}`} key={index}>
+            <div
+              className={`tank-card ${b ? 'occupied' : ''}`}
+              key={ids.join('-')}
+            >
               <div className="tank-top">
                 <span className="eyebrow">
-                  TANK {String(index + 1).padStart(2, '0')}
+                  {ids.length > 3
+                    ? `${ids.length} TANKS`
+                    : `TANK${ids.length > 1 ? 'S' : ''} ${ids.map((id) => String(id).padStart(2, '0')).join(' + ')}`}
                 </span>
                 <span
                   className={`status-tag ${b?.stage === 'ready' ? 'ripe' : ''}`}
@@ -453,88 +561,123 @@ function Fermentation({
                     : 'Available'}
                 </span>
               </div>
-              <div className="tank-illustration">
-                <svg viewBox="0 0 180 155" width="170" aria-hidden="true">
-                  <ellipse cx="95" cy="139" rx="56" ry="9" fill="#413e2f0c" />
-                  <path
-                    d="M53 116v24M127 116v24"
-                    stroke="#999d89"
-                    strokeWidth="6"
-                  />
-                  <path
-                    d="M43 34V114Q90 146 137 114V34"
-                    fill={b?.oak ? '#c5a077' : '#bec5b5'}
-                  />
-                  <path
-                    d="M98 47V133Q121 130 137 114V34Z"
-                    fill={b?.oak ? '#ad8963' : '#a6b19f'}
-                  />
-                  <ellipse
-                    cx="90"
-                    cy="34"
-                    rx="47"
-                    ry="21"
-                    fill={b?.oak ? '#d5b48c' : '#d9dece'}
-                  />
-                  <ellipse
-                    cx="90"
-                    cy="34"
-                    rx="35"
-                    ry="14"
-                    fill={b?.oak ? '#bf9a72' : '#c7cebd'}
-                  />
-                  <path d="M83 16V8H98V17" fill="#adb8a2" />
-                  <path
-                    d="M43 56Q90 82 137 56M43 105Q90 133 137 105"
-                    fill="none"
-                    stroke={b?.oak ? '#81725a' : '#9da991'}
-                    strokeWidth="4"
-                  />
-                  <rect
-                    x="64"
-                    y="73"
-                    width="31"
-                    height="29"
-                    rx="3"
-                    fill="#f5f2df"
-                  />
-                  <text
-                    x="79"
-                    y="85"
-                    textAnchor="middle"
-                    fontSize="6"
-                    fill="#817c65"
-                  >
-                    TERROIR
-                  </text>
-                  <text
-                    x="79"
-                    y="95"
-                    textAnchor="middle"
-                    fontSize="7"
-                    fill="#817c65"
-                  >
-                    {b ? `Y${b.year}` : 'EMPTY'}
-                  </text>
-                  <path
-                    d="M119 105h15v7"
-                    stroke="#6f7f6a"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  {b?.stage === 'fermenting' && (
-                    <g className="ferment-bubbles" fill="#b5bf9e">
-                      <circle cx="81" cy="2" r="3" />
-                      <circle cx="99" cy="-4" r="2" />
-                    </g>
-                  )}
-                </svg>
+              <div
+                className={`tank-illustration tank-vessels ${ids.length > 3 ? 'many-tanks' : ''}`}
+              >
+                {ids.map((id, index) => {
+                  const tank = state.cellar.tanks.find((t) => t.id === id)!;
+                  const earlierCapacity = ids
+                    .slice(0, index)
+                    .reduce(
+                      (n, earlier) =>
+                        n +
+                        state.cellar.tanks.find((t) => t.id === earlier)!
+                          .capacity,
+                      0,
+                    );
+                  const filled = b
+                    ? Math.min(
+                        tank.capacity,
+                        Math.max(0, b.liters - earlierCapacity),
+                      )
+                    : 0;
+                  return (
+                    <div className="tank-vessel" key={id}>
+                      <svg viewBox="0 0 180 155" width="170" aria-hidden="true">
+                        <ellipse
+                          cx="95"
+                          cy="139"
+                          rx="56"
+                          ry="9"
+                          fill="#413e2f0c"
+                        />
+                        <path
+                          d="M53 116v24M127 116v24"
+                          stroke="#999d89"
+                          strokeWidth="6"
+                        />
+                        <path
+                          d="M43 34V114Q90 146 137 114V34"
+                          fill={b?.oak ? '#c5a077' : '#bec5b5'}
+                        />
+                        <path
+                          d="M98 47V133Q121 130 137 114V34Z"
+                          fill={b?.oak ? '#ad8963' : '#a6b19f'}
+                        />
+                        <ellipse
+                          cx="90"
+                          cy="34"
+                          rx="47"
+                          ry="21"
+                          fill={b?.oak ? '#d5b48c' : '#d9dece'}
+                        />
+                        <ellipse
+                          cx="90"
+                          cy="34"
+                          rx="35"
+                          ry="14"
+                          fill={b?.oak ? '#bf9a72' : '#c7cebd'}
+                        />
+                        <path d="M83 16V8H98V17" fill="#adb8a2" />
+                        <path
+                          d="M43 56Q90 82 137 56M43 105Q90 133 137 105"
+                          fill="none"
+                          stroke={b?.oak ? '#81725a' : '#9da991'}
+                          strokeWidth="4"
+                        />
+                        <rect
+                          x="64"
+                          y="73"
+                          width="31"
+                          height="29"
+                          rx="3"
+                          fill="#f5f2df"
+                        />
+                        <text
+                          x="79"
+                          y="85"
+                          textAnchor="middle"
+                          fontSize="6"
+                          fill="#817c65"
+                        >
+                          TERROIR
+                        </text>
+                        <text
+                          x="79"
+                          y="95"
+                          textAnchor="middle"
+                          fontSize="7"
+                          fill="#817c65"
+                        >
+                          {b ? `Y${b.year}` : 'EMPTY'}
+                        </text>
+                        <path
+                          d="M119 105h15v7"
+                          stroke="#6f7f6a"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        {b?.stage === 'fermenting' && (
+                          <g className="ferment-bubbles" fill="#b5bf9e">
+                            <circle cx="81" cy="2" r="3" />
+                            <circle cx="99" cy="-4" r="2" />
+                          </g>
+                        )}
+                      </svg>
+                      {b && (
+                        <small>
+                          #{id} · {filled} / {tank.capacity} L
+                        </small>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               {b ? (
                 <>
                   <h3>{getVariety(state, b.variety).name}</h3>
                   <p className="tank-detail">
-                    Year {b.year} · {b.liters} L ·{' '}
+                    Year {b.year} · {b.liters} / {capacity} L ·{' '}
                     {b.oak ? 'French oak' : 'Stainless steel'}
                   </p>
                   <div className="tank-measure">
@@ -565,13 +708,16 @@ function Fermentation({
                         className="button secondary"
                         onClick={() => dispatch({ type: 'age', id: b.id })}
                       >
-                        Let it age
+                        {ids.length > 1
+                          ? `Age all ${ids.length} tanks`
+                          : 'Let it age'}
                       </button>
                     )}
                     <button
                       className="button primary"
                       disabled={
-                        b.stage === 'fermenting' || state.reserves.length >= 64
+                        b.stage === 'fermenting' ||
+                        state.reserves.length >= ESTATE_LIMITS.reserves
                       }
                       onClick={() => {
                         if (dispatch({ type: 'reserve', id: b.id })) onStored();
@@ -579,7 +725,9 @@ function Fermentation({
                     >
                       {b.stage === 'fermenting'
                         ? 'Fermenting…'
-                        : 'Move to reserves'}
+                        : ids.length > 1
+                          ? `Move ${ids.length} tanks to reserves`
+                          : 'Move to reserves'}
                       <Icon name="glass" size={15} />
                     </button>
                   </div>
@@ -588,7 +736,8 @@ function Fermentation({
                 <>
                   <h3>A little breathing room.</h3>
                   <p className="tank-detail">
-                    Harvest grapes to start a new batch.
+                    {capacity} L available · Harvest grapes to start a new
+                    batch.
                   </p>
                   <button
                     className="text-button"
@@ -627,8 +776,10 @@ function Fermentation({
       <div className="cellar-note">
         <Icon name="help" size={17} />
         <p>
-          Move finished wine into reserves to free its tank. Age for up to 8
-          weeks before storage. Blend and bottle whenever you’re ready.
+          Great wine starts with healthy, fully ripe grapes suited to their
+          site. New batches gain up to {CELLAR_QUALITY.oakMaturity} points from
+          oak aging or {CELLAR_QUALITY.steelMaturity} in steel over 8 weeks.
+          Move finished wine to reserves to free all of its tanks.
         </p>
       </div>
     </div>
@@ -647,6 +798,7 @@ function WineCard({
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(w.label);
   const [priceDraft, setPriceDraft] = useState<string | null>(null);
+  const forecast = demandForecast({ ...w, listed: true }, state);
   return (
     <article className="wine-card">
       <div className="wine-card-main">
@@ -790,17 +942,28 @@ function WineCard({
                     dispatch({
                       type: 'price',
                       id: w.id,
-                      price: fairPrice(w, state.reputation),
+                      price: retailPrice(w, state),
                     })
                   }
                 >
-                  Suggested: {money(fairPrice(w, state.reputation))}{' '}
+                  Suggested: {money(retailPrice(w, state))}{' '}
                   <ArrowUpRight size={12} />
                 </button>
                 <span>
-                  ~{demand({ ...w, listed: true }, state)} bottles / week
+                  {forecast.low === forecast.high
+                    ? forecast.low
+                    : `${forecast.low}–${forecast.high}`}{' '}
+                  bottles next week
                 </span>
               </div>
+              <p className="fine-print">
+                {state.week - w.bottled} week
+                {state.week - w.bottled === 1 ? '' : 's'} since bottling ·
+                Interest tapers over years.
+              </p>
+              <p className="fine-print">
+                {forecast.outlook}. Weekly sales vary.
+              </p>
               <button
                 className={`button ${w.listed ? 'secondary' : 'primary'} wide`}
                 onClick={() => dispatch({ type: 'list', id: w.id })}
@@ -822,7 +985,7 @@ function WineCard({
                 onClick={() => dispatch({ type: 'wholesale', id: w.id })}
               >
                 Sell all wholesale ·{' '}
-                {money(w.bottles * wholesalePrice(w, state.reputation))}
+                {money(w.bottles * wholesalePrice(w, state.reputation, state))}
                 <ArrowUpRight size={13} />
               </button>
             </>
@@ -908,8 +1071,12 @@ export function Market({ state, dispatch, navigate }: Props) {
               <Icon name="shop" />
               <h3>The wine shop</h3>
               <p>
-                Listed wines sell each week. Higher prices mean fewer customers.
-                Reputation helps bring them back.
+                Above 90 points, each extra point commands a larger price
+                premium. Reputation strengthens that premium. Use the suggested
+                price and sales forecast to find your market. Interest fades
+                gradually over several years. Seasons, grape trends, and visitor
+                surges or slumps move demand up and down. The range allows for
+                weekly surprises; incoming judging results can lift it further.
               </p>
             </div>
             <div>
@@ -924,8 +1091,9 @@ export function Market({ state, dispatch, navigate }: Props) {
               <Icon name="glass" />
               <h3>A place at your table</h3>
               <p>
-                Build a tasting terrace for $140 in weekly visitor income and
-                higher demand for your bottles.
+                Visitor facilities and specialist teams can raise income and
+                wine demand. Review their running costs and seasonal returns in
+                Build.
               </p>
             </div>
           </div>
@@ -934,66 +1102,42 @@ export function Market({ state, dispatch, navigate }: Props) {
     </div>
   );
 }
-export function Improvements({ state, dispatch }: Props) {
+export function Improvements({
+  state,
+  dispatch,
+  navigate,
+  landOpen,
+  onTabChange,
+}: Props & { landOpen: boolean; onTabChange: (open: boolean) => void }) {
   return (
-    <div className="operations-page">
-      <div className="section-intro">
-        <div>
-          <span className="eyebrow">PUT DOWN ROOTS</span>
-          <h2>A little better, every season.</h2>
-          <p>Invest in the details that make a vineyard your own.</p>
-        </div>
-      </div>
-      <div className="upgrade-list">
-        {Object.entries(UPGRADES).map(([id, u], i) => {
-          const owned = state.upgrades.includes(id as Upgrade);
-          return (
-            <article className="upgrade" key={id}>
-              <span className="upgrade-number">0{i + 1}</span>
-              <div className="upgrade-art">
-                <Icon name={u.icon as 'water'} size={43} />
-              </div>
-              <div className="upgrade-description">
-                <span className="eyebrow">
-                  {
-                    [
-                      'IN THE VINEYARD',
-                      'IN THE CELLAR',
-                      'AT THE ESTATE',
-                      'FOR THE WINEMAKER',
-                    ][i]
-                  }
-                </span>
-                <h3>{u.name}</h3>
-                <p>{u.text}</p>
-                <small>+ $15 weekly upkeep</small>
-              </div>
-              {owned ? (
-                <Done>Installed</Done>
-              ) : (
-                <button
-                  className="button primary"
-                  disabled={state.cash < u.cost}
-                  onClick={() =>
-                    dispatch({ type: 'upgrade', upgrade: id as Upgrade })
-                  }
-                >
-                  Build · {money(u.cost)}
-                  <Plus size={16} />
-                </button>
-              )}
-            </article>
-          );
-        })}
-      </div>
-      <div className="cellar-note">
-        <Icon name="leaf" size={17} />
-        <p>
-          Looking for more land? Select an available parcel on your estate map
-          to expand.
-        </p>
-      </div>
-    </div>
+    <>
+      <nav className="cellar-tabs" aria-label="Build departments">
+        <button
+          className={!landOpen ? 'active' : ''}
+          aria-current={!landOpen ? 'page' : undefined}
+          onClick={() => onTabChange(false)}
+        >
+          Buildings & equipment
+        </button>
+        <button
+          className={landOpen ? 'active' : ''}
+          aria-current={landOpen ? 'page' : undefined}
+          onClick={() => onTabChange(true)}
+        >
+          Land & estates
+        </button>
+      </nav>
+      {landOpen ? (
+        <Holdings state={state} dispatch={dispatch} navigate={navigate} />
+      ) : (
+        <Investments
+          state={state}
+          dispatch={dispatch}
+          onLand={() => onTabChange(true)}
+          onResearch={(id) => navigate('research', id)}
+        />
+      )}
+    </>
   );
 }
 export function Journal({ state, dispatch }: Props) {

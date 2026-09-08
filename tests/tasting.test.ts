@@ -1,3 +1,4 @@
+import { learn } from './helpers.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { act, deserialize, newGame, serialize } from '../src/game.ts';
@@ -51,42 +52,22 @@ test('blend analysis aggregates source years and intrinsic quality without chang
     profile = blendProfile(parts);
   assert.deepEqual(parts, copy);
   assert.equal(profile.base, 84);
-  assert.equal(profile.balance, 1);
-  assert.equal(profile.expected, 85);
-  assert.deepEqual([profile.low, profile.high], [82, 88]);
+  assert.ok(Math.abs(profile.compatibility - 2.56) < 1e-9);
+  assert.equal(profile.expected, 87);
+  assert.deepEqual([profile.low, profile.high], [84, 90]);
   assert.deepEqual(profile.sources, [
     { variety: 'cabernet', year: 2, quality: 92, share: 20 },
     { variety: 'merlot', year: 1, quality: 82, share: 80 },
   ]);
   assert.equal(profile.dominant!.variety, 'merlot');
-  assert.equal(profile.nextBalanceTarget, 66.6);
 });
 
-test('displayed balance targets earn the next point and multiple vintages do not count as different grapes', () => {
-  for (const [share, balance, target] of [
-    [950, 0, 83.3],
-    [800, 1, 66.6],
-    [600, 2, 50],
-    [500, 3, null],
-  ] as const) {
-    const parts = [
-      { variety: 'merlot', year: 1, ml: share, quality: 80 },
-      { variety: 'cabernet', year: 2, ml: 1000 - share, quality: 80 },
-    ];
-    const p = blendProfile(parts);
-    assert.equal(p.balance, balance);
-    assert.equal(p.nextBalanceTarget, target);
-    if (target !== null) {
-      parts[0].ml = Math.round(target * 10);
-      parts[1].ml = 1000 - parts[0].ml;
-      assert.equal(assess(parts).balance, balance + 1);
-    }
-  }
+test('multiple vintages do not count as different grapes', () => {
   const single = stored().reserves[0].components.map((p) => ({
     ...p,
     variety: 'merlot',
   }));
-  assert.equal(blendProfile(single).balance, 0);
+  assert.equal(blendProfile(single).compatibility, 0);
   assert.equal(blendProfile(single).varietyCount, 1);
   assert.equal(blendProfile(single).sources.length, 2);
   assert.equal(blendProfile([]).dominant, null);
@@ -116,7 +97,10 @@ test('a cellar tasting charges once, consumes no inventory or time, and matches 
 });
 
 test('saved tastings stay fixed through partial bottles, new releases, and repeat requests', () => {
-  let s = act(stored(), { type: 'tasteReserve', id: 1 });
+  let s = act(learn(stored(), 'vintage_blending'), {
+    type: 'tasteReserve',
+    id: 1,
+  });
   const score = s.reserves[0].score,
     seed = s.seed;
   s = bottle(deserialize(serialize(s)), 40);
@@ -164,7 +148,10 @@ test('tasting bounds remain valid at score limits and a new blend receives its o
     assert.ok(profile.low >= 0 && profile.high <= 100);
     valid(tasted);
   }
-  let s = act(stored(), { type: 'tasteReserve', id: 1 });
+  let s = act(learn(stored(), 'vintage_blending'), {
+    type: 'tasteReserve',
+    id: 1,
+  });
   const previousScore = s.reserves[0].score;
   s.reserves.push({
     id: s.nextId++,
@@ -185,7 +172,7 @@ test('tasting bounds remain valid at score limits and a new blend receives its o
   const newBlend = s.reserves.at(-1)!;
   assert.equal(newBlend.score, null);
   assert.equal(assess(newBlend.components).base, 84.7);
-  assert.equal(assess(newBlend.components).balance, 1);
+  assert.ok(Math.abs(assess(newBlend.components).compatibility - 2.56) < 1e-9);
   assert.equal(volume(newBlend.components), 10000);
   valid(s);
 });

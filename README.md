@@ -2,6 +2,12 @@
 
 A playable browser winery game with an original flat, illustrated estate, seasonal viticulture, a complete production economy, and persistent saves.
 
+Play online at [winery.tony-dong.com](https://winery.tony-dong.com/).
+
+## Design conventions
+
+The [Terroir style guide](docs/style-guide.md) records the palette, typography, layout, controls, illustration language, regional identities, motion, and responsive conventions. Read it before changing the UI. [AGENTS.md](AGENTS.md) directs coding agents to the same guide and defines the verification expected for future changes.
+
 ## Run
 
 ```sh
@@ -12,7 +18,7 @@ npm run dev -- --port 5173
 Open [localhost:5173](http://localhost:5173). Keep using the same hostname and port to access the same browser save.
 
 ```sh
-npm test          # 62 simulation and save-integrity tests
+npm test          # Simulation and save-integrity tests
 npm run build    # TypeScript checks and production bundle
 npm run preview  # Serve the production build locally
 ```
@@ -21,10 +27,10 @@ Requires Node.js 22 or newer. Built with React, TypeScript, Vite, and Zod. All a
 
 ## Your first vintage
 
-1. Pick or randomize one of eight wine regions and name your estate. Start with $12,500, three parcels, two regional grapes, two tanks, and 600 bottling kits. Time is paused.
+1. Pick or randomize one of eight wine regions and name your estate. Start with $12,500, three parcels, two regional grapes, two 150 L tanks in a four-bay cellar, and 600 bottling kits. Time is paused.
 2. Select **South slope**. Tend the vines if you like, then harvest its ripe regional grape.
-3. In **Cellar**, choose stainless steel or French oak and start fermentation. Fresh grapes spoil after three game weeks.
-4. Advance two weeks. Age for up to eight weeks if you like, then **Move to reserves** to free the tank. In **Reserves & blending**, store the wine, blend it with other grapes and vintages, or bottle it on its own.
+3. In **Cellar**, choose stainless steel or French oak and review the required tanks and processing cost. Large harvests fill multiple tanks. Fresh grapes spoil after three game weeks.
+4. Advance two weeks. Age for up to eight weeks if you like, then **Move to reserves** to free all tanks used by that harvest. In **Reserves & blending**, store the wine, blend it with other grapes and vintages, or bottle it on its own.
 5. Bottle any amount into a new or existing wine line. Choose a bottle and label for a new line, then watch its tasting score appear. In **Wine shop**, set its price and list the release. Customers buy each game week. Wholesale sells the entire remaining stock immediately at a lower price.
 6. Track milestones in **Journal**, plant your empty parcel, buy more land, and invest in irrigation, tanks, a tasting terrace, or temperature control.
 
@@ -34,27 +40,74 @@ The year has 12 game weeks: spring 1–3, summer 4–6, autumn 7–9, winter 10�
 
 ## Regions, research, and breeding
 
-Choose Bordeaux, Burgundy, Napa Valley, Mosel, Tuscany, Rioja, Mendoza, or Barossa. Regional favorites start unlocked, cost 15% less to plant, and enjoy local growing advantages. Six classic grapes are always available, so other-region planting is possible from the start. Research unlocks the full 24-variety catalog everywhere.
+Choose Bordeaux, Burgundy, Napa Valley, Mosel, Tuscany, Rioja, Mendoza, or Barossa. New estates know only their region’s **two founding grapes**. Every other grape has an individual field study. Regional favorites keep their growing advantages and 15% planting discount, and their studies cost 20% less cash and take two fewer study weeks. Buying another estate does not unlock grapes.
 
-**Research** has three departments: studies, a searchable grape library, and the breeding nursery. Knowledge comes from weekly observation (+6, or +8 after Vine science), harvesting (+12), and bottling (+1 for every 40 bottles produced). Research consumes both funds and knowledge and completes as game weeks pass. One study and one breeding trial can run concurrently.
+**Research** contains **54 studies**: 30 techniques across vineyard science, cellar techniques, tourism/hospitality, and commerce/discovery, plus 24 individual grape studies. Search by technique, grape, or unlock; follow clickable prerequisites; filter by availability. Studies range from **6–72 weeks** and **$1,200–$180,000**. A game year has 12 weeks. Research costs are separate from buildings, teams, and planting.
 
-Complete **Vine science → Cross-pollination** to breed. Choose two unlocked parents, select regional adaptation, hardiness, or wine quality, and name your new grape. Trials cost $900 and 60 knowledge, and last four weeks (three after Field selection). Finished offspring can be planted, made into wine, sold, and crossed again. An estate can keep 60 custom varieties.
+Knowledge comes from weekly observation (+6; +2 after Vine science; +4 after Field notebooks), harvesting (+12), and bottling (+1 per 40 bottles). One prepaid study and one breeding trial can run concurrently. Studies can pause or be abandoned without a refund; restarting pays the full cost again. An operating research lab doubles progress and adds 10 knowledge per week.
 
-Use **Replace grape variety** on a planted parcel to remove its vines for $120, then buy replacement vines. Removing vines loses any unpicked crop and never grants a second harvest in the same year.
+Cellar foundations unlocks same-grape, same-vintage, same-estate lot blending. Varietal assemblage unlocks different grapes; Perpetual reserves unlocks different vintages; Regional cuvées unlocks different estates; Red & white experiments unlocks mixed wine colors. Basic harvesting, fermentation, reserve storage, analysis, and single-lot bottling remain available immediately. Every capital investment in Build requires a discovery, while cellar bays, tanks, and land remain direct purchases.
 
-To choose a different region, use **Save & settings → Start a new estate**. Previewing regions is reversible; only the final Start button replaces the save. Export first to keep multiple estates as files. See [regional research and balancing notes](docs/regions-and-research.md).
+For example: **Wine tourism → Visitor services → Hosted tastings** unlocks a tasting terrace, visitor center, and tasting room for separate purchase. The tasting room also needs an operating visitor center. Sommelier training additionally requires Sensory science; Wine & gastronomy and Destination stays open later hospitality options.
+
+Complete **Vine science → Nursery propagation → Cross-pollination** to breed. Trials cost **$7,500 and 160 knowledge**, and take **24 weeks** (18 after Field selection). Generational crosses unlocks hybrid parents; Aroma & finesse selection unlocks the Wine quality trait. Finished offspring can be planted, bottled, and sold. An estate can keep 60 custom varieties.
+
+Use **Replace grape variety** on a planted parcel to remove its vines for $120 at original plot size, then buy replacement vines. Removal and planting costs scale with expanded acreage. Removing vines loses any unpicked crop and never grants a second harvest in the same year.
+
+To restart in a different region, use **Save & settings → Start a new game**. Previewing regions is reversible; only the final Start button replaces the save. Export first to keep the previous game. Acquire additional regional estates through **Build → Land & estates** to keep playing the same business. See [regional research and balancing notes](docs/regions-and-research.md).
+
+## Expand your wine estates
+
+To grow more of a grape already planted, select its parcel on the **Estate** map and use **Grow more here → Expand plot**. Each purchase adds half the original acreage, with four expansions reaching three times the original size. The preview shows price, mature yield, and cellar tank needs. New rows on planted plots join the crop next spring; the current harvest stays unchanged. Each purchase adds $15 weekly upkeep, and care, planting, and harvest costs scale with size. For example, South slope grows from 1.2 to 1.8 ha for $1,800, taking its healthy Merlot yield from 360 to 540 kg once established. See [plot expansion rules](docs/plot-expansion.md).
+
+To add more parcels or properties, open **Build → Land & estates**, or use **Expand your holdings** above the estate map.
+
+- **Add a vineyard district:** six empty parcels totaling 6.8 ha. Cellar space and tanks are purchased separately. Districts cost $18,000, then $27,000, then $36,000 at each estate, and add $185 weekly upkeep. Plant vines separately.
+- **Acquire a regional estate:** choose an unowned region and name the estate (or generate a name). The first acquisition costs $28,000; each later acquisition costs $8,000 more. Includes three empty parcels totaling 3 ha and three neighboring parcels available to buy; cellar equipment is separate. Adds $175 weekly upkeep before further purchases.
+- **Manage the portfolio:** use the estate selector above the map and its vineyard district tabs. All estates grow every week, with their own regional soil and climate. Switching estates consumes no time or money. Research, equipment, cash, supplies, reserves, wine lines, and the calendar are shared.
+- **Keep provenance:** grape lots retain their origin through fermentation, storage, blending, bottling, and history. Combine wines from different estates and vintages while retaining the source breakdown. Estate diversity alone gives no grape-compatibility bonus.
+
+Own one estate in each of the eight regions, with up to four districts per estate: **192 parcels and 217.6 ha before individual plot expansions**, or **652.8 ha with every parcel fully enlarged**. Existing vines, inventory, scores, money, and history survive migration. **Start a new game** in settings remains the separate reset flow.
+
+See [estate expansion rules](docs/estates.md) for costs, save compatibility, and simulation boundaries.
+
+## Facilities, staff, and running costs
+
+**Build → Buildings & equipment** now has 14 investments grouped into vineyard/cellar, hospitality, sales, and research. Prices range from **$6,000 to $180,000**, with **$180–$3,000 weekly running costs per investment**. Existing irrigation, tasting terrace, and winemaker’s bench purchases remain owned and now use their listed running costs.
+
+Visitor centers, tasting rooms, sommeliers, restaurants, and a guesthouse earn visitor income or improve wine demand. Attendance and room occupancy depend on reputation and season; there is no guaranteed $140 visitor payment. The page previews current hospitality income after costs, each purchase's incremental return before wine sales, and its purchase price plus eight weeks of operating costs. Wine sales still depend on stock, quality, prices, and the market.
+
+Optical sorting improves new harvests, viticulture staff support larger vineyards, refrigeration extends fresh-grape life to five weeks, and the research/nursery lab accelerates studies and breeding. Wine-club and export teams target older releases and premium wines. Benefits only apply while an investment and its prerequisites operate.
+
+Use **Suspend** to stop benefits and reduce a bill to **25%**, rounded up. Ownership is permanent; there is no refund. Dependents also suspend and must be resumed individually. Resuming requires cash for one full week of total estate upkeep. If funds cannot cover the weekly bill, investments suspend automatically after that week's full charge; reduced maintenance applies afterward. Equipment capacity, purchased land, and existing wine scores remain intact.
+
+See [investment costs and economy](docs/investments.md) for the complete catalog and simulation rules.
+
+## Cellar floor space and tanks
+
+Open **Cellar → Space & tanks**, or **Build → Buildings & equipment → Cellar space & tanks**.
+
+- New games have **two 150 L tanks and four tank bays**. Buy additional 150 L tanks for **$1,200 each**, including several at once.
+- Expand the floor by **four empty bays for $3,200**. Each later extension costs $1,600 more and adds $15 weekly upkeep. Tanks are purchased separately; vineyard purchases do not add equipment or bays.
+- A harvest automatically uses enough empty tanks for all its wine. A 360 kg harvest makes 252 L, filling one tank with 150 L and another with 102 L. Steel processing costs **$140 per occupied tank**; oak costs **$320**. The entire order is rejected without charges if there is insufficient capacity or money.
+- Tanks cannot share different harvests, even if partially full. A harvest's tanks ferment and age together; transferring it to reserves frees every assigned tank. The cellar supports up to **256 installed tanks**.
+- Old saves retain all previously owned **400 L tanks**, occupied wine, funds, and existing upkeep. New purchases are 150 L. See [cellar equipment rules](docs/cellar-equipment.md).
 
 ## Reserves, blends, and house labels
 
-The cellar has **Fermentation**, **Reserves & blending**, and **Wine lines** departments. Store up to 64 reserve lots, indefinitely, without occupying fermentation tanks. Aging improves quality in the tank before transfer; time in reserves preserves it.
+The cellar has **Fermentation**, **Reserves & blending**, **Wine lines**, and **Space & tanks** departments. Store up to 256 reserve lots, indefinitely, without occupying fermentation tanks. Aging improves quality in the tank before transfer; time in reserves preserves it.
 
 Select two or more lots and enter liters to create a blend. Mix different grape varieties, harvest years, and existing blends. Only the selected amounts are consumed, and each source grape and year remains in the recipe. Liquid is measured internally in whole milliliters, including the remainder after filling 750 mL bottles.
 
 Use **Generate** beside **Name this blend** for a name inspired by your estate's region. Click again for another suggestion, or edit it before creating the blend.
 
-A recipe’s potential score is its weighted wine quality plus up to three points for varietal balance. A final tasting adds −3 to +3 points, clamped to 0–100, and appears in an animated bottle reveal. A reserve is assessed once: additional bottles and reloads keep its score. Reblending calculates the bonus from the original recipe, without stacking previous bonuses. Reduced-motion users see the final score immediately.
+A recipe’s potential score combines weighted source quality with **grape compatibility (−6 to +4 points)**. Grape choices and proportions matter: Bordeaux reds, Rhône partners, and Sauvignon Blanc–Sémillon complement each other; some contrasting styles lose points. Petit Verdot works as an accent but can overwhelm a recipe at high proportions. Unfamiliar pairings can be neutral, and a single grape can still make excellent wine. A final tasting adds −3 to +3 points, clamped to 0–100, and appears in an animated bottle reveal. A reserve is assessed once: additional bottles and reloads keep its score. Reblending calculates compatibility from the original recipe, without stacking previous bonuses. Bred varieties inherit their parents’ pairing tendencies through their ancestry. Reduced-motion users see the final score immediately.
 
-The blending bench previews the estimated range as you change quantities. Expand **Source quality & blending advice** for each grape and vintage's quality, its share of the recipe, and the proportion needed for the next balance point. Different vintages of the same grape do not add varietal balance; higher-quality sources can improve the base score while changing the balance bonus.
+**90+ is exceptional.** New starting harvests score 67–75 depending on region. Health, full ripeness, climate, matching soil, and grape finesse matter more than automatic cellar bonuses. Each finesse point contributes two harvest-quality points. Temperature control adds 3 points to new fermentations; new batches gain up to 6 from oak aging or 3 in steel over eight weeks, with diminishing returns. Poor fruit cannot become a great wine just by waiting. High-finesse grapes, careful cultivation, breeding, and thoughtful blends provide routes into the 90s.
+
+Existing grapes, stored recipes, and recorded bottle/tasting scores are preserved. Batches already in the cellar keep their original aging curve; newly started fermentations use the rebalanced curve, which persists in saves.
+
+The blending bench previews the estimated range as you change quantities. Expand **Source quality & blending advice** for each grape and vintage's quality, its share, and the complementary, neutral, or conflicting pairings behind the score. Pair contributions reflect the current proportions; tiny additions have tiny effects. Different vintages of the same grape do not earn a pairing bonus. Saved tastings remain final even when current recipe analysis changes. See [blend compatibility](docs/blend-compatibility.md) for the game model, examples, and source inspiration.
 
 Every stored lot has **Analyze & score**. Analysis is free; an optional **Taste & score · $60** fixes its final score before bottling, without consuming wine, kits, or game time. After tasting, use **Bottle this reserve** to create a release. The lot becomes **Tasting notes**, where its score remains available, including after partial bottling and reloading. You can also bottle an untasted reserve directly and reveal its score as usual. Independent judging in the wine shop is a separate review for the bottled release.
 
@@ -73,6 +126,25 @@ Each release in **Wine shop → Current wines** offers two paid actions:
 
 Set any whole-dollar shelf price from **$1 to $1,000** using the exact price field or slider. Valid changes save immediately; incomplete or invalid input returns to the saved price when you leave the field. Click **Suggested: $…** to apply the current suggestion. Marketing and medals raise willingness to pay; they do not change your chosen selling price automatically. Demand bonuses add together and still respond to pricing and stock. Prices far above suggested value can result in no sales; the forecast updates as you adjust. Fees are charged from estate funds, with no bottle consumption or extra cash awards.
 
+Retail sales taper over several years from each release's bottling date. Underlying interest follows `20% + 80% × 2^(-weeks / 36)`: 100% at bottling, about 83% after one game year (12 weeks), 60% after three years, 40% after six, and 25% after twelve, approaching a lasting 20% audience. This is six times the previous decay period. Age alone does not reduce the wine's score, suggested value, or wholesale offer.
+
+Actual demand moves above and below that longer curve. Shop traffic changes smoothly over 18-week periods (75–125%); individual grape popularity changes over 12-week periods (70–130%). Seasonal tastes favor whites in summer and reds in winter by up to 18%, weighted by the blend's composition. Three-week market windows can bring a wine fair (+45%) or quiet tourism (−35%); each has a 14% chance per window. Each release also gets an independent weekly shopper variation of ±35%. Pricing, reputation, the tasting terrace, marketing, and medals continue to apply. Sales are rounded down to whole bottles and capped by remaining stock.
+
+The shop shows a **forecast range** for the next weekly sale, weeks since bottling, and the strongest market influence. Events show how many sales weeks remain. Judging results arriving that week can raise actual sales above the range. A dedicated saved market seed keeps forecasts and sales reproducible: reloading, renaming, changing prices back and forth, or unrelated cellar actions do not reroll shoppers. Pausing a listing does not freeze release age or the market. Each new release has its own bottling date and weekly shopper pattern. Older saves receive a default market seed and keep recorded bottling dates, inventory, funds, prices, and sales history.
+
+Above **90 points**, suggested value includes a quadratic premium: each additional point adds more value than the previous one. Reputation strengthens that premium. For example, at 50 reputation before medals or marketing:
+
+| Bottle score | Suggested price |
+| --- | --- |
+| 90 | $31 |
+| 91 | $38 |
+| 92 | $56 |
+| 95 | $183 |
+| 98 | $417 |
+| 100 | $634 |
+
+This premium uses the original bottle score. Independent judging adds its medal's price and demand bonuses; it does not replace the bottle score. The same value curve feeds shop demand and wholesale offers. Existing releases gain the new suggested valuation while keeping their chosen shelf prices until you change them.
+
 Campaign countdowns and judging results persist in saves. The panel's outcome is fixed when you enter, so reloading while waiting does not reroll it. The original bottle rating stays separate from the panel score; reviews and medals remain visible in **Wine history** and **Cellar → Wine lines**, including after sellout. Older saves start with no campaigns or judging entries and keep existing prices, funds, and inventory.
 
 Milestones are automatic progress markers and do not grant money. The journal shows completed achievements and the estate highlights the next unfinished milestone. Previously earned cash and historical ledger entries remain intact in older saves.
@@ -81,8 +153,8 @@ Milestones are automatic progress markers and do not grant money. The journal sh
 
 - Every successful game action saves automatically to browser `localStorage` under `terroir.save.v1`.
 - **Save & settings → Export save** downloads a JSON file. **Import save** validates the entire state and previews the estate before replacing the open game.
-- A save contains the calendar, funds, plots, inventory, production, labels/prices, upgrades, orders, milestones, ledger, random-generator state, region, knowledge, research, breeding projects, and complete custom-grape lineages.
-- Version-one and version-two saves migrate automatically to version three. Existing land soils, vines, funds, inventory, and calendar are preserved; the legacy estate receives Bordeaux as its region. Old bottles keep their scores, prices, and stock, and become releases in house wine lines. Original production quantities are marked unrecorded when the old save did not track them. The storage key remains unchanged for compatibility.
+- A save contains the calendar, funds, plots, inventory, production, labels/prices, owned and suspended investments, orders, milestones, ledger, random-generator state, region, knowledge, research, breeding projects, complete custom-grape lineages, all estates and districts, the selected estate, purchased plot expansions and productive rows, wine origins, cellar bays, purchased tanks, and occupied tank assignments.
+- Version-one through version-five saves migrate automatically to version six, with the original property retained as the home estate and existing 400 L tanks preserved. Existing land soils, vines, funds, inventory, and calendar are preserved; the legacy estate receives Bordeaux as its region. Old bottles keep their scores, prices, and stock, and become releases in house wine lines. Original production quantities are marked unrecorded when the old save did not track them. Previously unlocked grapes and owned investments remain available. Paid legacy collection studies keep their original remaining time and promised grape unlocks. Completed legacy techniques receive their new prerequisites. The storage key remains unchanged for compatibility.
 - Invalid imports leave the current estate intact. Unreadable existing saves are preserved as a recovery copy when browser storage permits it. Failed storage writes show an explicit export reminder.
 - Other tabs on the same origin adopt incoming saves and pause their timers.
 - Saves are local to the browser and origin. There is no account or cloud synchronization. Export before clearing browser data, moving ports, deploying to a new address, or changing devices.
@@ -92,19 +164,34 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 
 ## Code map
 
+- `src/CellarEquipment.tsx` — shared tank purchasing and cellar expansion controls.
+- `src/PlotExpansion.tsx` — individual plot enlargement, yield forecasts, and costs.
+- `tests/plot-expansion.test.ts` — spring activation, scaled costs and crops, larger cellar batches, and save compatibility.
+
 - `src/game.ts`: pure game transitions, economy, deterministic seasons, and versioned save validation.
+- `src/market.ts`: longer release demand curves, seasonal tastes, grape popularity, visitor events, and reproducible weekly shopper variation.
 - `src/App.tsx`: application shell, timer, persistence, import/export, and dialogs.
-- `src/EstateMap.tsx`: interactive SVG estate and original vector art.
-- `src/Panels.tsx`: vineyard inspector, production, pricing, upgrades, ledger, and milestones.
+- `src/EstateMap.tsx`: interactive SVG estate districts and original vector art.
+- `src/Holdings.tsx`, `src/estates.ts`, `src/holdings.css`: estate selection, district expansion, regional acquisitions, and parcel addressing.
+- `tests/estates.test.ts`: estate migration, purchases, regional production, provenance, and full portfolio capacity.
+- `src/Panels.tsx`: vineyard inspector, production, pricing, ledger, and milestones.
+- `src/EstateInvestments.tsx`, `src/investments.ts`, `src/investments.css`: investment catalog, running costs, suspension, hospitality forecasts, and staff benefits.
+- `tests/investments.test.ts`: investment economy, prerequisites, suspension, production and sales benefits, and save compatibility.
 - `src/winemaking.ts`: reserve, recipe, label, and line schemas; exact volume allocation and blending quality.
 - `src/Reserves.tsx`: reserve storage, blending bench, bottling form, and line archive.
 - `src/BlendAnalysis.tsx`: live recipe analysis, source-quality advice, and paid cellar tasting.
 - `src/WinePresentation.tsx`: bottle artwork, provenance, and animated score reveal.
 - `tests/blending.test.ts`: cross-vintage blending, partial bottling, inherited labels, tasting persistence, and migration.
-- `tests/tasting.test.ts`: recipe advice thresholds, tasting costs, fixed scores, and save integrity.
-- `src/catalog.ts`: 24 grape definitions, eight regions, and six research projects.
-- `src/Regions.tsx`: new-estate region selection and regional illustrations.
-- `src/Research.tsx`: research progression, grape library, and breeding nursery.
+- `tests/tasting.test.ts`: source analysis, tasting costs, fixed scores, and save integrity.
+- `src/blendCompatibility.ts`: grape pairings, proportion effects, and inherited hybrid affinities.
+- `tests/compatibility.test.ts`: complementary and conflicting recipes, proportions, ancestry, bounds, and preview-to-bottle consistency.
+- `tests/quality.test.ts`: quality distribution, exceptional-wine progression, legacy maturation, and nonlinear pricing.
+- `src/catalog.ts`: 24 grape definitions, eight regions, and 54 research projects.
+- `src/Regions.tsx`: new-estate region selection.
+- `src/RegionLandscape.tsx`: distinct SVG postcards for all eight regions.
+- `src/Research.tsx` and `src/ResearchProjects.tsx`: research ledger, grape library, active studies, and breeding nursery.
+- `src/researchProgression.ts` and `src/research.css`: shared research terms, capability checks, and responsive ledger styles.
+- `tests/research-progression.test.ts`: individual studies, unlock gates, long projects, and legacy migration.
 - `src/expansion.css`: region and research layouts, including responsive behavior.
 - `tests/expansion.test.ts`: region, research, breeding, migration, and custom-wine tests.
 - `src/components.tsx`: shared controls and accessible modal behavior.
@@ -112,4 +199,4 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `docs/design-notes.md`: reference research, implemented choices, and possible future depth.
 - `docs/validation.md`: browser scenarios and current verification evidence.
 
-This is a local playable prototype. `npm run build` produces a static `dist/` directory that can be hosted on any static web host; no public deployment has been created.
+`npm run build` produces a static `dist/` directory that can be hosted on any static web host.

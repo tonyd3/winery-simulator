@@ -1,10 +1,14 @@
+import { districtForPlot, plotId } from './estates';
 import { useState } from 'react';
 import { Minus, Plus, Maximize2 } from 'lucide-react';
 import {
-  LAND,
   REGIONS,
   getVariety,
   getLand,
+  getEstate,
+  estatePlots,
+  estateArea,
+  hectares,
   calendar,
   readyToHarvest,
 } from './game';
@@ -194,20 +198,18 @@ export default function EstateMap({
   onCellar: () => void;
 }) {
   const [zoom, setZoom] = useState(1);
+  const estate = getEstate(state),
+    district = districtForPlot(selected);
   return (
     <div
       className="estate-map"
-      style={{ background: REGIONS[state.region].sky }}
+      style={{ background: REGIONS[estate.region].sky }}
     >
       <div className="map-heading">
         <span className="map-live-dot" /> ESTATE VIEW{' '}
         <span className="map-heading-divider" />{' '}
-        {state.plots.filter((p) => p.owned).length} parcels ·{' '}
-        {state.plots
-          .filter((p) => p.owned)
-          .reduce((a, p) => a + Number(LAND[p.id - 1].area), 0)
-          .toFixed(1)}{' '}
-        ha
+        {estatePlots(state).filter((p) => p.owned).length} parcels ·{' '}
+        {hectares(estateArea(state))} ha
       </div>
       <svg
         className="world"
@@ -321,7 +323,8 @@ export default function EstateMap({
               />
             ))}
           </g>
-          {[6, 4, 1, 3, 2, 5].map((id) => {
+          {[6, 4, 1, 3, 2, 5].map((local) => {
+            const id = plotId(estate.id, district, local);
             const p = state.plots.find((p) => p.id === id)!;
             const l = getLand(state, id);
             const ready = readyToHarvest(p, state.week);
@@ -332,7 +335,7 @@ export default function EstateMap({
                 transform={`translate(${l.x} ${l.y})`}
                 role="button"
                 tabIndex={0}
-                aria-label={`${l.name}, ${p.owned ? (p.variety ? getVariety(state, p.variety).name : 'empty parcel') : 'available to buy'}${ready ? ', ready to harvest' : ''}`}
+                aria-label={`${l.name}, ${p.owned ? (p.variety ? getVariety(state, p.variety).name : 'empty parcel') : 'available to buy'}${ready ? ', ready to harvest' : ''}${p.expansions ? `, expanded to ${l.area} hectares` : ''}`}
                 aria-pressed={active}
                 onClick={() => onSelect(id)}
                 onKeyDown={(e) => {
@@ -366,6 +369,27 @@ export default function EstateMap({
                   plot={p}
                   winter={calendar(state.week).season === 'Winter'}
                 />
+                {(p.expansions ?? 0) > 0 && (
+                  <g transform="translate(83 -18)">
+                    <rect
+                      x="-24"
+                      y="-10"
+                      width="48"
+                      height="18"
+                      rx="4"
+                      fill="#fcfaf0"
+                      stroke="#b7b888"
+                    />
+                    <text
+                      textAnchor="middle"
+                      y="2"
+                      fontSize="8.5"
+                      fill="#515440"
+                    >
+                      {l.area} ha
+                    </text>
+                  </g>
+                )}
                 {!p.owned && (
                   <g
                     transform="translate(0 -9)"
@@ -500,7 +524,7 @@ export default function EstateMap({
               letterSpacing="2"
               fill="#f8edce"
             >
-              BELLEVUE
+              {REGIONS[estate.region].name.toUpperCase()}
             </text>
           </g>
           <g transform="translate(565 365)">

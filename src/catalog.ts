@@ -466,74 +466,376 @@ export const REGIONS: Record<RegionId, Region> = {
     landmark: 'hills',
   },
 };
-export const RESEARCH_IDS = [
+export const RESEARCH_DEPARTMENTS = {
+  vineyard: 'Vineyard science',
+  cellar: 'Cellar techniques',
+  hospitality: 'Tourism & hospitality',
+  business: 'Commerce & discovery',
+  grapes: 'Individual grapes',
+} as const;
+export type ResearchDepartment = keyof typeof RESEARCH_DEPARTMENTS;
+export const TECHNIQUE_IDS = [
   'ampelography',
   'heritage',
+  'soil_mapping',
   'adaptation',
+  'precision_viticulture',
   'breeding',
-  'discovery',
   'selection',
+  'backcrossing',
+  'genomics',
+  'oenology',
+  'assemblage',
+  'vintage_blending',
+  'regional_blending',
+  'rose_trials',
+  'cellar_control',
+  'fruit_selection',
+  'cold_chain',
+  'sensory_science',
+  'tourism',
+  'visitor_services',
+  'hospitality',
+  'sommelier_training',
+  'culinary_tourism',
+  'estate_lodging',
+  'brand_strategy',
+  'direct_sales',
+  'export_trade',
+  'discovery',
+  'field_notebooks',
+  'research_methods',
 ] as const;
-export type ResearchId = (typeof RESEARCH_IDS)[number];
-export const RESEARCH: Record<
+export type TechniqueId = (typeof TECHNIQUE_IDS)[number];
+export type ResearchId = TechniqueId | `grape_${string}`;
+type Study = {
+  name: string;
+  knowledge: number;
+  cost: number;
+  weeks: number;
+  requires: ResearchId[];
+  text: string;
+  department: ResearchDepartment;
+  grape?: string;
+};
+const study = (
+  department: ResearchDepartment,
+  name: string,
+  knowledge: number,
+  cost: number,
+  weeks: number,
+  requires: ResearchId[],
+  text: string,
+): Study => ({ department, name, knowledge, cost, weeks, requires, text });
+export const TECHNIQUES = {
+  ampelography: study(
+    'vineyard',
+    'Vine science',
+    40,
+    1200,
+    6,
+    [],
+    'Gain 2 knowledge each week. Opens individual studies of classic grapes and nursery propagation.',
+  ),
+  heritage: study(
+    'vineyard',
+    'Nursery propagation',
+    80,
+    4500,
+    10,
+    ['ampelography'],
+    'Learn to establish imported vines. Opens individual heritage grape studies and cross-pollination; each grape needs its own study.',
+  ),
+  soil_mapping: study(
+    'vineyard',
+    'Soil & water mapping',
+    90,
+    7000,
+    12,
+    ['ampelography'],
+    'Unlocks drip irrigation for purchase and the path to a specialist viticulture team.',
+  ),
+  adaptation: study(
+    'vineyard',
+    'Climate adaptation',
+    160,
+    14000,
+    18,
+    ['heritage'],
+    'Reduce every grape’s climate mismatch by one level. Challenging imports become easier to grow.',
+  ),
+  precision_viticulture: study(
+    'vineyard',
+    'Precision viticulture',
+    220,
+    24000,
+    24,
+    ['soil_mapping', 'adaptation'],
+    'Unlocks the viticulture team: faster growth and healthier vines across your holdings.',
+  ),
+  breeding: study(
+    'vineyard',
+    'Cross-pollination',
+    220,
+    22000,
+    24,
+    ['heritage'],
+    'Open the breeding nursery. Cross two learned varieties in a separate 24-week, $7,500 field trial.',
+  ),
+  selection: study(
+    'vineyard',
+    'Field selection',
+    440,
+    65000,
+    40,
+    ['breeding', 'adaptation'],
+    'Add 2 resilience to every vine. New breeding trials take 18 weeks instead of 24.',
+  ),
+  backcrossing: study(
+    'vineyard',
+    'Generational crosses',
+    550,
+    85000,
+    52,
+    ['selection'],
+    'Use your own hybrid grapes as parents. Build a lineage over successive generations of field trials.',
+  ),
+  genomics: study(
+    'vineyard',
+    'Aroma & finesse selection',
+    900,
+    180000,
+    72,
+    ['backcrossing'],
+    'Unlock the Wine quality breeding trait: finer grapes with smaller crops and more delicate vines.',
+  ),
+  oenology: study(
+    'cellar',
+    'Cellar foundations',
+    35,
+    1500,
+    6,
+    [],
+    'Combine reserve lots of the same grape, vintage and estate. Single-lot bottling is available from the beginning.',
+  ),
+  assemblage: study(
+    'cellar',
+    'Varietal assemblage',
+    100,
+    7500,
+    14,
+    ['oenology'],
+    'Blend different grape varieties. Their proportions and compatibility determine the finished wine’s quality.',
+  ),
+  vintage_blending: study(
+    'cellar',
+    'Perpetual reserves',
+    220,
+    22000,
+    26,
+    ['assemblage'],
+    'Blend across vintages, carrying older reserves into new releases. Keep your best lots for future years.',
+  ),
+  regional_blending: study(
+    'cellar',
+    'Regional cuvées',
+    300,
+    38000,
+    30,
+    ['assemblage', 'adaptation'],
+    'Blend wine from different estates. Bring contrasting terroirs together in one release.',
+  ),
+  rose_trials: study(
+    'cellar',
+    'Red & white experiments',
+    260,
+    28000,
+    24,
+    ['assemblage'],
+    'Combine red and white grape components. Permission to experiment does not guarantee a harmonious blend.',
+  ),
+  cellar_control: study(
+    'cellar',
+    'Fermentation control',
+    110,
+    9000,
+    12,
+    ['oenology'],
+    'Unlocks the winemaker’s bench for purchase, adding temperature control to new fermentations.',
+  ),
+  fruit_selection: study(
+    'cellar',
+    'Selective fruit handling',
+    180,
+    18500,
+    20,
+    ['cellar_control'],
+    'Unlocks the optical sorting line for purchase. Better fruit selection improves future harvest quality.',
+  ),
+  cold_chain: study(
+    'cellar',
+    'Cold-chain logistics',
+    130,
+    14000,
+    18,
+    ['oenology'],
+    'Unlocks refrigerated grape storage for purchase, extending the time to process a harvest.',
+  ),
+  sensory_science: study(
+    'cellar',
+    'Sensory science',
+    80,
+    4500,
+    10,
+    ['oenology'],
+    'Establish a formal tasting vocabulary. A prerequisite for training a professional sommelier team.',
+  ),
+  tourism: study(
+    'hospitality',
+    'Wine tourism',
+    90,
+    8500,
+    12,
+    [],
+    'Unlocks a tasting terrace for purchase. Start welcoming visitors, then develop a destination estate.',
+  ),
+  visitor_services: study(
+    'hospitality',
+    'Visitor services',
+    180,
+    22000,
+    22,
+    ['tourism'],
+    'Unlocks the visitor center for purchase. Plan arrivals, estate tours and a larger hospitality operation.',
+  ),
+  hospitality: study(
+    'hospitality',
+    'Hosted tastings',
+    280,
+    45000,
+    32,
+    ['visitor_services'],
+    'Unlocks the tasting room for purchase. A visitor center must also be operating before you build it.',
+  ),
+  sommelier_training: study(
+    'hospitality',
+    'Sommelier training',
+    380,
+    60000,
+    40,
+    ['hospitality', 'sensory_science'],
+    'Unlocks the sommelier team for hire: stronger demand and retail value for wines rated 80 or higher.',
+  ),
+  culinary_tourism: study(
+    'hospitality',
+    'Wine & gastronomy',
+    500,
+    95000,
+    48,
+    ['hospitality'],
+    'Unlocks the estate restaurant for purchase. Dining can earn more per visitor, but quiet weeks still carry kitchen costs.',
+  ),
+  estate_lodging: study(
+    'hospitality',
+    'Destination stays',
+    650,
+    140000,
+    60,
+    ['culinary_tourism'],
+    'Unlocks the vineyard guesthouse for purchase. Seasonal room bookings come with substantial ongoing maintenance.',
+  ),
+  brand_strategy: study(
+    'business',
+    'Estate storytelling',
+    100,
+    9000,
+    14,
+    [],
+    'Develop your route to collectors and overseas buyers. Opens membership and export research.',
+  ),
+  direct_sales: study(
+    'business',
+    'Cellar-door membership',
+    180,
+    18000,
+    20,
+    ['brand_strategy', 'tourism'],
+    'Unlocks the wine club team for hire. Older releases gain an audience when you keep them in stock.',
+  ),
+  export_trade: study(
+    'business',
+    'Export trade',
+    400,
+    60000,
+    36,
+    ['brand_strategy'],
+    'Unlocks the export sales team for hire. Premium releases gain greater demand and wholesale value.',
+  ),
+  discovery: study(
+    'business',
+    'Experimental viticulture',
+    240,
+    28000,
+    28,
+    ['heritage', 'adaptation'],
+    'Open individual studies of rare grapes. Each experimental variety has its own price and field-study duration.',
+  ),
+  field_notebooks: study(
+    'business',
+    'Field notebooks',
+    120,
+    12000,
+    16,
+    ['ampelography'],
+    'Gain 4 additional knowledge each week through systematic vineyard observation.',
+  ),
+  research_methods: study(
+    'business',
+    'Research institute',
+    500,
+    80000,
+    48,
+    ['cellar_control', 'breeding'],
+    'Unlocks the research & nursery lab for purchase. While operating, it doubles study and trial progress and adds 10 weekly knowledge.',
+  ),
+};
+export const grapeResearchId = (id: string): ResearchId => `grape_${id}`;
+export const GRAPE_STUDIES: Record<`grape_${string}`, Study> =
+  Object.fromEntries(
+    Object.entries(VARIETIES).map(([id, grape]) => {
+      const tier = { classic: 0, heritage: 1, discovery: 2 }[grape.collection];
+      return [
+        grapeResearchId(id),
+        {
+          name: `${grape.name} field study`,
+          department: 'grapes',
+          grape: id,
+          knowledge: 60 + tier * 70 + Math.max(0, grape.finesse) * 10,
+          cost: Math.round(
+            grape.planting * (6 + tier * 9) + Math.max(0, grape.finesse) * 650,
+          ),
+          weeks: 10 + tier * 8 + Math.max(0, grape.finesse) * 2,
+          requires: [
+            (['ampelography', 'heritage', 'discovery'] as const)[tier],
+          ],
+          text: `Learn to plant and breed ${grape.name}. This study unlocks this grape alone; planting still costs money.`,
+        },
+      ];
+    }),
+  );
+export const RESEARCH: Record<ResearchId, Study> = {
+  ...TECHNIQUES,
+  ...GRAPE_STUDIES,
+};
+export const RESEARCH_IDS = Object.keys(RESEARCH) as [
   ResearchId,
-  {
-    name: string;
-    knowledge: number;
-    cost: number;
-    weeks: number;
-    requires: ResearchId[];
-    text: string;
-  }
-> = {
-  ampelography: {
-    name: 'Vine science',
-    knowledge: 30,
-    cost: 350,
-    weeks: 2,
-    requires: [],
-    text: 'Learn to study grape varieties. Unlock the research tree and gain 2 extra knowledge each week.',
-  },
-  heritage: {
-    name: 'Heritage collection',
-    knowledge: 40,
-    cost: 600,
-    weeks: 3,
-    requires: ['ampelography'],
-    text: 'Open the nursery’s heritage collection: Riesling, Sangiovese, Tempranillo, Malbec, and six more.',
-  },
-  adaptation: {
-    name: 'Climate adaptation',
-    knowledge: 50,
-    cost: 800,
-    weeks: 3,
-    requires: ['ampelography'],
-    text: 'Reduce every grape’s climate mismatch by one level. Challenging imports become easier to grow.',
-  },
-  breeding: {
-    name: 'Cross-pollination',
-    knowledge: 55,
-    cost: 900,
-    weeks: 3,
-    requires: ['ampelography'],
-    text: 'Open your breeding nursery. Cross two varieties, select a trait, and develop an estate grape.',
-  },
-  discovery: {
-    name: 'World collection',
-    knowledge: 65,
-    cost: 1000,
-    weeks: 3,
-    requires: ['heritage'],
-    text: 'Unlock all 24 varieties, including Nebbiolo, Chenin Blanc, Vermentino, and Petit Verdot.',
-  },
-  selection: {
-    name: 'Field selection',
-    knowledge: 70,
-    cost: 1100,
-    weeks: 4,
-    requires: ['breeding'],
-    text: 'Add 2 resilience to every vine and shorten new breeding trials from 4 weeks to 3.',
-  },
+  ...ResearchId[],
+];
+export const BREEDING = {
+  cost: 7500,
+  knowledge: 160,
+  weeks: 24,
+  selectedWeeks: 18,
 };
 export const TRAITS = {
   climate: {

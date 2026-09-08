@@ -1,5 +1,7 @@
 # Design and mechanics
 
+For current styling rules and implementation references, see the [Terroir style guide](style-guide.md). This document preserves the original research and early gameplay decisions; its initial feature scope and balance numbers are historical, not a current specification.
+
 ## Direction
 
 **Visual thesis:** warm paper, muted vineyard greens, burgundy controls, and flat isometric illustrations create the atmosphere of a small countryside estate.

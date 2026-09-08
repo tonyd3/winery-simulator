@@ -1,0 +1,356 @@
+.estate-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 22px;
+  padding: 24px 28px;
+  border-bottom: 1px solid #deddd1;
+  background: #faf9f4;
+}
+.estate-switcher {
+  flex: 1;
+  min-width: 220px;
+  max-width: 380px;
+}
+.estate-switcher label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  color: #777c68;
+  margin-bottom: 8px;
+}
+.estate-switcher select {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #d7d8c9;
+  border-radius: 0;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 18px;
+  padding: 8px 22px 8px 0;
+}
+.estate-switcher p {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 7px 0 0;
+  font-size: 11px;
+  color: #6f755f;
+}
+.district-tabs {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.district-tabs button {
+  border: 0;
+  background: transparent;
+  color: #6c725e;
+  padding: 10px 12px;
+  border-bottom: 2px solid transparent;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.district-tabs button:hover {
+  background: #efeee5;
+}
+.district-tabs button.active {
+  color: #774b60;
+  border-bottom-color: #774b60;
+}
+.holdings-totals {
+  display: flex;
+  gap: 60px;
+  margin: 24px 0;
+  padding: 24px 0;
+  border-block: 1px solid #deddd1;
+}
+.holdings-totals dt {
+  font-size: 11px;
+  color: #747965;
+  margin-bottom: 9px;
+}
+.holdings-totals dd {
+  margin: 0;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 32px;
+  color: #454e3b;
+}
+.holdings-totals small {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: #747965;
+}
+.holdings-scope {
+  max-width: 740px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #6b725d;
+}
+.holding-row {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 28px 0;
+  border-bottom: 1px solid #deddd1;
+}
+.holding-landscape {
+  width: 160px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 3px;
+}
+.holding-landscape .region-landscape {
+  width: 100%;
+  height: 125px;
+  display: block;
+}
+.holding-description {
+  flex: 1;
+  min-width: 0;
+}
+.holding-description h3 {
+  font:
+    25px 'Fraunces',
+    Georgia,
+    serif;
+  margin: 9px 0;
+  overflow-wrap: anywhere;
+}
+.holding-description p {
+  font-size: 12px;
+  color: #747965;
+  line-height: 1.6;
+  margin: 9px 0;
+}
+.holding-expansion {
+  text-align: right;
+  max-width: 330px;
+}
+.holding-expansion p,
+.holding-expansion small {
+  display: block;
+  font-size: 11px;
+  color: #747965;
+  margin: 9px 0 0;
+  line-height: 1.6;
+}
+.estate-acquisition {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 48px;
+  margin-top: 42px;
+  padding-top: 20px;
+}
+.acquisition-landscape {
+  position: relative;
+  background: #e7e9d6;
+  align-self: stretch;
+  min-height: 340px;
+  overflow: hidden;
+  border-radius: 3px;
+}
+.acquisition-landscape .region-landscape {
+  width: 100%;
+  height: 100%;
+  display: block;
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+}
+.acquisition-landscape > span {
+  position: absolute;
+  bottom: 28px;
+  left: 28px;
+  background: #f9f7ec;
+  color: #46513b;
+  font:
+    26px 'Fraunces',
+    Georgia,
+    serif;
+  padding: 16px 22px;
+}
+.acquisition-landscape > span small {
+  display: block;
+  font:
+    11px 'DM Sans',
+    sans-serif;
+  margin-top: 6px;
+}
+.acquisition-form {
+  max-width: 540px;
+}
+.acquisition-form h3 {
+  font:
+    28px 'Fraunces',
+    Georgia,
+    serif;
+  margin: 12px 0 24px;
+}
+.acquisition-form select,
+.acquisition-form input {
+  width: 100%;
+}
+.acquisition-form p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #707762;
+}
+.estate-name-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: baseline;
+  margin-top: 20px;
+}
+.estate-name-label .text-button {
+  font-size: 11px;
+}
+.acquisition-cost {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 22px 0;
+}
+.acquisition-cost strong {
+  font:
+    28px 'Fraunces',
+    Georgia,
+    serif;
+}
+.acquisition-cost span,
+.holdings-complete {
+  font-size: 12px;
+  color: #6f755f;
+}
+@media (max-width: 1000px) {
+  .holding-row {
+    flex-wrap: wrap;
+  }
+  .holding-expansion {
+    flex-basis: 100%;
+    max-width: none;
+    text-align: left;
+  }
+  .estate-acquisition {
+    gap: 26px;
+  }
+}
+@media (max-width: 620px) {
+  .estate-toolbar {
+    gap: 16px;
+    padding: 20px;
+  }
+  .estate-switcher {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .district-tabs {
+    flex-basis: 100%;
+  }
+  .district-tabs button {
+    font-size: 11px;
+    padding: 9px 8px;
+  }
+  .holdings-totals {
+    gap: 20px;
+    justify-content: space-between;
+  }
+  .holdings-totals dt {
+    font-size: 10px;
+    max-width: 95px;
+  }
+  .holdings-totals dd {
+    font-size: 26px;
+  }
+  .holding-landscape {
+    width: 96px;
+  }
+  .holding-landscape .region-landscape {
+    height: 100px;
+  }
+  .holding-row {
+    gap: 16px;
+  }
+  .holding-description h3 {
+    font-size: 22px;
+  }
+  .estate-acquisition {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .acquisition-landscape {
+    min-height: 230px;
+  }
+  .acquisition-cost {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .district-tabs button {
+    transition: none;
+  }
+}
+
+/* Parcel-scale growth follows the inspector's quiet ledger layout. */
+.plot-expansion {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  margin-top: 20px;
+}
+.plot-expansion-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.plot-expansion-heading h3 {
+  font: 21px var(--serif);
+  margin: 0;
+}
+.plot-expansion-heading small {
+  font-size: 10px;
+  color: #757968;
+  white-space: nowrap;
+}
+.plot-expansion p {
+  font-size: 11px;
+  line-height: 1.65;
+  color: #757968;
+  margin: 12px 0;
+}
+.plot-expansion .plot-yield strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.plot-expansion-preview {
+  margin: 16px 0;
+}
+.plot-expansion-preview > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 8px 0;
+  font-size: 11px;
+}
+.plot-expansion-preview dt {
+  color: #757968;
+}
+.plot-expansion-preview dd {
+  margin: 0;
+  font-weight: 500;
+}
+.plot-expansion .plot-expansion-pending {
+  color: #805b48;
+}
+.plot-expansion .plot-expansion-footnote {
+  font-size: 10px;
+}
+.plot-expansion .button {
+  gap: 8px;
+}

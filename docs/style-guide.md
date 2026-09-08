@@ -1,0 +1,128 @@
+# Terroir style guide
+
+Terroir should feel like a small wine estate's illustrated field notebook: warm paper, vineyard greens, claret ink, expressive serif headings, and precise working information. The land and wine give each screen its character; controls stay quiet and easy to use.
+
+This is the current design reference for contributors and coding agents. It records the direction embodied in the app, including the distinct regional landscapes. Follow it for future changes unless the user requests a new direction. Update this file alongside changes that establish a lasting convention.
+
+## Start from the existing screen
+
+Each screen has one main job and a clear next action. Keep the current content hierarchy when extending a flow:
+
+| Surface                  | Composition to preserve                                                                                                       | Implementation reference                                                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| New estate               | Region choices beside a large illustrated preview, with regional details below it and the estate name/start action at the end | [Regions.tsx](../src/Regions.tsx), [expansion.css](../src/expansion.css)                                                    |
+| Estate                   | Landscape as the main workspace, with parcel selection opening its inspector; resources and seasons provide context           | [EstateMap.tsx](../src/EstateMap.tsx), [App.tsx](../src/App.tsx), [styles.css](../src/styles.css)                           |
+| Cellar and reserves      | Ledger rows with quantities and actions; a distinct workbench for blending or bottling                                        | [Reserves.tsx](../src/Reserves.tsx), [BlendAnalysis.tsx](../src/BlendAnalysis.tsx), [winemaking.css](../src/winemaking.css) |
+| Wine presentation        | Illustrated bottle, readable label, provenance, and a restrained score reveal                                                 | [WinePresentation.tsx](../src/WinePresentation.tsx)                                                                         |
+| Research                 | Notebook sections, clear prerequisites, and a browsable grape library                                                         | [Research.tsx](../src/Research.tsx), [expansion.css](../src/expansion.css)                                                  |
+| Dialogs and empty states | A focused title, short explanation, and useful action using the shared primitives                                             | [components.tsx](../src/components.tsx)                                                                                     |
+
+Use spacing, alignment, typography, and thin dividers to group information. Tinted panels belong around a meaningful interaction, such as the blend bench or parcel inspector. Repeated records should usually be rows. Avoid adding a mosaic of independent cards, decorative hero sections to working screens, or extra badges that repeat information.
+
+### Investment decisions
+
+Build groups facilities and staff in department-filtered ledger rows, implemented in [EstateInvestments.tsx](../src/EstateInvestments.tsx) and [investments.css](../src/investments.css). Keep upfront prices, operating costs, suspended maintenance, prerequisites, and purchase/resume actions together. The budget summary separates hospitality income from wine sales and distinguishes forecasts from guaranteed returns. On narrow screens, stack purchase details beneath each description; retain readable long prices and disabled reasons.
+
+### Research decisions
+
+Research uses branch-filtered ledger rows with a description and linked prerequisites beside a compact cost/duration/action column. `ResearchProjects.tsx` and `research.css` own this layout. Keep the active study visible across the project, grape-library, and nursery tabs. Show the single occupied slot, remaining game weeks, separate investment costs, and the no-refund consequence before abandoning. Grape-library climate and study terms must occupy separate columns; stack them under the grape name on narrow screens.
+
+## Color and surfaces
+
+The shared token definitions live in `:root` in [styles.css](../src/styles.css). Use these CSS variables for new interface styling. Keep the definitions there rather than maintaining a second palette in JSON or another stylesheet.
+
+| Token     | Current value                | Role                                                               |
+| --------- | ---------------------------- | ------------------------------------------------------------------ |
+| `--paper` | `#f8f7f2`                    | Main warm paper background                                         |
+| `--ink`   | `#3d4639`                    | Primary text and strong labels                                     |
+| `--muted` | `#939586`                    | Subdued secondary accents; check readability before using for text |
+| `--wine`  | `#784759`                    | Primary actions, active controls, and links                        |
+| `--line`  | `#e5e5da`                    | Fine dividers and structural borders                               |
+| `--green` | `#768764`                    | Vineyard and growth accents                                        |
+| `--serif` | `'Fraunces', Georgia, serif` | Display typography                                                 |
+
+Existing secondary surfaces include `#fbfaf5` for the parcel inspector, `#f1eee5` for the blend bench, and `#fcfbf5` for dialogs. These are component values, not additional shared tokens. Match the relevant component; promote a value to a named token when it gains a reusable role. Do not add another nearly identical hex value for each new screen.
+
+Use the wine accent consistently across regions. The artwork can shift from cool blue-green to ochre and terracotta while the surrounding controls retain their identity. Grape colors, gold harvest/score details, and error colors communicate their own meaning and need not use the action accent.
+
+Keep text darker than decorative accents. Some existing metadata is small or pale; that is not a requirement to repeat poor readability. Improve contrast or size where needed, and pair color-coded status with text or an icon. Prefer flat fills and subtle tonal differences. Avoid neon colors, glossy gradients, glass panels, or dark backgrounds introduced as decoration.
+
+## Typography and copy
+
+Use only the two existing font families:
+
+- **Fraunces**, through `var(--serif)`, for the wordmark, page and section headings, estate/wine names, and selected prominent figures. Prefer weights 400–500 and the existing gentle negative tracking for large headings.
+- **DM Sans**, inherited from the root, for body text, buttons, forms, navigation, labels, and working data. Prefer weights 400–500, with stronger weights for emphasis.
+
+The root text size is currently 13px. Existing section headings are commonly 23–34px; the region setup heading scales from 40–66px. These are reference ranges, not a demand to resize every screen. Reserve the largest type for onboarding and major page titles. Keep body copy comfortably readable, usually with 1.5–1.8 line height, and increase compact text where the screen needs it.
+
+Use the existing `.eyebrow` treatment for short uppercase context labels. Do not set instructions or whole paragraphs in spaced capitals. Align comparable quantities and use tabular numerals where changing numbers would otherwise shift the layout. Keep units beside values.
+
+Write with the calm, practical voice of a winemaker explaining the next step. A heading such as “Every wine starts somewhere.” can establish atmosphere on setup; working controls should say what happens: “Harvest grapes,” “Move to reserves,” or “Bottle this reserve.” Show relevant cost or consequence beside the action. Keep instructions short, preserve regional names and accents, and distinguish estimates from recorded results. Do not expose implementation terminology or invent progress, scores, or functionality for visual effect.
+
+## Spacing, borders, and controls
+
+Match the surrounding screen's rhythm. Common existing values are 6–10px within a compact control, 12–18px between closely related items, 24–34px for section padding, and larger gaps between primary columns. These are useful starting points, not a new spacing-token system.
+
+Use mostly square or gently rounded shapes. Buttons currently use a 5px radius, inputs 6px, and the blend bench 4px. Dialogs and the brand mark have softer corners. Reserve pills and circles for small counts, swatches, seals, or other existing treatments. Use one-pixel borders and restrained shadows for overlays; ordinary rows do not need elevation.
+
+Reuse the existing primitives and classes:
+
+- `.button.primary`: wine fill with light text for the main action in a decision area.
+- `.button.secondary`: light paper fill and a fine border for supporting actions.
+- `.text-button`: lower-emphasis inline actions, such as generation, inspection, and navigation.
+- `Modal`, `Empty`, `Progress`, and `Done` from [components.tsx](../src/components.tsx): retain their established structure and behavior.
+- Lucide icons: match neighboring line weights and sizes; the shared `Icon` defaults to 20px with a 1.7 stroke. Keep icon-only controls accessible by name.
+
+Place costs, availability, and disabled-state explanations close to the relevant control. Preserve semantic buttons, associated input labels, visible focus indicators, and the modal's Escape, focus-trapping, and focus-restoration behavior. Do not shrink touch targets to preserve a dense desktop arrangement.
+
+## Illustration language
+
+Artwork is original SVG kept in the repository. Use broad flat silhouettes, layered terrain, limited earthy palettes, and a small amount of shadow or highlight. Details should remain legible at the displayed size. Vine rows, field boundaries, trees, paths, roofs, and bottle labels carry the visual story.
+
+The estate uses an isometric map; regional previews use landscape postcards; wine presentation uses a front-facing bottle. Preserve the perspective of the surface being edited. Reuse small drawing primitives where helpful without forcing distinct scenes into one template. Avoid substituting stock photography, emoji scenery, photorealistic renders, or an external image service for these illustrations as part of routine work.
+
+### Regional identity
+
+[RegionLandscape.tsx](../src/RegionLandscape.tsx) owns the regional postcards. A selection must visibly change the composition and geography as well as the palette. Each region should be distinguishable at a glance even if its label is hidden.
+
+| Region      | Defining visual cues                                                                         |
+| ----------- | -------------------------------------------------------------------------------------------- |
+| Bordeaux    | Broad estuary, formal vineyard rows, slate-roofed château, cool Atlantic sky                 |
+| Burgundy    | Small walled parcels, limestone slopes, stone village and tiled church tower                 |
+| Napa Valley | Wide valley between wooded ridges, straight rows, oak tree and timber winery                 |
+| Mosel       | Broad blue river bend, steep terraced slopes, hilltop castle and riverside village           |
+| Tuscany     | Rolling golden hills, terracotta-roofed villa and a winding cypress-lined lane               |
+| Rioja       | Rugged limestone ridge, red-earth vineyards and a sandstone village with a square bell tower |
+| Mendoza     | Snow-covered Andes, dry foothills, irrigated vines, poplars and an adobe winery              |
+| Barossa     | Open golden country, rusty soil, stone farmhouse and a spreading gum tree                    |
+
+These are stylized regional cues, not exact site reconstructions. When adding a region, define its terrain, vineyard arrangement, architecture, vegetation, and palette before drawing it. Keep region descriptions and visible scenery consistent.
+
+The postcards use a `640 × 400` viewBox and an `8 / 5` aspect ratio. Fill the preview frame; retain `preserveAspectRatio="xMidYMid slice"` unless a deliberate framing change calls for another approach. Check that responsive cropping preserves the landmarks and the country label stays readable. Do not restore fixed-color bars around the artwork. Give meaningful SVGs descriptive accessible names and use unique IDs, such as React `useId`, for reusable clipping paths.
+
+## Motion and responsive behavior
+
+Use short motion to explain a change: a selected row changes emphasis, a region scene enters, an inspector appears, or a score is revealed. Ordinary controls currently transition in roughly 160–200ms, region art in 400ms, and the special bottle arrival in 750ms. Match those relationships instead of applying the longest animation everywhere. Avoid scroll theatrics or continuous decorative motion on working screens.
+
+Respect `prefers-reduced-motion`. CSS already disables animation and transitions globally for that preference; JavaScript-driven reveals must also make their result available without waiting for an animation.
+
+Adapt to available space instead of scaling down the entire interface. Reuse the relevant stylesheet's breakpoints: setup changes at 1000, 780, and 620px; the reserve workspace stacks at 950px and has narrower adjustments at 600px. Other estate-shell breakpoints are defined in `styles.css`; there is no single universal breakpoint set to impose on every component.
+
+Keep the task sequence and important actions available when columns stack. Let long estate and wine names wrap, keep quantities and units readable, and prevent controls from overflowing. The current body has a 360px minimum width; check changes at that narrow width when affected. The palette and illustration language should remain consistent across screen sizes.
+
+## Implementation and review
+
+The app uses React, TypeScript, and plain CSS. Shared styles live in [styles.css](../src/styles.css), region/research styles in [expansion.css](../src/expansion.css), and cellar/bottle styles in [winemaking.css](../src/winemaking.css). [main.tsx](../src/main.tsx) imports them in that order. Check later overrides before assuming an earlier rule is the rendered value.
+
+Extend an existing component or class when its role matches. Keep new rules near the related feature and name classes by their role. Use inline styles for data-dependent values, such as composition proportions or grape colors; put reusable presentation rules in CSS. A routine feature should not introduce another CSS framework, font family, icon set, or animation dependency.
+
+For each UI change:
+
+1. Read this guide and the relevant source references. Identify the existing pattern the change should extend.
+2. Inspect the affected screen before editing, then compare it with the result using the same state and viewport. Keep temporary screenshot evidence outside the product source unless requested otherwise.
+3. Exercise the actual action and its relevant selected, empty, disabled, error, or completion states. For regional art, check every affected region, selection/details agreement, and frame coverage.
+4. Check narrow layouts when affected, including long labels, touch access, focus, and reduced motion when changing animation. Do not sacrifice legibility to match an old screenshot.
+5. Run `npm run build` for code or CSS changes and `npm test` when behavior changes. State any verification that could not be completed. Documentation-only changes need link and reference checks rather than a build.
+
+When a requested change establishes a new convention, update this guide and the relevant shared implementation together. Keep historical rationale in [design-notes.md](design-notes.md). Prefer a small set of maintained rules and concrete source examples over another parallel design system.

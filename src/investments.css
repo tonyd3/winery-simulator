@@ -1,0 +1,226 @@
+.investment-count {
+  color: var(--ink);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.investment-budget {
+  border-block: 1px solid var(--line);
+  padding: 24px 0 16px;
+  margin-bottom: 24px;
+}
+.investment-budget dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0;
+  gap: 24px;
+}
+.investment-budget dt {
+  font-size: 11px;
+  color: #626958;
+  margin-bottom: 8px;
+}
+.investment-budget dd {
+  font-family: var(--serif);
+  font-size: 30px;
+  margin: 0 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+.investment-budget small {
+  font-size: 11px;
+  color: #626958;
+}
+.investment-budget > p {
+  color: #626958;
+  line-height: 1.7;
+  max-width: 950px;
+  margin: 18px 0 0;
+  font-size: 12px;
+}
+.investment-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.investment-filters button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #626958;
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  min-height: 40px;
+}
+.investment-filters button.active {
+  border-color: var(--line);
+  background: #f1eee5;
+  color: var(--wine);
+}
+.investment-filters button span {
+  margin-left: 5px;
+  font-size: 10px;
+}
+.investment-department > h3 {
+  margin: 26px 0 6px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 23px;
+}
+.investment-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 200px;
+  gap: 20px;
+  padding: 26px 0;
+  border-bottom: 1px solid var(--line);
+  align-items: start;
+}
+.investment-symbol {
+  color: var(--green);
+  padding-top: 3px;
+}
+.investment-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.investment-title h4 {
+  font-family: var(--serif);
+  font-size: 23px;
+  font-weight: 400;
+  margin: 0;
+}
+.investment-description > p {
+  font-size: 12px;
+  line-height: 1.7;
+  max-width: 660px;
+  margin: 10px 0;
+  color: #626958;
+}
+.investment-terms {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 20px;
+  row-gap: 5px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.investment-description > small {
+  display: block;
+  font-size: 11px;
+  margin-top: 6px;
+  color: #626958;
+}
+.investment-description > p.investment-return {
+  font-size: 11px;
+  margin-bottom: 0;
+}
+.investment-loss,
+.investment-description > p.investment-loss {
+  color: #8a513e;
+}
+.investment-status {
+  border: 1px solid var(--line);
+  padding: 3px 7px;
+  font-size: 10px;
+  color: #626958;
+}
+.investment-status.operating {
+  background: #eef0e6;
+  color: #506145;
+}
+.investment-purchase {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  gap: 8px;
+}
+.investment-purchase > strong {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 25px;
+  font-variant-numeric: tabular-nums;
+}
+.investment-purchase small {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: #626958;
+  line-height: 1.6;
+}
+.investment-purchase .button {
+  min-width: 120px;
+  min-height: 40px;
+  margin: 3px 0 0;
+}
+.investment-policy {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #626958;
+  max-width: 850px;
+  margin: 24px 0;
+}
+@media (max-width: 780px) {
+  .investments-page .section-intro {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .investment-budget dl {
+    gap: 18px;
+  }
+  .investment-budget dd {
+    font-size: 25px;
+  }
+  .investment-row {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .investment-purchase {
+    grid-column: 2;
+    align-items: flex-start;
+    text-align: left;
+  }
+  .investment-purchase .button {
+    min-width: 150px;
+  }
+}
+@media (max-width: 500px) {
+  .investment-budget dl {
+    grid-template-columns: 1fr;
+  }
+  .investment-budget dl > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+  }
+  .investment-budget dt {
+    align-self: center;
+    margin: 0;
+  }
+  .investment-budget dd {
+    grid-column: 2;
+    grid-row: span 2;
+    align-self: center;
+    margin: 0;
+    font-size: 24px;
+  }
+  .investment-budget small {
+    grid-column: 1;
+  }
+  .investment-title h4 {
+    font-size: 21px;
+  }
+  .investment-row {
+    padding-block: 22px;
+  }
+  .investment-filters {
+    gap: 4px;
+  }
+  .investment-filters button {
+    padding: 9px;
+    font-size: 11px;
+  }
+}

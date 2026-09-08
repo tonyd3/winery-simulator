@@ -1,6 +1,6 @@
 import { ArrowRight, Check, Wine } from 'lucide-react';
 import { Modal } from './components';
-import { getVariety, money } from './game';
+import { getVariety, getEstate, money } from './game';
 import type { GameState } from './game';
 import type { Dispatch } from './Panels';
 import {
@@ -11,6 +11,11 @@ import {
   volume,
 } from './winemaking';
 import type { Reserve, WineComponent } from './winemaking';
+
+const signedPoints = (value: number) => {
+  const rounded = Math.round(value * 10) / 10;
+  return `${rounded > 0 ? '+' : rounded < 0 ? '−' : ''}${Math.abs(rounded).toFixed(1)}`;
+};
 
 export function BlendAnalysis({
   parts,
@@ -25,7 +30,7 @@ export function BlendAnalysis({
   expanded?: boolean;
   stored?: boolean;
 }) {
-  const profile = blendProfile(parts);
+  const profile = blendProfile(parts, state.hybrids);
   if (!profile.dominant) return null;
   const strongest = profile.sources[0];
   const fixed = score !== null;
@@ -52,19 +57,25 @@ export function BlendAnalysis({
           <dd>{profile.base.toFixed(1)}</dd>
         </div>
         <div>
-          <dt>Varietal balance</dt>
-          <dd>+{profile.balance} / 3</dd>
+          <dt>Grape compatibility</dt>
+          <dd>{signedPoints(profile.compatibility)} pts</dd>
         </div>
         <div>
           <dt>Cellar tasting</dt>
           <dd>{fixed ? 'Final' : `±${CELLAR_TASTING.variation}`}</dd>
         </div>
       </dl>
+      {fixed && (
+        <p className="fine-print">
+          Recipe analysis uses current blending rules. This lot’s recorded score
+          stays fixed.
+        </p>
+      )}
       <details className="blend-guidance" open={expanded}>
         <summary>Source quality & blending advice</summary>
         <table className="blend-source-table">
           <caption>
-            Each source’s share and quality before the balance bonus.
+            Each source’s share and quality before pairing effects.
           </caption>
           <thead>
             <tr>
@@ -75,10 +86,16 @@ export function BlendAnalysis({
           </thead>
           <tbody>
             {profile.sources.map((source) => (
-              <tr key={`${source.variety}:${source.year}`}>
+              <tr
+                key={`${source.variety}:${source.year}:${source.estateId ?? 1}`}
+              >
                 <th scope="row">
                   {getVariety(state, source.variety).name}
-                  <small>Year {source.year}</small>
+                  <small>
+                    Year {source.year}
+                    {state.estates.length > 1 &&
+                      ` · ${getEstate(state, source.estateId ?? 1).name}`}
+                  </small>
                 </th>
                 <td>{source.share.toFixed(1)}%</td>
                 <td>{source.quality.toFixed(1)}</td>
@@ -86,24 +103,65 @@ export function BlendAnalysis({
             ))}
           </tbody>
         </table>
+        {profile.pairs.length > 0 && (
+          <section className="grape-pairings" aria-label="Grape pairings">
+            <h4>How these grapes work together</h4>
+            <p>
+              Pair effects at your chosen proportions · −6 to +4 points overall.
+            </p>
+            <ul>
+              {profile.pairs.slice(0, 6).map((pair) => (
+                <li key={pair.grapes.join(':')}>
+                  <div className="pairing-heading">
+                    <strong>
+                      {pair.grapes
+                        .map((id) => getVariety(state, id).name)
+                        .join(' + ')}
+                    </strong>
+                    <span>{signedPoints(pair.effect)} pts</span>
+                  </div>
+                  <p>
+                    <b>
+                      {pair.affinity > 0
+                        ? 'Complementary'
+                        : pair.affinity < 0
+                          ? 'Tension'
+                          : 'Neutral'}
+                      .
+                    </b>{' '}
+                    {pair.reason}
+                  </p>
+                </li>
+              ))}
+            </ul>
+            {profile.pairs.length > 6 && (
+              <p>
+                Showing the 6 largest effects. All {profile.pairs.length}{' '}
+                pairings count toward the total.
+              </p>
+            )}
+          </section>
+        )}
         <ul className="blend-advice">
-          <li>
-            {profile.nextBalanceTarget !== null
-              ? `${getVariety(state, profile.dominant.variety).name} makes up ${profile.dominant.share.toFixed(1)}%. For the next balance point, keep every grape at ${profile.nextBalanceTarget}% or less. Total score also depends on source quality.`
-              : 'This recipe earns the full 3-point balance bonus. Better source wines are the next way to lift its potential.'}
-          </li>
           {profile.varietyCount === 1 ? (
             <li>
-              Different vintages of the same grape do not earn a varietal
-              balance bonus. Try another grape in your next blend.
+              A single grape stands on source quality. Mixing its vintages adds
+              no pairing bonus; it can still make an exceptional wine.
             </li>
           ) : (
-            <li>
-              {getVariety(state, strongest.variety).name}, Year {strongest.year}
-              , is your highest-quality source at {strongest.quality.toFixed(1)}{' '}
-              points. Favoring higher-quality wine lifts the base; keep an eye
-              on balance as you adjust.
-            </li>
+            <>
+              <li>
+                Small additions have small effects. Adding more grapes does not
+                automatically improve a blend; compare both compatibility and
+                source quality as you adjust the recipe.
+              </li>
+              <li>
+                {getVariety(state, strongest.variety).name}, Year{' '}
+                {strongest.year}, is your highest-quality source at{' '}
+                {strongest.quality.toFixed(1)} points. More of it lifts the
+                base, but can change the pairing effects.
+              </li>
+            </>
           )}
         </ul>
         <p className="fine-print">

@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { grapeCompatibility } from './blendCompatibility';
+import type { GrapeLineage } from './blendCompatibility';
 
 export const CELLAR_TASTING = { cost: 60, variation: 3 };
 
@@ -24,6 +26,7 @@ export const LABEL_COLORS = {
 export const componentSchema = z
   .object({
     variety: z.string().min(1).max(32),
+    estateId: z.number().int().min(1).max(8).optional(),
     year: count(10000),
     ml: count(100000000).min(1),
     quality: z.number().finite().min(0).max(100),
@@ -63,32 +66,47 @@ export const vintage = (parts: WineComponent[]) => {
 };
 
 // Keep intrinsic quality in the recipe. Mixing an existing blend never compounds a bonus.
-export function assess(parts: WineComponent[]) {
+export function assess(
+  parts: WineComponent[],
+  hybrids: readonly GrapeLineage[] = [],
+) {
   const total = volume(parts);
-  if (!total) return { base: 0, balance: 0, expected: 0 };
-  const base = parts.reduce((n, p) => n + p.quality * p.ml, 0) / total;
-  const grapes = new Map<string, number>();
-  for (const p of parts)
-    grapes.set(p.variety, (grapes.get(p.variety) ?? 0) + p.ml);
-  const balance = Math.min(
-    3,
-    Math.floor((1 - Math.max(...grapes.values()) / total) * 6 + 1e-9),
-  );
-  return { base, balance, expected: Math.min(100, Math.round(base + balance)) };
+  const base = total
+    ? parts.reduce((n, p) => n + p.quality * p.ml, 0) / total
+    : 0;
+  const harmony = grapeCompatibility(parts, hybrids);
+  return {
+    base,
+    ...harmony,
+    expected: Math.max(
+      0,
+      Math.min(100, Math.round(base + harmony.compatibility)),
+    ),
+  };
 }
 
-export function blendProfile(parts: WineComponent[]) {
+export function blendProfile(
+  parts: WineComponent[],
+  hybrids: readonly GrapeLineage[] = [],
+) {
   const total = volume(parts);
-  const score = assess(parts);
+  const score = assess(parts, hybrids);
   const sources = new Map<
     string,
-    { variety: string; year: number; ml: number; qualityTotal: number }
+    {
+      variety: string;
+      year: number;
+      ml: number;
+      qualityTotal: number;
+      estateId?: number;
+    }
   >();
   const grapes = new Map<string, number>();
   for (const part of parts) {
-    const key = `${part.variety}:${part.year}`;
+    const key = `${part.variety}:${part.year}:${part.estateId ?? 1}`;
     const source = sources.get(key) ?? {
       variety: part.variety,
+      ...(part.estateId !== undefined ? { estateId: part.estateId } : {}),
       year: part.year,
       ml: 0,
       qualityTotal: 0,
@@ -106,6 +124,7 @@ export function blendProfile(parts: WineComponent[]) {
     sources: [...sources.values()]
       .map((source) => ({
         variety: source.variety,
+        ...(source.estateId !== undefined ? { estateId: source.estateId } : {}),
         year: source.year,
         quality: source.qualityTotal / source.ml,
         share: (source.ml / total) * 100,
@@ -114,11 +133,6 @@ export function blendProfile(parts: WineComponent[]) {
     dominant: dominant
       ? { variety: dominant[0], share: (dominant[1] / total) * 100 }
       : null,
-    // Round down so a displayed target actually crosses the balance threshold.
-    nextBalanceTarget:
-      score.balance < 3
-        ? Math.floor((1 - (score.balance + 1) / 6) * 1000 + 1e-9) / 10
-        : null,
     varietyCount: grapes.size,
   };
 }
@@ -126,7 +140,7 @@ export function blendProfile(parts: WineComponent[]) {
 export function combine(parts: WineComponent[]): WineComponent[] {
   const grouped = new Map<string, WineComponent>();
   for (const part of parts) {
-    const key = `${part.variety}:${part.year}:${part.quality}`;
+    const key = `${part.variety}:${part.year}:${part.quality}:${part.estateId ?? 1}`;
     const existing = grouped.get(key);
     if (existing) existing.ml += part.ml;
     else grouped.set(key, { ...part });

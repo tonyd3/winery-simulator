@@ -1,3 +1,4 @@
+import { learn } from './helpers.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -11,12 +12,16 @@ import {
 import { assess, DEFAULT_DESIGN, volume } from '../src/winemaking.ts';
 import type { GameState, Action } from '../src/game.ts';
 function cellar() {
-  let s = newGame();
+  let s = learn(newGame(), 'vintage_blending');
   s.week = 20;
+  s.cellar.tanks.forEach((t) => {
+    t.capacity = 400;
+  });
   s.kits = 2000;
   s.batches = [
     {
       id: 1,
+      tankIds: [1],
       variety: 'merlot',
       liters: 210,
       quality: 77,
@@ -28,6 +33,7 @@ function cellar() {
     },
     {
       id: 2,
+      tankIds: [2],
       variety: 'cabernet',
       liters: 150,
       quality: 83,
@@ -97,12 +103,12 @@ test('partial blending conserves liquid and provenance across varieties and vint
       ['cabernet', 2, 60000],
     ],
   );
-  assert.equal(assess(s.reserves[2].components).expected, 84);
+  assert.equal(assess(s.reserves[2].components).expected, 86);
   assert.equal(s.kits, 2000);
   valid(s);
 });
 
-test('nested blends do not compound balance bonuses or discard source years', () => {
+test('nested blends do not compound compatibility bonuses or discard source years', () => {
   let s = blended();
   // Add the remaining reserves back at the same 60/40 ratio.
   s = act(s, {
@@ -114,7 +120,7 @@ test('nested blends do not compound balance bonuses or discard source years', ()
       { id: 4, ml: 60000 },
     ],
   });
-  assert.equal(assess(s.reserves.at(-1)!.components).expected, 84);
+  assert.equal(assess(s.reserves.at(-1)!.components).expected, 86);
   assert.equal(s.reserves.at(-1)!.components.length, 2);
   assert.equal(
     s.reserves.reduce((n, r) => n + volume(r.components), 0),
@@ -315,6 +321,7 @@ test('splitting bottlings does not multiply research rewards', () => {
 test('v2 migration preserves old scores, labels, inventory and sold-out history', () => {
   const raw: any = cellar();
   raw.version = 2;
+  raw.research = [];
   delete raw.lines;
   delete raw.reserves;
   raw.wines = [
@@ -343,7 +350,7 @@ test('v2 migration preserves old scores, labels, inventory and sold-out history'
   const s = deserialize(
     JSON.stringify({ game: 'terroir', savedAt: 'legacy', state: raw }),
   );
-  assert.equal(s.version, 3);
+  assert.equal(s.version, 6);
   assert.deepEqual(s.batches, raw.batches);
   assert.equal(s.lines.length, 1);
   assert.deepEqual(
