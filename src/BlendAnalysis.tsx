@@ -1,3 +1,4 @@
+import { parcelLabel } from './parcelProvenance';
 import { ArrowRight, Check, Wine } from 'lucide-react';
 import { Modal } from './components';
 import { getVariety, getEstate, money } from './game';
@@ -5,6 +6,7 @@ import type { GameState } from './game';
 import type { Dispatch } from './Panels';
 import {
   blendProfile,
+  wineSourceKey,
   CELLAR_TASTING,
   liters,
   vintage,
@@ -86,9 +88,7 @@ export function BlendAnalysis({
           </thead>
           <tbody>
             {profile.sources.map((source) => (
-              <tr
-                key={`${source.variety}:${source.year}:${source.estateId ?? 1}`}
-              >
+              <tr key={wineSourceKey(source)}>
                 <th scope="row">
                   {getVariety(state, source.variety).name}
                   <small>
@@ -96,6 +96,7 @@ export function BlendAnalysis({
                     {state.estates.length > 1 &&
                       ` · ${getEstate(state, source.estateId ?? 1).name}`}
                   </small>
+                  <small>{parcelLabel(source.parcel)}</small>
                 </th>
                 <td>{source.share.toFixed(1)}%</td>
                 <td>{source.quality.toFixed(1)}</td>

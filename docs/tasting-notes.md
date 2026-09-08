@@ -20,9 +20,11 @@ Harvest years remain in the recipe, but elapsed calendar time is not treated as 
 
 ## Saves and release history
 
-New-model batches store `fermentation: 'oak' | 'steel'` separately from `maturation: { version: 1, vessel: 'oak' | 'neutral' | 'steel', weeks: 0..12, oakDominant: boolean }`. Zero means no extra maturation time. Combining lots keeps distinct fermentation, maturation, and balance histories separate, while the visible grape recipe still groups matching grapes, estates, and vintages. The **Ferment** row reports known fermentation shares; **Aging** reports maturation shares and durations.
+New-model batches store `fermentation: 'oak' | 'steel'` separately from `maturation: { version: 1, vessel: 'oak' | 'neutral' | 'steel', weeks: 0..12, oakDominant: boolean }`. Zero means no extra maturation time. Combining lots keeps distinct fermentation, maturation, and balance histories separate, while the visible recipe groups matching grapes, estates, vintages, and recorded source parcels. The **Ferment** row reports known fermentation shares; **Aging** reports maturation shares and durations.
 
 Newly picked grapes also record `harvest: { ripeness: 80..100, health: 0..100, sunExposure: 0..1 }`. This optional record survives partial fermentation, aging, reserves, reblending, and partial bottling. Different picking histories remain separate even when grape, estate, year, quality, and vessel match. Blended descriptions weight the actual wine volume; the Vintage row states the recorded share and marks any missing harvest history.
+
+New harvests also record `parcel: { id, name, soil }` from the picked site. District-qualified parcel names and soil are captured at harvest and follow every portion through fermentation, reserves, blends, and bottling. Fresh harvests, cellar batches, recipe composition, source-quality analysis, and release history show this record. Distinct parcels remain separate even when grape, estate, vintage, and wine quality match. Existing lots without this optional record show **Parcel unrecorded**; current vines or soils are never used to guess their origin. This metadata does not change scoring, sensory rules, or pricing.
 
 Each new bottled release stores its descriptive `tasting` snapshot with its recipe and label. Later catalog edits, estate navigation, naming changes, and passing weeks cannot rewrite that snapshot. The bottling preview uses the same milliliter allocation as the final release.
 

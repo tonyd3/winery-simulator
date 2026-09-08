@@ -1,3 +1,4 @@
+import { parcelLabel } from './parcelProvenance';
 import { useState } from 'react';
 import { ArrowRight, Clock3 } from 'lucide-react';
 import { Icon } from './components';
@@ -43,6 +44,7 @@ export function GrapeArrival({
           {state.estates.length > 1 && (
             <small>{getEstate(state, g.estateId ?? 1).name}</small>
           )}
+          <small className="parcel-source">{parcelLabel(g.parcel)}</small>
           <p>
             {g.kg} kg · {g.quality}/100 quality · makes {grapeLiters(g.kg)} L
           </p>

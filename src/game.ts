@@ -1,3 +1,4 @@
+import { parcelProvenanceSchema } from './parcelProvenance';
 import {
   centsSchema,
   financeSchema,
@@ -316,6 +317,7 @@ const grapeSchema = z
     directCostCents: centsSchema.optional(),
     picked: integer(100000),
     harvest: harvestCharacterSchema.optional(),
+    parcel: parcelProvenanceSchema.optional(),
     estateId: z.number().int().min(1).max(8).optional(),
   })
   .strict();
@@ -334,6 +336,7 @@ const batchSchema = z
     oak: z.boolean(),
     year: integer(10000),
     harvest: harvestCharacterSchema.optional(),
+    parcel: parcelProvenanceSchema.optional(),
     // Absent in older saves: preserve those batches' existing maturation curve.
     agingProfile: z.enum(['balanced', 'varietal-v1']).optional(),
     maturationProfile: maturationProfileSchema.optional(),
@@ -677,15 +680,24 @@ export const stateSchema = z
       expectedPlots.some((id) => !actualPlots.has(id))
     )
       fail('Invalid estate parcels.');
-    if (
-      [
-        ...s.grapes,
-        ...s.batches,
-        ...s.reserves.flatMap((r) => r.components),
-        ...s.wines.flatMap((w) => w.components),
-      ].some((x) => !estateIds.has(x.estateId ?? 1))
-    )
+    const wineOrigins = [
+      ...s.grapes,
+      ...s.batches,
+      ...s.reserves.flatMap((r) => r.components),
+      ...s.wines.flatMap((w) => w.components),
+    ];
+    if (wineOrigins.some((x) => !estateIds.has(x.estateId ?? 1)))
       fail('Unknown wine origin estate.');
+    const ownedPlots = new Set(s.plots.filter((p) => p.owned).map((p) => p.id));
+    if (
+      wineOrigins.some(
+        ({ parcel, estateId }) =>
+          parcel &&
+          (estateIdForPlot(parcel.id) !== (estateId ?? 1) ||
+            !ownedPlots.has(parcel.id)),
+      )
+    )
+      fail('Invalid wine origin parcel.');
     if (new Set(s.upgrades).size !== s.upgrades.length)
       fail('Duplicate upgrades.');
     if (
@@ -1723,6 +1735,7 @@ export function act(current: GameState, action: Action): GameState {
           ml: b.liters * 1000,
           quality: quality(b),
           ...(b.harvest ? { harvest: { ...b.harvest } } : {}),
+          ...(b.parcel ? { parcel: { ...b.parcel } } : {}),
           ...(b.directCostCents !== undefined
             ? { directCostCents: b.directCostCents }
             : {}),
@@ -2402,6 +2415,7 @@ export function act(current: GameState, action: Action): GameState {
           sunExposure: sunnyWeeks / growingWeeks,
         },
         estateId: land.estateId,
+        parcel: { id: land.id, name: land.name, soil: land.soil },
       });
       p.harvestedYear = calendar(s.week).year;
       p.growth = 0;
@@ -2528,6 +2542,7 @@ export function act(current: GameState, action: Action): GameState {
         oak: action.oak,
         year: calendar(g.picked).year,
         ...(g.harvest ? { harvest: { ...g.harvest } } : {}),
+        ...(g.parcel ? { parcel: { ...g.parcel } } : {}),
         agingProfile: 'varietal-v1',
         maturationProfile: createMaturationProfile(
           g.variety,

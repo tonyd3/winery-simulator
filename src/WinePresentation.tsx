@@ -1,9 +1,10 @@
+import { parcelLabel } from './parcelProvenance';
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check, Sparkles } from 'lucide-react';
 import { Modal } from './components';
 import { getVariety, getEstate, wineSales } from './game';
 import type { GameState, Wine } from './game';
-import { LABEL_COLORS, vintage, volume } from './winemaking';
+import { LABEL_COLORS, vintage, volume, wineSourceKey } from './winemaking';
 import type { ArchiveSummary, LabelDesign, WineComponent } from './winemaking';
 import { TastingNotes } from './TastingNotes';
 import { releaseTasting } from './wineSensory';
@@ -45,10 +46,10 @@ export function Composition({
   const total = volume(parts);
   const rows = new Map<
     string,
-    { variety: string; year: number; ml: number; estateId?: number }
+    Pick<WineComponent, 'variety' | 'year' | 'ml' | 'estateId' | 'parcel'>
   >();
   for (const p of parts) {
-    const key = `${p.variety}:${p.year}:${p.estateId ?? 1}`;
+    const key = wineSourceKey(p);
     const row = rows.get(key);
     if (row) row.ml += p.ml;
     else rows.set(key, { ...p });
@@ -84,6 +85,7 @@ export function Composition({
                 {state.estates.length > 1 &&
                   ` · ${getEstate(state, p.estateId ?? 1).name}`}
               </small>
+              <small className="parcel-source">{parcelLabel(p.parcel)}</small>
             </span>
             <b>
               {((p.ml / total) * 100).toLocaleString('en-US', {

@@ -1,3 +1,4 @@
+import { parcelProvenanceSchema, parcelKey } from './parcelProvenance';
 import { centsSchema, archivedAccountsSchema } from './finance';
 import { z } from 'zod';
 import { cellarTechniquesSchema, techniqueKey } from './cellarTechniques';
@@ -43,6 +44,7 @@ export const componentSchema = z
     quality: z.number().finite().min(0).max(100),
     techniques: cellarTechniquesSchema.optional(),
     harvest: harvestCharacterSchema.optional(),
+    parcel: parcelProvenanceSchema.optional(),
     directCostCents: centsSchema.optional(),
     fermentation: z.enum(['oak', 'steel']).optional(),
     maturation: z
@@ -100,6 +102,15 @@ export type LabelDesign = z.infer<typeof labelDesignSchema>;
 export type WineComponent = z.infer<typeof componentSchema>;
 export type Reserve = z.infer<typeof reserveSchema>;
 export type WineLine = z.infer<typeof wineLineSchema>;
+export const wineSourceKey = (
+  part: Pick<WineComponent, 'variety' | 'year' | 'estateId' | 'parcel'>,
+) =>
+  JSON.stringify([
+    part.variety,
+    part.year,
+    part.estateId ?? 1,
+    parcelKey(part.parcel),
+  ]);
 export const volume = (parts: WineComponent[]) =>
   parts.reduce((n, p) => n + p.ml, 0);
 export const isSmallReserve = (reserve: Reserve) => {
@@ -174,15 +185,17 @@ export function blendProfile(
       ml: number;
       qualityTotal: number;
       estateId?: number;
+      parcel?: WineComponent['parcel'];
     }
   >();
   const grapes = new Map<string, number>();
   for (const part of parts) {
-    const key = `${part.variety}:${part.year}:${part.estateId ?? 1}`;
+    const key = wineSourceKey(part);
     const source = sources.get(key) ?? {
       variety: part.variety,
       ...(part.estateId !== undefined ? { estateId: part.estateId } : {}),
       year: part.year,
+      ...(part.parcel ? { parcel: part.parcel } : {}),
       ml: 0,
       qualityTotal: 0,
     };
@@ -201,6 +214,7 @@ export function blendProfile(
         variety: source.variety,
         ...(source.estateId !== undefined ? { estateId: source.estateId } : {}),
         year: source.year,
+        ...(source.parcel ? { parcel: source.parcel } : {}),
         quality: source.qualityTotal / source.ml,
         share: (source.ml / total) * 100,
       }))
@@ -220,7 +234,7 @@ export function combine(parts: WineComponent[]): WineComponent[] {
     const maturationKey = aging
       ? `${aging.vessel}:${aging.weeks}:${'version' in aging ? `${aging.version}:${aging.oakDominant}` : 'legacy'}`
       : 'unrecorded';
-    const key = `${part.variety}:${part.year}:${part.quality}:${part.estateId ?? 1}:${maturationKey}:${part.fermentation ?? 'unrecorded'}:${part.techniques ? techniqueKey(part.techniques) : 'unrecorded'}:${harvest ? `${harvest.ripeness}:${harvest.health}:${harvest.sunExposure}` : 'unrecorded'}`;
+    const key = `${wineSourceKey(part)}:${part.quality}:${maturationKey}:${part.fermentation ?? 'unrecorded'}:${part.techniques ? techniqueKey(part.techniques) : 'unrecorded'}:${harvest ? `${harvest.ripeness}:${harvest.health}:${harvest.sunExposure}` : 'unrecorded'}`;
     const existing = grouped.get(key);
     if (existing) {
       existing.ml += part.ml;
