@@ -85,3 +85,16 @@ export function breedingPermission(
 }
 export const researchDuration = (weeks: number) =>
   `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
+
+// Paid studies from before the pacing update keep their original clock.
+const previousStudyWeeks: Partial<Record<ResearchId, number>> = {
+  heritage: 10,
+  breeding: 24,
+  selection: 40,
+  backcrossing: 52,
+  genomics: 72,
+  assemblage: 14,
+  rose_trials: 24,
+};
+export const studyDurationLimit = (id: ResearchId) =>
+  Math.max(RESEARCH[id].weeks, previousStudyWeeks[id] ?? 0);

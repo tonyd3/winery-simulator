@@ -35,13 +35,13 @@ The current catalog has 64 projects: 30 techniques and 34 individual grape field
 
 | Branch | Progression and actual unlocks |
 | --- | --- |
-| Vineyard science | Vine science (+2 weekly knowledge) → Nursery propagation → Climate adaptation, Cross-pollination → Field selection (+2 resilience, shorter trials) → Generational crosses → Aroma & finesse selection. Soil & water mapping unlocks irrigation; Precision viticulture unlocks vineyard staff. |
+| Vineyard science | Vine science (+2 weekly knowledge) → Nursery propagation → Climate adaptation, Cross-pollination → Field selection (+2 resilience, shorter trials) → Generational crosses. Cross-pollination also opens Aroma & finesse selection. Soil & water mapping unlocks irrigation; Precision viticulture unlocks vineyard staff. |
 | Cellar techniques | Cellar foundations → Varietal assemblage → Perpetual reserves, Regional cuvées, Red & white experiments. Fermentation control unlocks the winemaker’s bench; Selective fruit handling unlocks optical sorting; Cold-chain logistics unlocks refrigeration. Sensory science is required for sommelier training. |
 | Tourism & hospitality | Wine tourism → Visitor services → Hosted tastings → Sommelier training / Wine & gastronomy → Destination stays. These permit separate purchases of terrace, visitor center, tasting room, sommelier team, restaurant, and guesthouse. |
 | Commerce & discovery | Estate storytelling → Cellar-door membership / Export trade. Experimental viticulture opens rare grape studies. Field notebooks adds 4 weekly knowledge. Research institute unlocks the lab. |
 | Individual grapes | Classic grapes require Vine science; heritage grapes require Nursery propagation; rare grapes require Experimental viticulture. Each variety has a separate duration and price based on rarity, planting cost, and finesse. Home-region favorites cost 20% less cash and require two fewer study weeks. Visiting or buying a different region does not change these study terms. |
 
-Technique studies cost $1,200–$180,000 and take 6–72 weeks; 12 weeks equal one game year. The field-study catalog adds ten base weeks, eight per rarity tier, and two per positive finesse point. Its cash and knowledge costs also increase by rarity and finesse. Local discounts apply before lab acceleration. Investment purchases remain separately priced, with their full ongoing operating costs.
+Technique studies cost $1,200–$140,000 and take 6–60 weeks; 12 weeks equal one game year. The field-study catalog adds ten base weeks, eight per rarity tier, and two per positive finesse point. Its cash and knowledge costs also increase by rarity and finesse. Local discounts apply before lab acceleration. Investment purchases remain separately priced, with their full ongoing operating costs.
 
 One prepaid study and one nursery trial can run simultaneously. Knowledge comes from weekly observation (6 base), harvests (+12), and bottling (+1 per 40 bottles produced). Vine science adds 2 weekly knowledge; Field notebooks adds 4. An operating research lab adds 10 and advances both studies and trials by two study weeks per game week. Pausing the lab restores normal speed. Pausing a study retains the occupied slot; abandoning frees it, loses progress, and refunds nothing. No cost is charged again during an active project.
 
@@ -51,7 +51,7 @@ Blend creation checks all positive-volume recipe components, including those ins
 
 ## Breeding
 
-A trial costs 160 knowledge and $7,500, and lasts 24 weeks (18 after Field selection). Two distinct unlocked parents are required. Previously bred parents require Generational crosses; the Wine quality trait requires Aroma & finesse selection. Choose a unique name up to 28 characters. An estate can retain 60 custom grapes; the cap is shown when reached.
+A trial costs 80 knowledge and $2,000, and lasts 8 weeks (6 after Field selection). Two distinct unlocked parents are required. Previously bred parents require Generational crosses; the Wine quality trait requires Aroma & finesse selection. Choose a unique name up to 28 characters. An estate can retain 60 custom grapes; the cap is shown when reached.
 
 The offspring inherits a randomly selected parent's color and preferred soil. Other traits begin from parent averages. Regional adaptation shifts warmth up to one point toward the estate climate and reduces yield by three percentage points. Hardiness adds two resilience and removes one finesse. Quality selection adds three finesse, removes one resilience, and reduces yield by eight percentage points. Trait bounds prevent endless improvement through repeated crossing. Breeding is an accelerated fictional model, not a prediction of actual grape genetics.
 
@@ -66,3 +66,5 @@ Legacy collection studies retain original remaining time and grant the exact pro
 The saved project stores its contracted duration, remaining study weeks, and pause state. Save validation checks the project against its catalog maximum, completed prerequisites, duplicate licenses, known grapes, custom lineage, and inventory references. New-game studies and field trials persist across reloads without refunds or rerolls. See `tests/research-progression.test.ts` and `tests/expansion.test.ts`.
 
 The expanded [34-grape library](grape-library.md) adds ten individual studies and new blending options. Legacy collection rewards are frozen to their original 24-grape catalog; all ten additions need individual studies in older estates too. Current saves retain their licenses, completed studies, and active projects.
+
+The introductory breeding chain plus a trial totals $9,000 and 28 study/trial weeks. The mixed red/white blending chain totals $8,000 and 20 study weeks. These totals exclude upkeep, planting and waits for resources. Previously paid studies and trials retain their saved durations and remaining weeks.
