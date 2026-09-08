@@ -1,4 +1,15 @@
 import {
+  centsSchema,
+  financeSchema,
+  releaseAccountsSchema,
+  startFinance,
+  recordCash,
+  newAccounts,
+  recordWineSale,
+  archiveAccounts,
+} from './finance';
+import { productionCost, addProductionCost } from './winemaking';
+import {
   researchComplete,
   studyDurationLimit,
   researchTerms,
@@ -228,6 +239,7 @@ const grapeSchema = z
     variety: varietySchema,
     kg: integer(1800),
     quality: bounded(100),
+    directCostCents: centsSchema.optional(),
     picked: integer(100000),
     estateId: z.number().int().min(1).max(8).optional(),
   })
@@ -239,6 +251,7 @@ const batchSchema = z
     liters: integer(1260).min(1),
     tankIds: z.array(z.number().int().min(1).max(256)).min(1).max(9),
     quality: bounded(100),
+    directCostCents: centsSchema.optional(),
     stage: z.enum(['fermenting', 'ready', 'aging']),
     remaining: integer(3),
     age: integer(8),
@@ -262,6 +275,7 @@ const legacyWineSchema = z
   })
   .strict();
 const wineSchema = legacyWineSchema.extend({
+  accounts: releaseAccountsSchema.optional(),
   lineId: integer(),
   release: integer().min(1),
   produced: integer(1000000).nullable(),
@@ -362,6 +376,8 @@ export const stateSchema = z
     name: z.string().trim().min(1).max(32),
     week: z.number().int().min(1).max(100000),
     cash: bounded(),
+    finance: financeSchema.nullable().default(null),
+    kitCostCents: centsSchema.nullable().default(null),
     bankruptcy: z
       .object({ week: integer(100000), bill: bounded(), unpaid: bounded() })
       .strict()
@@ -383,7 +399,13 @@ export const stateSchema = z
       .default([]),
     deliveries: z
       .array(
-        z.object({ kits: integer(1000000), arrival: integer(100000) }).strict(),
+        z
+          .object({
+            kits: integer(1000000),
+            arrival: integer(100000),
+            costCents: centsSchema.optional(),
+          })
+          .strict(),
       )
       .max(100),
     events: z.array(eventSchema).max(200).default([]),
@@ -674,6 +696,11 @@ function compactWineHistory(s: GameState) {
       complete: true,
       best: 0,
     });
+    summary.accounts = archiveAccounts(
+      wine,
+      summary.accounts,
+      summary.releases,
+    );
     summary.releases++;
     summary.lastRelease = Math.max(summary.lastRelease, wine.release);
     summary.sold += wineSales([wine]).count;
@@ -790,6 +817,8 @@ export function newGame(
     reserves: [],
     lines: [],
     kits: 600,
+    kitCostCents: 0,
+    finance: startFinance(6, 12500),
     upgrades: [],
     suspendedUpgrades: [],
     deliveries: [],
@@ -1198,17 +1227,28 @@ function trackQualitySales(s: GameState, wine: Wine, count: number) {
   s.stats.qualitySold = (s.stats.qualitySold ?? 0) + count;
   s.stats.qualityPoints = (s.stats.qualityPoints ?? 0) + count * wine.quality;
 }
-function transaction(s: GameState, label: string, amount: number) {
+function transaction(
+  s: GameState,
+  label: string,
+  amount: number,
+  investment = false,
+) {
+  recordCash(s, amount, investment);
   s.cash += amount;
   s.ledger.unshift({ week: s.week, label, amount });
   s.ledger = s.ledger.slice(0, 80);
 }
-function spend(s: GameState, label: string, amount: number) {
+function debit(
+  s: GameState,
+  label: string,
+  amount: number,
+  investment: boolean,
+) {
   if (s.cash < amount)
     throw new Error(
       `You need ${money(amount - s.cash)} more for ${label.toLowerCase()}.`,
     );
-  transaction(s, label, -amount);
+  transaction(s, label, -amount, investment);
 }
 function random(s: GameState) {
   s.seed = (Math.imul(s.seed, 1664525) + 1013904223) >>> 0;
@@ -1281,6 +1321,20 @@ export function act(current: GameState, action: Action): GameState {
     if (!w) throw new Error('Vintage not found.');
     return w;
   };
+  const investment = [
+    'research',
+    'breed',
+    'plant',
+    'buyPlot',
+    'expandPlot',
+    'acquireEstate',
+    'expandEstate',
+    'expandCellar',
+    'buyTank',
+    'upgrade',
+  ].includes(action.type);
+  const spend = (state: GameState, label: string, amount: number) =>
+    debit(state, label, amount, investment);
   switch (action.type) {
     case 'visitEstate': {
       getEstate(s, action.id);
@@ -1498,6 +1552,10 @@ export function act(current: GameState, action: Action): GameState {
         }
       }
       for (const d of s.deliveries.filter((d) => d.arrival <= s.week)) {
+        s.kitCostCents =
+          d.costCents !== undefined && (s.kits === 0 || s.kitCostCents != null)
+            ? (s.kits === 0 ? 0 : s.kitCostCents!) + d.costCents
+            : null;
         s.kits += d.kits;
         note(s, `${d.kits} bottling kits arrived at the cellar.`, 'good');
       }
@@ -1526,6 +1584,7 @@ export function act(current: GameState, action: Action): GameState {
         const count = demand(w, sellingState);
         if (w.produced === null)
           w.salesSinceTracking = (w.salesSinceTracking ?? 0) + count;
+        recordWineSale(w, count, count * w.price);
         w.bottles -= count;
         sales += count * w.price;
         bottles += count;
@@ -1749,6 +1808,7 @@ export function act(current: GameState, action: Action): GameState {
         variety: p.variety!,
         kg,
         quality: q,
+        directCostCents: plotHarvestCost(p) * 100,
         picked: s.week,
         estateId: land.estateId,
       });
@@ -1850,6 +1910,9 @@ export function act(current: GameState, action: Action): GameState {
           g.quality +
             (upgradeActive(s, 'lab') ? CELLAR_QUALITY.temperatureControl : 0),
         ),
+        ...(g.directCostCents !== undefined
+          ? { directCostCents: g.directCostCents + plan.cost * 100 }
+          : {}),
         stage: 'fermenting',
         remaining: 2,
         age: 0,
@@ -1899,6 +1962,9 @@ export function act(current: GameState, action: Action): GameState {
             year: b.year,
             ml: b.liters * 1000,
             quality: quality(b),
+            ...(b.directCostCents !== undefined
+              ? { directCostCents: b.directCostCents }
+              : {}),
             maturation: { vessel: b.oak ? 'oak' : 'steel', weeks: b.age },
             ...(b.estateId !== undefined ? { estateId: b.estateId } : {}),
           },
@@ -2002,6 +2068,7 @@ export function act(current: GameState, action: Action): GameState {
       if (reserve.score !== null)
         throw new Error('This lot already has a final tasting score.');
       spend(s, `${reserve.name} cellar tasting`, CELLAR_TASTING.cost);
+      addProductionCost(reserve.components, CELLAR_TASTING.cost * 100);
       const score = scoreReserve(s, reserve);
       note(
         s,
@@ -2072,13 +2139,24 @@ export function act(current: GameState, action: Action): GameState {
           ...s.wines.filter((w) => w.lineId === line.id).map((w) => w.release),
           0,
         ) + 1;
+      const kitCost =
+        s.kitCostCents != null
+          ? Math.round((s.kitCostCents * count) / s.kits)
+          : null;
+      const liquidCost = productionCost(components);
+      const accounts = newAccounts(
+        kitCost !== null && liquidCost !== null ? kitCost + liquidCost : null,
+      );
+      s.kitCostCents = kitCost !== null ? s.kitCostCents! - kitCost : null;
       s.kits -= count;
+      if (!s.kits) s.kitCostCents = 0;
       s.wines.push({
         id: s.nextId++,
         variety: blendProfile(components, s.hybrids).dominant!.variety,
         quality: q,
         bottles: count,
         produced: count,
+        accounts,
         salesSinceTracking: 0,
         marketingWeeks: 0,
         judging: null,
@@ -2130,7 +2208,7 @@ export function act(current: GameState, action: Action): GameState {
       )
         throw new Error('Your supply storage is full.');
       spend(s, '600 bottling kits', 480);
-      s.deliveries.push({ kits: 600, arrival: s.week + 1 });
+      s.deliveries.push({ kits: 600, arrival: s.week + 1, costCents: 48000 });
       note(s, '600 bottles, corks, and labels ordered. Delivery next week.');
       break;
     }
@@ -2254,6 +2332,7 @@ export function act(current: GameState, action: Action): GameState {
       const blocked = marketingBlocked(s, w);
       if (blocked) throw new Error(blocked);
       spend(s, `${w.label} marketing`, MARKETING.cost);
+      (w.accounts ??= newAccounts()).promotionCents += MARKETING.cost * 100;
       w.marketingWeeks = MARKETING.weeks;
       note(
         s,
@@ -2267,6 +2346,7 @@ export function act(current: GameState, action: Action): GameState {
       const blocked = judgingBlocked(s, w);
       if (blocked) throw new Error(blocked);
       spend(s, `${w.label} judging entry`, JUDGING.cost);
+      (w.accounts ??= newAccounts()).promotionCents += JUDGING.cost * 100;
       w.judging = {
         remaining: JUDGING.weeks,
         score: Math.max(
@@ -2290,6 +2370,7 @@ export function act(current: GameState, action: Action): GameState {
       if (!w.bottles) throw new Error('This vintage is sold out.');
       const revenue = w.bottles * wholesalePrice(w, s.reputation, s);
       transaction(s, `${w.label} wholesale`, revenue);
+      recordWineSale(w, w.bottles, revenue);
       s.stats.sold += w.bottles;
       s.stats.revenue += revenue;
       s.reputation = Number(

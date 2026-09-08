@@ -217,6 +217,7 @@ test('wine lines retain label heritage and release history after sales and new v
   assert.equal(first.release, 1);
   assert.equal(line.founded, 2);
   s = act(s, { type: 'wholesale', id: first.id });
+  const sold = structuredClone(s.wines[0]);
   s = act(s, { type: 'rename', name: 'Renamed estate' });
   s.week = 35;
   s = bottle(s, 100, 5, line.id);
@@ -228,7 +229,7 @@ test('wine lines retain label heritage and release history after sales and new v
   assert.equal(second.quality, first.quality);
   assert.equal(second.founded, 2);
   assert.equal(second.estate, 'Renamed estate');
-  assert.deepEqual(s.wines[0], { ...first, bottles: 0 });
+  assert.deepEqual(s.wines[0], sold);
   assert.equal(
     s.reserves.some((r) => r.id === 5),
     false,
