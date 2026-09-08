@@ -22,6 +22,12 @@ The current model adds 0.35 body and 0.75 tannin for skin contact, subtracts 1 a
 
 The real techniques inform these broad tendencies: white-grape [skin contact](https://www.awri.com.au/industry_support/winemaking_resources/winemaking-practices/winemaking-treatment-skin-contact/) extracts flavor and phenolics, affecting body and astringency. [Malolactic fermentation](https://www.awri.com.au/files/attachment/mlf_modulation_awri_fact_sheet/) converts malic acid to lactic acid and can change texture and aroma; buttery flavor is not assumed for every wine. [Lees contact](https://www.awri.com.au/industry_support/winemaking_resources/winemaking-practices/winemaking-treatment-lees-contact/) can contribute yeast-derived character and mouthfeel. Results in real cellars depend on the fruit, microbes, temperature, and handling. This game deliberately compresses time and uses predictable effects; costs and durations above are game balance choices.
 
+## Buyer preferences
+
+The Wine shop shows a repeating four-year cycle: fruit-forward, round/textured, skin-contact, then oak-influenced wines. Each preference lasts 12 weekly sales; its remaining weeks and successor are visible before release. Fermentation and maturation histories assign proportional appeal: malolactic and lees favor rounded styles, neutral oak adds texture, skin contact favors structure, and French oak favors wood influence. Untreated wine retains fruit-forward appeal. Combining treatments divides appeal instead of granting every benefit at once; blend effects follow the actual treated volume.
+
+The matching share adjusts retail demand from −15% to +45%, averaging no bonus across a complete 48-week cycle. It does not change quality, tasting snapshots, chosen prices, wholesale prices, or wine aging. Costs and tank time remain real tradeoffs. The forecast includes this factor, and weekly sales use the same factor with the existing customer pools and market variation.
+
 ## Persistence and verification
 
 Version-six saves gain optional `techniques` arrays on active batches and wine components, and optional technique descriptions in tasting snapshots. Existing saves, in-flight fermentations (including old three-week batches), and old tasting notes remain valid. An absent field means no recorded treatment; learning a technique never retroactively applies it. New actions reject unknown or duplicate techniques, unpaid research, and insufficient cash before consuming grapes or tanks. Imports reject malformed treatment arrays and impossible batch progress.

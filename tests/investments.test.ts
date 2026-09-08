@@ -186,7 +186,13 @@ test('insolvency ends the estate after income and blocks every further action', 
 });
 
 test('sommeliers change suitable wine prices and demand without changing scores or chosen shelf prices', () => {
-  const base = stocked(),
+  const stockedState = stocked();
+  // Keep shelf capacity from hiding the demand benefit under test.
+  const base = act(stockedState, {
+      type: 'shelfSpace',
+      id: stockedState.wines[0].id,
+      bottles: 120,
+    }),
     s = hospitality(base),
     wine = s.wines[0];
   assert.equal(

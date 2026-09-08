@@ -1360,6 +1360,7 @@ export function demandForecast(
     low: Math.min(available, demandCount(wine, low)),
     high: Math.min(available, demandCount(wine, high)),
     outlook: outlook.market.outlook,
+    style: outlook.market.style,
   };
 }
 

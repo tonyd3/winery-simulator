@@ -3002,3 +3002,16 @@ h1 {
   font-size: 12px;
   flex-wrap: wrap;
 }
+
+.market-style-note {
+  margin: 0 0 24px;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.market-style-note p {
+  margin: 6px 0 0;
+  max-width: 80ch;
+  color: var(--ink);
+  font-size: 12px;
+}
