@@ -209,7 +209,9 @@ test('matching soil improves harvest quality', () => {
   );
 });
 test('builds and land purchases cannot be duplicated; upgrades affect production', () => {
-  let s = act(learn(allGrapes(newGame()), 'cellar_control'), {
+  const start = learn(allGrapes(newGame()), 'cellar_control');
+  start.cash = 30000; // Fund this production test's land and planting setup.
+  let s = act(start, {
     type: 'buyPlot',
     id: 4,
   });

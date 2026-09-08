@@ -46,7 +46,7 @@ test('expanding a planted plot costs money, preserves its current crop, and queu
   const s = expand(before),
     p = s.plots[0];
   assert.deepEqual(before, snapshot);
-  assert.equal(s.cash, before.cash - 1800);
+  assert.equal(s.cash, before.cash - 3600);
   assert.equal(getLand(s, 1).area, '1.8');
   assert.equal(estateArea(s), 3.6);
   assert.equal(upkeep(s), upkeep(before) + 15);
@@ -92,7 +92,7 @@ test('new rows activate next spring in unselected estates without altering their
 test('four purchases reach triple size at increasing prices, with no second harvest or crop reset', () => {
   let s = act(funded(), { type: 'harvest', id: 1 });
   const harvested = s.plots[0].harvestedYear;
-  for (const [level, cost] of [1800, 2700, 3600, 4500].entries()) {
+  for (const [level, cost] of [3600, 5400, 7200, 9000].entries()) {
     assert.equal(plotExpansionCost(s, s.plots[0]), cost);
     const cash = s.cash;
     s = expand(s);
@@ -237,9 +237,9 @@ test('invalid and unaffordable expansions and malformed imports leave the state 
   assert.throws(() => expand(s, 4), /Buy this parcel/);
   assert.throws(() => expand(s, 999), /not found/);
   assert.deepEqual(s, snapshot);
-  const poor = { ...s, cash: 1799 };
+  const poor = { ...s, cash: 3599 };
   assert.throws(() => expand(poor), /more/);
-  assert.equal(poor.cash, 1799);
+  assert.equal(poor.cash, 3599);
   assert.equal(poor.plots[0].expansions, 0);
   for (const mutate of [
     (x: GameState) => {

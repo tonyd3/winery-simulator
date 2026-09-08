@@ -65,7 +65,7 @@ export const BOTTLE_PRICE = { min: 1, max: 1000 };
 export const PLOT_EXPANSION = {
   max: 4,
   step: 0.5,
-  costPerHectare: 1500,
+  costPerHectare: 3000,
   upkeep: 15,
 };
 export const hectares = (area: number) =>
@@ -148,7 +148,7 @@ export const LAND = [
     soil: 'Chalk',
     aspect: 'South-facing',
     area: '1.4',
-    cost: 4200,
+    cost: 16800,
     yield: 420,
     x: 708,
     y: 147,
@@ -159,7 +159,7 @@ export const LAND = [
     soil: 'Clay',
     aspect: 'East-facing',
     area: '1.1',
-    cost: 3500,
+    cost: 14000,
     yield: 340,
     x: 475,
     y: 495,
@@ -170,7 +170,7 @@ export const LAND = [
     soil: 'Limestone',
     aspect: 'West-facing',
     area: '1.3',
-    cost: 4800,
+    cost: 19200,
     yield: 400,
     x: 245,
     y: 147,

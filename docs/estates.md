@@ -6,13 +6,13 @@ The wine business now owns a portfolio of estates, sharing funds, research, equi
 
 | Purchase | Cost | Land included | Shared tank capacity | Added weekly upkeep |
 | --- | ---: | --- | ---: | ---: |
-| First additional estate | $28,000 | 3 empty parcels / 3.0 ha | Purchased separately | $175 |
-| Later estates | Prior acquisition price + $8,000 | 3 empty parcels / 3.0 ha | Purchased separately | $175 |
-| Second district at an estate | $18,000 | 6 empty parcels / 6.8 ha | Purchased separately | $185 |
-| Third district | $27,000 | 6 empty parcels / 6.8 ha | Purchased separately | $185 |
-| Fourth district | $36,000 | 6 empty parcels / 6.8 ha | Purchased separately | $185 |
+| First additional estate | $56,000 | 3 empty parcels / 3.0 ha | Purchased separately | $175 |
+| Later estates | Prior acquisition price + $16,000 | 3 empty parcels / 3.0 ha | Purchased separately | $175 |
+| Second district at an estate | $36,000 | 6 empty parcels / 6.8 ha | Purchased separately | $185 |
+| Third district | $54,000 | 6 empty parcels / 6.8 ha | Purchased separately | $185 |
+| Fourth district | $72,000 | 6 empty parcels / 6.8 ha | Purchased separately | $185 |
 
-Each original vineyard has three additional neighboring parcels available at the existing land prices, adding $25 weekly upkeep apiece. New vines cost extra. Buying land never grants ripe grapes, research points, supplies, or starting capital. All purchases are atomic and reject invalid, duplicate, unaffordable, or over-limit requests.
+Each original vineyard has three neighboring parcels for sale: River meadow costs $14,000, Hilltop parcel $16,800, and Old stone field $19,200. Each costs more than the $12,500 starting balance, encouraging production on the three founding parcels before buying land. Each purchase adds $25 weekly upkeep. New vines cost extra. Buying land never grants ripe grapes, research points, supplies, or starting capital. All purchases are atomic and reject invalid, duplicate, unaffordable, or over-limit requests.
 
 Each estate can have four districts. There is one estate per region, up to eight. Each district has six individually managed parcels. At full ownership this is 192 parcels / 217.6 ha before individual plot enlargement. Four expansions per parcel can triple this to 652.8 ha. Select an owned parcel on the Estate map to enlarge it; see [plot expansion](plot-expansion.md) for costs and next-spring production timing. Land purchases supply no cellar equipment. Buy floor space and 150 L tanks separately, up to 256 installed tanks; see [cellar equipment](cellar-equipment.md). The shared cellar can hold 256 reserve lots; fresh-grape capacity and save validation support the larger portfolio. Existing release, recipe, and total-save-size limits still apply.
 

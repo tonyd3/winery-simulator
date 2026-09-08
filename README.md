@@ -58,12 +58,14 @@ To restart in a different region, use **Save & settings → Start a new game**. 
 
 ## Expand your wine estates
 
-To grow more of a grape already planted, select its parcel on the **Estate** map and use **Grow more here → Expand plot**. Each purchase adds half the original acreage, with four expansions reaching three times the original size. The preview shows price, mature yield, and cellar tank needs. New rows on planted plots join the crop next spring; the current harvest stays unchanged. Each purchase adds $15 weekly upkeep, and care, planting, and harvest costs scale with size. For example, South slope grows from 1.2 to 1.8 ha for $1,800, taking its healthy Merlot yield from 360 to 540 kg once established. See [plot expansion rules](docs/plot-expansion.md).
+Neighboring parcels cost $14,000 (River meadow), $16,800 (Hilltop parcel), and $19,200 (Old stone field), plus vines and $25 weekly upkeep. These exceed the $12,500 starting balance; build income from the three parcels you already own before acquiring more land.
+
+To grow more of a grape already planted, select its parcel on the **Estate** map and use **Grow more here → Expand plot**. Each purchase adds half the original acreage, with four expansions reaching three times the original size. The preview shows price, mature yield, and cellar tank needs. New rows on planted plots join the crop next spring; the current harvest stays unchanged. Each purchase adds $15 weekly upkeep, and care, planting, and harvest costs scale with size. For example, South slope grows from 1.2 to 1.8 ha for $3,600, taking its healthy Merlot yield from 360 to 540 kg once established. See [plot expansion rules](docs/plot-expansion.md).
 
 To add more parcels or properties, open **Build → Land & estates**, or use **Expand your holdings** above the estate map.
 
-- **Add a vineyard district:** six empty parcels totaling 6.8 ha. Cellar space and tanks are purchased separately. Districts cost $18,000, then $27,000, then $36,000 at each estate, and add $185 weekly upkeep. Plant vines separately.
-- **Acquire a regional estate:** choose an unowned region and name the estate (or generate a name). The first acquisition costs $28,000; each later acquisition costs $8,000 more. Includes three empty parcels totaling 3 ha and three neighboring parcels available to buy; cellar equipment is separate. Adds $175 weekly upkeep before further purchases.
+- **Add a vineyard district:** six empty parcels totaling 6.8 ha. Cellar space and tanks are purchased separately. Districts cost $36,000, then $54,000, then $72,000 at each estate, and add $185 weekly upkeep. Plant vines separately.
+- **Acquire a regional estate:** choose an unowned region and name the estate (or generate a name). The first acquisition costs $56,000; each later acquisition costs $16,000 more. Includes three empty parcels totaling 3 ha and three neighboring parcels available to buy; cellar equipment is separate. Adds $175 weekly upkeep before further purchases.
 - **Manage the portfolio:** use the estate selector above the map and its vineyard district tabs. All estates grow every week, with their own regional soil and climate. Switching estates consumes no time or money. Research, equipment, cash, supplies, reserves, wine lines, and the calendar are shared.
 - **Keep provenance:** grape lots retain their origin through fermentation, storage, blending, bottling, and history. Combine wines from different estates and vintages while retaining the source breakdown. Estate diversity alone gives no grape-compatibility bonus.
 

@@ -37,6 +37,63 @@ const acquire = (s: GameState, region: RegionId = 'mosel') =>
   act(s, { type: 'acquireEstate', region, name: `${region} Estate` });
 const valid = (s: GameState) => assert.deepEqual(deserialize(serialize(s)), s);
 
+test('starting funds support the founding vineyard but cannot buy any neighboring parcel', () => {
+  for (const region of REGION_IDS) {
+    const s = newGame(region),
+      before = structuredClone(s);
+    assert.equal(s.plots.filter((p) => p.owned).length, 3);
+    for (const id of [4, 5, 6]) {
+      assert.ok(getLand(s, id).cost > s.cash);
+      assert.throws(() => act(s, { type: 'buyPlot', id }), /more/);
+      assert.deepEqual(s, before);
+    }
+    const harvested = act(s, { type: 'harvest', id: 1 });
+    const planted = act(harvested, {
+      type: 'plant',
+      id: 3,
+      variety: s.plots[0].variety!,
+    });
+    assert.ok(planted.cash > 0);
+    assert.ok(planted.grapes.length > 0);
+    assert.equal(planted.plots[2].growth, 15);
+  }
+});
+
+test('land purchases use their quoted price and reject balances one dollar short', () => {
+  for (const [id, price] of [[4, 16800], [5, 14000], [6, 19200]]) {
+    for (const estate of [1, 2]) {
+      const s = estate === 1 ? funded() : acquire(funded());
+      const address = plotId(estate, 0, id);
+      assert.equal(getLand(s, address).cost, price);
+      s.cash = price - 1;
+      const before = structuredClone(s);
+      assert.throws(() => act(s, { type: 'buyPlot', id: address }), /more/);
+      assert.deepEqual(s, before);
+      s.cash = price;
+      const bought = act(s, { type: 'buyPlot', id: address });
+      assert.equal(bought.cash, 0);
+      assert.equal(bought.ledger[0].amount, -price);
+      assert.equal(bought.plots.find((p) => p.id === address)!.owned, true);
+      assert.equal(upkeep(bought), upkeep(s) + 25);
+      assert.equal(bought.seed, s.seed);
+      assert.equal(bought.week, s.week);
+      valid(bought);
+    }
+  }
+});
+
+test('repricing land preserves previously purchased acreage and its historical cost', () => {
+  const old = newGame();
+  old.plots[4].owned = true;
+  old.cash -= 3500;
+  old.ledger.unshift({ week: old.week, label: 'River meadow', amount: -3500 });
+  const loaded = deserialize(serialize(old));
+  assert.deepEqual(loaded, old);
+  assert.equal(estateArea(loaded), 4.1);
+  assert.equal(getLand(loaded, 5).cost, 14000);
+  assert.equal(loaded.ledger[0].amount, -3500);
+});
+
 test('v3 migration wraps the original estate without regrading or changing inventory', () => {
   const start = newGame('burgundy', 'Old Vines');
   start.cellar.tanks.forEach((t) => {
@@ -224,6 +281,7 @@ test('estate origins survive fermentation, reserves, cross-estate blending, part
 
 test('the full portfolio supports 192 parcels while processing capacity is purchased independently', () => {
   let s = funded();
+  s.cash = 4000000; // Capacity coverage funds the entire higher-priced portfolio.
   for (const region of REGION_IDS.filter((r) => r !== s.region))
     s = acquire(s, region);
   for (const e of [...s.estates]) {

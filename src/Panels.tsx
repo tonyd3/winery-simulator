@@ -357,6 +357,11 @@ export function PlotInspector({
             <span className="button-price">{money(land.cost)}</span>
           </button>
           <p className="fine-print">Adds $25 to weekly estate upkeep.</p>
+          {state.cash < land.cost && (
+            <p className="fine-print">
+              Need {money(land.cost - state.cash)} more to buy this parcel.
+            </p>
+          )}
         </>
       )}
       {plot.owned && (

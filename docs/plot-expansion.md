@@ -2,15 +2,15 @@
 
 Select any owned parcel on the Estate map and use **Grow more here → Expand plot**. This grows the area devoted to that parcel's grape without adding a vineyard district or acquiring another estate. Unowned parcels must be purchased first. Empty parcels can also be enlarged before planting.
 
-Each purchase adds 50% of the parcel's original acreage and base yield. Four purchases reach three times its original size. The cost is the original hectares × $1,500 × the current size multiplier, rounded to whole dollars. Prices are game balance values.
+Each purchase adds 50% of the parcel's original acreage and base yield. Four purchases reach three times its original size. The cost is the original hectares × $3,000 × the current size multiplier, rounded to whole dollars. Prices are game balance values.
 
 | South slope expansion | Area | Purchase cost | Healthy, established Merlot yield |
 | --- | ---: | ---: | ---: |
 | Original | 1.2 ha | — | 360 kg |
-| First | 1.8 ha | $1,800 | 540 kg |
-| Second | 2.4 ha | $2,700 | 720 kg |
-| Third | 3.0 ha | $3,600 | 900 kg |
-| Fourth | 3.6 ha | $4,500 | 1,080 kg |
+| First | 1.8 ha | $3,600 | 540 kg |
+| Second | 2.4 ha | $5,400 | 720 kg |
+| Third | 3.0 ha | $7,200 | 900 kg |
+| Fourth | 3.6 ha | $9,000 | 1,080 kg |
 
 ## Production and costs
 
