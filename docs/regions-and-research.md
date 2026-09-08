@@ -31,7 +31,7 @@ For market value, Prestige influence equals the score through 100 and `100 + 25 
 
 ## Research progression
 
-The current catalog has 64 projects: 30 techniques and 34 individual grape field studies. See `src/catalog.ts` for the full cost/prerequisite table. The research ledger shows all costs, remaining time, prerequisites, and unlock descriptions. Each region starts with only its two founding grapes; technique nodes never grant an entire grape collection. All studied grapes can be planted across all owned regions, with region-specific climate and planting costs.
+The current catalog has 67 projects: 33 techniques and 34 individual grape field studies. See `src/catalog.ts` for the full cost/prerequisite table. The research ledger shows all costs, remaining time, prerequisites, and unlock descriptions. Each region starts with only its two founding grapes; technique nodes never grant an entire grape collection. All studied grapes can be planted across all owned regions, with region-specific climate and planting costs.
 
 | Branch | Progression and actual unlocks |
 | --- | --- |
@@ -43,11 +43,19 @@ The current catalog has 64 projects: 30 techniques and 34 individual grape field
 
 Technique studies cost $1,200–$180,000 and take 6–72 weeks; 12 weeks equal one game year. The field-study catalog adds ten base weeks, eight per rarity tier, and two per positive finesse point. Its cash and knowledge costs also increase by rarity and finesse. Local discounts apply before lab acceleration. Investment purchases remain separately priced, with their full ongoing operating costs.
 
-One prepaid study and one nursery trial can run simultaneously. Knowledge comes from weekly observation (6 base), harvests (+12), and bottling (+1 per 40 bottles produced). Vine science adds 2 weekly knowledge; Field notebooks adds 4. An operating research lab adds 10 and advances both studies and trials by two study weeks per game week. Pausing the lab restores normal speed. Pausing a study retains the occupied slot; abandoning frees it, loses progress, and refunds nothing. No cost is charged again during an active project.
+Each estate collection starts with one study slot. Under **Research**, **Add study slot** permanently increases shared research capacity up to eight simultaneous studies. The second slot costs $5,000, the third $10,000, and each later slot costs $5,000 more, up to $35,000 for the eighth. No research prerequisite, knowledge payment, or weekly upkeep applies to slot purchases. The current occupancy, next price, affordability, and limit remain visible across the research, grape-library, and nursery tabs.
+
+Each study pays its own cash and knowledge costs upfront. Different studies progress in parallel and retain independent pause/resume and abandon controls. Pausing retains that occupied slot; abandoning frees it, loses progress, and refunds nothing. Completion frees a slot for another study. A study cannot be started twice, and prerequisites must be completed before a dependent study starts. One nursery trial runs separately from study capacity.
+
+Knowledge comes from weekly observation (6 base), harvests (+12), and bottling (+1 per 40 bottles produced). Vine science adds 2 weekly knowledge; Field notebooks adds 4. An operating research lab adds 10 and advances every unpaused study and the nursery trial by two study weeks per game week. Pausing the lab restores normal speed. No cost is charged again during an active project.
+
+Existing saves default to one study slot while preserving the paid project's duration, progress, pause state, and promised legacy grape unlocks. Version-six saves add `researchSlots` and `additionalResearchProjects`; the original `researchProject` field retains the first active study. Completed or abandoned projects are removed while the other studies retain their IDs and progress. Import validation rejects over-capacity and duplicate studies, completed projects, invalid durations, and unmet prerequisites.
 
 Basic harvest, fermentation, aging, reserve storage, analysis, single-lot bottling, marketing, judging, land, and tank purchases stay available. Every purchase in the 14-item capital investment catalog has a research prerequisite. Existing owned facilities can operate and resume without retroactive research charges.
 
 Blend creation checks all positive-volume recipe components, including those inside earlier blends. Different grapes, years, estate origins, and wine colors require separate studies. Failed attempts consume no wine, money, IDs, knowledge, or RNG. Permission does not improve a recipe’s score: compatibility and component quality still matter. Existing blends remain bottleable.
+
+Skin contact, Malolactic fermentation, and Lees aging each require Cellar foundations. Completing a study unlocks a choice on new batches; it never changes wine already in a tank, reserve, or bottle. Study costs and batch processing costs are separate. See [cellar techniques](cellar-techniques.md) for the exact terms and style effects.
 
 ## Breeding
 

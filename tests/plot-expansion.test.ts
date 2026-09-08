@@ -150,10 +150,11 @@ test('a fully enlarged real plot produces a six-tank harvest that preserves all 
   assert.equal(g.kg, 1080);
   assert.equal(s.cash, cash - 540);
   assert.equal(fermentationPlan(s, g.kg).missing, 456);
-  assert.throws(
-    () => act(s, { type: 'ferment', id: g.id, oak: false }),
-    /456 L/,
-  );
+  const partial = act(s, { type: 'ferment', id: g.id, oak: false });
+  assert.equal(partial.batches[0].liters, 300);
+  assert.equal(partial.grapes[0].kg, 652);
+  assert.equal(grapeLiters(partial.grapes[0].kg), 456);
+  valid(partial);
   s = act(s, { type: 'expandCellar' });
   s = act(s, { type: 'buyTank', count: 4 });
   const processing = s.cash;

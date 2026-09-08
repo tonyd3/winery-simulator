@@ -1,6 +1,6 @@
 # Ten more grapes
 
-The catalog contains 34 varieties and 64 research projects (30 techniques and 34 individual grape studies). Each addition can be planted in any region after its study, used as a breeding parent, fermented, stored, blended, bottled, and sold. New estates still begin with two founding grapes.
+The catalog contains 34 varieties and 67 research projects (33 techniques and 34 individual grape studies). Each addition can be planted in any region after its study, used as a breeding parent, fermented, stored, blended, bottled, and sold. New estates still begin with two founding grapes.
 
 These are base study costs and durations, excluding prerequisite projects. Home-region favorites cost 20% less and take two fewer study weeks; an operating research lab accelerates progress. A game year contains 12 weeks. Planting and breeding are separate purchases.
 

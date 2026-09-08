@@ -37,7 +37,7 @@ The desktop estate workspace has a viewport-based height that stays fixed while 
 
 ### Research decisions
 
-Research uses branch-filtered ledger rows with a description and linked prerequisites beside a compact cost/duration/action column. `ResearchProjects.tsx` and `research.css` own this layout. Keep the active study visible across the project, grape-library, and nursery tabs. Show the single occupied slot, remaining game weeks, separate investment costs, and the no-refund consequence before abandoning. Grape-library climate and study terms must occupy separate columns; stack them under the grape name on narrow screens.
+Research uses branch-filtered ledger rows with a description and linked prerequisites beside a compact cost/duration/action column. `ResearchProjects.tsx` and `research.css` own this layout. Keep the slot count, additional-slot purchase, and all active studies visible across the project, grape-library, and nursery tabs. Group current studies in one tinted ledger with fine dividers; each row has its own remaining game weeks and pause/resume and abandon controls. Show the slot purchase cost, affordability, and capacity limit beside its action. Paused studies retain their slots, and abandoning requires the existing no-refund confirmation for that named study. Keep discovery and investment costs separate. Grape-library climate and study terms must occupy separate columns; stack them under the grape name on narrow screens.
 
 ## Color and surfaces
 
@@ -112,6 +112,10 @@ The estate uses an isometric map; regional previews use landscape postcards; win
 These are stylized regional cues, not exact site reconstructions. When adding a region, define its terrain, vineyard arrangement, architecture, vegetation, and palette before drawing it. Keep region descriptions and visible scenery consistent.
 
 The postcards use a `640 × 400` viewBox and an `8 / 5` aspect ratio. Fill the preview frame; retain `preserveAspectRatio="xMidYMid slice"` unless a deliberate framing change calls for another approach. Check that responsive cropping preserves the landmarks and the country label stays readable. Do not restore fixed-color bars around the artwork. Give meaningful SVGs descriptive accessible names and use unique IDs, such as React `useId`, for reusable clipping paths.
+
+## Batch technique choices
+
+Keep optional cellar recipes inside a native disclosure beneath each harvest row. The main fermentation action always shows the complete charge, tank allocation, and total weeks, even with the recipe collapsed. Expanded recipes use fine-divided rows with a labeled checkbox, a concrete style effect, time and per-tank cost, and a direct study link when locked. Stack terms below their technique on narrow screens. Preserve the distinction between character and quality points. See [GrapeArrival.tsx](../src/GrapeArrival.tsx) and [winemaking.css](../src/winemaking.css). Tank status names the current step; tasting notes list the treated proportion when wine is blended.
 
 ## Motion and responsive behavior
 

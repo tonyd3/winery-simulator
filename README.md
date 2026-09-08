@@ -29,8 +29,8 @@ Requires Node.js 22 or newer. Built with React, TypeScript, Vite, and Zod. All a
 
 1. Pick or randomize one of eight wine regions and name your estate. Start with $12,500, three parcels, two regional grapes, two 150 L tanks in a four-bay cellar, and 600 bottling kits. Time is paused.
 2. Select **South slope**. Tend the vines if you like, then harvest its ripe regional grape.
-3. In **Cellar**, choose stainless steel or French oak and review the required tanks and processing cost. Large harvests fill multiple tanks. Fresh grapes spoil after three game weeks.
-4. Advance two weeks. Age for up to eight weeks if you like, then **Move to reserves** to free all tanks used by that harvest. In **Reserves & blending**, store the wine, blend it with other grapes and vintages, or bottle it on its own.
+3. In **Cellar**, choose stainless steel or French oak and review the available tanks and processing cost. Large harvests fill multiple tanks; if only part fits, start that portion and process or sell the remaining grapes later. Fresh grapes keep their original three-week spoilage deadline.
+4. Advance two weeks. Age for up to eight weeks if you like, then **Move to reserves** to free all tanks used by that batch. In **Reserves & blending**, store the wine, blend it with other grapes and vintages, or bottle it on its own.
 5. Bottle any amount into a new or existing wine line. Preview its likely tasting notes, choose a bottle and label for a new line, then watch its tasting score appear. In **Wine shop**, set its price and list the release. Customers buy each game week. Wholesale sells the entire remaining stock immediately at a lower price.
 6. Review income and expenses in **Journal**, plant your empty parcel, buy more land, and research investments that suit your estate.
 
@@ -42,11 +42,13 @@ The year has 12 game weeks: spring 1–3, summer 4–6, autumn 7–9, winter 10�
 
 Choose Bordeaux, Burgundy, Napa Valley, Mosel, Tuscany, Rioja, Mendoza, or Barossa. New estates know only their region’s **two founding grapes**. Every other grape has an individual field study. Regional favorites keep their growing advantages and 15% planting discount, and their studies cost 20% less cash and take two fewer study weeks. Buying another estate does not unlock grapes.
 
-**Research** contains **64 studies**: 30 techniques across vineyard science, cellar techniques, tourism/hospitality, and commerce/discovery, plus 34 individual grape studies. Search by technique, grape, or unlock; follow clickable prerequisites; filter by availability. Studies range from **6–72 weeks** and **$1,200–$180,000**. A game year has 12 weeks. Research costs are separate from buildings, teams, and planting.
+**Cellar techniques** are researched after Cellar foundations, then selected separately for each fresh harvest before fermentation. Skin contact adds body and tannin (+1 week, $40 per tank); malolactic fermentation softens acidity (+2 weeks, $60 per tank); lees aging adds texture and bread-dough notes (+3 weeks, $50 per tank). The batch shows its full processing cost and tank time upfront. Steps run automatically, preserve partial-harvest handling, and carry into blend and bottle tasting notes. See [cellar techniques](docs/cellar-techniques.md) for research terms and save behavior.
+
+**Research** contains **67 studies**: 33 techniques across vineyard science, cellar techniques, tourism/hospitality, and commerce/discovery, plus 34 individual grape studies. Search by technique, grape, or unlock; follow clickable prerequisites; filter by availability. Studies range from **6–72 weeks** and **$1,200–$180,000**. A game year has 12 weeks. Research costs are separate from buildings, teams, and planting.
 
 The 34-grape library includes Gamay, Carménère, Graciano, Petite Sirah / Durif, Pinot Gris / Pinot Grigio, Viognier, Albariño, Grüner Veltliner, Marsanne, and Roussanne. Each has its own field study, growing traits, and blending affinities. Search accepts names without accents. See the [grape expansion guide](docs/grape-library.md) for costs and recipe ideas.
 
-Knowledge comes from weekly observation (+6; +2 after Vine science; +4 after Field notebooks), harvesting (+12), and bottling (+1 per 40 bottles). One prepaid study and one breeding trial can run concurrently. Studies can pause or be abandoned without a refund; restarting pays the full cost again. An operating research lab doubles progress and adds 10 knowledge per week.
+Knowledge comes from weekly observation (+6; +2 after Vine science; +4 after Field notebooks), harvesting (+12), and bottling (+1 per 40 bottles). Start with one study slot and buy up to eight under **Research → Add study slot**. The second slot costs $5,000, the third $10,000, and each later slot costs $5,000 more; slots are permanent and add no weekly upkeep. Every study pays its own cash and knowledge costs upfront and progresses in parallel, with individual pause/resume and abandon controls. Paused studies keep their slots; abandoning refunds nothing. One breeding trial can run separately. An operating research lab doubles all running study and trial progress and adds 10 knowledge each week.
 
 Cellar foundations unlocks same-grape, same-vintage, same-estate lot blending. Varietal assemblage unlocks different grapes; Perpetual reserves unlocks different vintages; Regional cuvées unlocks different estates; Red & white experiments unlocks mixed wine colors. Basic harvesting, fermentation, reserve storage, analysis, and single-lot bottling remain available immediately. Every capital investment in Build requires a discovery, while cellar bays, tanks, and land remain direct purchases.
 
@@ -93,8 +95,8 @@ Open **Cellar → Space & tanks**, or **Build → Buildings & equipment → Cell
 
 - New games have **two 150 L tanks and four tank bays**. Buy additional 150 L tanks for **$1,200 each**, including several at once.
 - Expand the floor by **four empty bays for $3,200**. Each later extension costs $1,600 more and adds $15 weekly upkeep. Tanks are purchased separately; vineyard purchases do not add equipment or bays.
-- A harvest automatically uses enough empty tanks for all its wine. A 360 kg harvest makes 252 L, filling one tank with 150 L and another with 102 L. Steel processing costs **$140 per occupied tank**; oak costs **$320**. The entire order is rejected without charges if there is insufficient capacity or money.
-- Tanks cannot share different harvests, even if partially full. A harvest's tanks ferment and age together; transferring it to reserves frees every assigned tank. The cellar supports up to **256 installed tanks**.
+- A harvest fills the available empty tanks, leaving any remaining grapes to process or sell before their original spoilage deadline. A 360 kg harvest makes 252 L, filling one tank with 150 L and another with 102 L. Steel processing costs **$140 per tank used**; oak costs **$320**. An order is rejected without charges if no tanks are empty or there is insufficient money for the displayed processing cost.
+- Tanks cannot share batches, even if partially full. Each batch's tanks ferment and age together; transferring it to reserves frees every assigned tank. The cellar supports up to **256 installed tanks**.
 - Old saves retain all previously owned **400 L tanks**, occupied wine, funds, and existing upkeep. New purchases are 150 L. See [cellar equipment rules](docs/cellar-equipment.md).
 
 ## Reserves, blends, and house labels
@@ -202,7 +204,8 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `src/blendCompatibility.ts`: grape pairings, proportion effects, and inherited hybrid affinities.
 - `tests/compatibility.test.ts`: complementary and conflicting recipes, proportions, ancestry, bounds, and preview-to-bottle consistency.
 - `tests/quality.test.ts`: quality distribution, exceptional-wine progression, legacy maturation, and nonlinear pricing.
-- `src/catalog.ts`: 34 grape definitions, eight regions, and 64 research projects.
+- `src/cellarTechniques.ts`, `src/GrapeArrival.tsx`: batch technique rules, progress labels, and per-harvest cellar choices.
+- `src/catalog.ts`: 34 grape definitions, eight regions, and 67 research projects.
 - `src/Regions.tsx`: new-estate region selection.
 - `src/RegionLandscape.tsx`: distinct SVG postcards for all eight regions.
 - `src/Research.tsx` and `src/ResearchProjects.tsx`: research ledger, grape library, active studies, and breeding nursery.

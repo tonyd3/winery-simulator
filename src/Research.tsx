@@ -2,7 +2,7 @@ import type { ResearchId } from './catalog';
 import { matchesSearch } from './search';
 import {
   ResearchProjects,
-  CurrentStudy,
+  CurrentStudies,
   StudyAction,
 } from './ResearchProjects';
 import { BREEDING, grapeResearchId } from './catalog';
@@ -124,7 +124,7 @@ export default function Research({
           </button>
         ))}
       </div>
-      <CurrentStudy state={state} dispatch={dispatch} />
+      <CurrentStudies state={state} dispatch={dispatch} />
       {tab === 'projects' && (
         <ResearchProjects state={state} dispatch={dispatch} focusId={focusId} />
       )}

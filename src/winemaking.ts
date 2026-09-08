@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { cellarTechniquesSchema, techniqueKey } from './cellarTechniques';
 import { grapeCompatibility } from './blendCompatibility';
 import type { GrapeLineage } from './blendCompatibility';
 
@@ -30,6 +31,7 @@ export const componentSchema = z
     year: count(10000),
     ml: count(100000000).min(1),
     quality: z.number().finite().min(0).max(100),
+    techniques: cellarTechniquesSchema.optional(),
     maturation: z
       .object({
         vessel: z.enum(['oak', 'steel']),
@@ -152,7 +154,7 @@ export function combine(parts: WineComponent[]): WineComponent[] {
   const grouped = new Map<string, WineComponent>();
   for (const part of parts) {
     const aging = part.maturation;
-    const key = `${part.variety}:${part.year}:${part.quality}:${part.estateId ?? 1}:${aging ? `${aging.vessel}:${aging.weeks}` : 'unrecorded'}`;
+    const key = `${part.variety}:${part.year}:${part.quality}:${part.estateId ?? 1}:${aging ? `${aging.vessel}:${aging.weeks}` : 'unrecorded'}:${part.techniques ? techniqueKey(part.techniques) : 'unrecorded'}`;
     const existing = grouped.get(key);
     if (existing) existing.ml += part.ml;
     else grouped.set(key, { ...part });

@@ -24,7 +24,7 @@ The map remains schematic. Acreage badges, parcel details, and estate/portfolio 
 
 ## Cellar planning
 
-The preview shows future kilograms, wine liters, and the number of new 150 L tanks that crop would require. It is a planning estimate at current vine health, not a purchase of equipment. Actual fermentation uses the available installed tanks, including preserved 400 L tanks in old games. A fully enlarged, healthy Merlot South slope produces 1,080 kg → 756 L → six new tanks. The existing whole-harvest capacity check and per-tank processing fees apply.
+The preview shows future kilograms, wine liters, and the number of new 150 L tanks that crop would require. It is a planning estimate at current vine health, not a purchase of equipment. Actual fermentation uses the available empty tanks, including preserved 400 L tanks in old games. A fully enlarged, healthy Merlot South slope produces 1,080 kg → 756 L → six new tanks when processed together. If only part fits, fermentation starts that portion and leaves the remaining grapes with their original spoilage deadline. Processing fees apply to each tank used.
 
 Fresh-grape validation now allows 1,800 kg per lot, and fermentation allows 1,260 L across up to nine tanks per batch. All assigned tanks are released together on reserve transfer. Wine volume and provenance continue through blending and bottling unchanged.
 
