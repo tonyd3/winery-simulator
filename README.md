@@ -247,3 +247,5 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 `npm run build` produces a static `dist/` directory that can be hosted on any static web host.
 
 Using an investment for a harvest, fermentation, or wholesale sale commits its operating charge until the next weekly payment. Suspending afterward stops further benefits but does not erase that charge. Multiple uses in the same week share the bill; saved games retain unpaid charges.
+
+The research outcome planner includes a first two-grape blend for each home region. Cellar foundations shows the recipe, missing grape studies, planting links and costs, and the same-estate, same-year harvest requirement. Research estimates exclude growing and winemaking.

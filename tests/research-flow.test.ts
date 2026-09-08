@@ -12,7 +12,7 @@ import {
   getVariety,
 } from '../src/game.ts';
 import type { GameState } from '../src/game.ts';
-import { RESEARCH, REGION_IDS, REGIONS } from '../src/catalog.ts';
+import { RESEARCH, REGION_IDS, REGIONS, VARIETIES } from '../src/catalog.ts';
 import {
   INTRO_BREEDING,
   breedingPreview,
@@ -22,11 +22,56 @@ import {
   researchPlan,
   researchPath,
   discoveryDestination,
+  firstBlendRecipe,
 } from '../src/researchPlanning.ts';
-import { volume } from '../src/winemaking.ts';
+import { volume, blendProfile } from '../src/winemaking.ts';
 import { learn } from './helpers.ts';
 
 const funded = () => ({ ...newGame(), cash: 1000000, knowledge: 10000 });
+
+test('every region offers a compatible first blend with a founding grape and a complete study path', () => {
+  for (const region of REGION_IDS) {
+    const s = newGame(region, 'First blend');
+    const recipe = firstBlendRecipe(s);
+    assert.equal(
+      VARIETIES[recipe[0].id].wineType,
+      VARIETIES[recipe[1].id].wineType,
+    );
+    assert.ok(
+      recipe.some((grape) => REGIONS[region].starters.includes(grape.id)),
+    );
+    assert.ok(
+      blendProfile(
+        recipe.map((grape) => ({
+          variety: grape.id,
+          ml: 1500,
+          quality: 80,
+          year: 1,
+          estateId: 1,
+        })),
+      ).compatibility > 0,
+    );
+    const plan = researchPlan(s, 'first_blend');
+    for (const grape of recipe.filter((grape) => !grape.available)) {
+      assert.ok(plan.path.includes(grape.study));
+      for (const prerequisite of RESEARCH[grape.study].requires)
+        assert.ok(plan.path.includes(prerequisite));
+    }
+    for (const study of plan.remaining) learn(s, study);
+    assert.equal(researchPlan(s, 'first_blend').ready, true);
+    assert.ok(firstBlendRecipe(s).every((grape) => grape.available));
+    s.researchGoal = 'first_blend';
+    assert.equal(deserialize(serialize(s))?.researchGoal, 'first_blend');
+  }
+});
+
+test('Cellar foundations alone does not claim Bordeaux blend ingredients are unlocked', () => {
+  const s = learn(newGame(), 'oenology');
+  const plan = researchPlan(s, 'first_blend');
+  assert.equal(plan.ready, false);
+  assert.ok(plan.remaining.includes('grape_cabernet'));
+  assert.ok(plan.cash > 0);
+});
 const tick = (s: GameState, count: number) => {
   for (let i = 0; i < count; i++) s = act(s, { type: 'advance' });
   return s;

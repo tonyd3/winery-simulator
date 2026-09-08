@@ -518,6 +518,21 @@
 .study-payoff strong {
   font-weight: 500;
 }
+
+.first-blend-guide {
+  display: grid;
+  gap: 12px;
+  max-width: 80ch;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.first-blend-guide > div {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.research-plan-body > .first-blend-guide {
+  margin: 20px 0;
+}
 .study-description .study-payoff p {
   margin: 4px 0;
   line-height: 1.65;
