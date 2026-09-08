@@ -2897,3 +2897,40 @@ h1 {
   flex-wrap: wrap;
   gap: 12px;
 }
+
+.estate-updates {
+  border-block: 1px solid var(--line);
+  padding: 20px;
+  margin-bottom: 24px;
+  background: #f1eee5;
+}
+.estate-updates h2 {
+  font: 400 24px var(--serif);
+  margin-bottom: 8px;
+}
+.estate-updates p,
+.estate-updates li {
+  line-height: 1.7;
+}
+.estate-updates ul {
+  padding-left: 20px;
+  max-height: 240px;
+  overflow: auto;
+}
+.event-history {
+  margin-bottom: 32px;
+}
+.event-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  line-height: 1.6;
+}
+@media (max-width: 620px) {
+  .event-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

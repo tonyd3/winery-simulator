@@ -274,6 +274,13 @@ const wineSchema = legacyWineSchema.extend({
   estate: z.string().trim().min(1).max(32),
   founded: integer(10000),
 });
+const eventSchema = z
+  .object({
+    week: integer(100000),
+    text: z.string().max(240),
+    type: z.enum(['good', 'info', 'warning']),
+  })
+  .strict();
 export const stateSchema = z
   .object({
     version: z.literal(6),
@@ -372,6 +379,8 @@ export const stateSchema = z
         z.object({ kits: integer(1000000), arrival: integer(100000) }).strict(),
       )
       .max(100),
+    events: z.array(eventSchema).max(200).default([]),
+    pendingEvents: integer(200).default(0),
     log: z
       .array(
         z
@@ -639,6 +648,7 @@ export type Action =
   | { type: 'expandEstate'; id: number }
   | { type: 'visitEstate'; id: number }
   | { type: 'advance' }
+  | { type: 'acknowledgeEvents' }
   | { type: 'research'; id: ResearchId }
   | { type: 'pauseResearch'; paused: boolean }
   | { type: 'abandonResearch' }
@@ -739,6 +749,8 @@ export function newGame(
     upgrades: [],
     suspendedUpgrades: [],
     deliveries: [],
+    events: [],
+    pendingEvents: 0,
     log: [
       {
         week: 6,
@@ -1101,9 +1113,17 @@ function note(
   s: GameState,
   text: string,
   type: 'good' | 'info' | 'warning' = 'info',
+  important = type === 'warning',
 ) {
   s.log.unshift({ week: s.week, text, type });
   s.log = s.log.slice(0, 40);
+  if (important) {
+    s.events = [{ week: s.week, text, type }, ...(s.events ?? [])].slice(
+      0,
+      200,
+    );
+    s.pendingEvents = Math.min(200, (s.pendingEvents ?? 0) + 1);
+  }
 }
 function transaction(s: GameState, label: string, amount: number) {
   s.cash += amount;
@@ -1252,6 +1272,9 @@ export function act(current: GameState, action: Action): GameState {
       );
       break;
     }
+    case 'acknowledgeEvents':
+      s.pendingEvents = 0;
+      break;
     case 'advance': {
       if (s.week >= 100000)
         throw new Error(
@@ -1275,7 +1298,12 @@ export function act(current: GameState, action: Action): GameState {
           ]),
         ];
         s.researchProject = null;
-        note(s, `${RESEARCH[id].name} completed. ${RESEARCH[id].text}`, 'good');
+        note(
+          s,
+          `${RESEARCH[id].name} completed. ${RESEARCH[id].text}`,
+          'good',
+          true,
+        );
       }
       if (
         s.breedingProject &&
@@ -1291,6 +1319,7 @@ export function act(current: GameState, action: Action): GameState {
           s,
           `${h.name} passed its nursery trial. Your new estate grape is ready to plant.`,
           'good',
+          true,
         );
       }
       const date = calendar(s.week);
@@ -1371,6 +1400,7 @@ export function act(current: GameState, action: Action): GameState {
               s,
               `${getVariety(s, b.variety).name} finished fermenting. Age it or bottle it.`,
               'good',
+              true,
             );
           }
         } else if (b.stage === 'aging' && b.age < 8) {
@@ -1380,6 +1410,7 @@ export function act(current: GameState, action: Action): GameState {
               s,
               `${getVariety(s, b.variety).name} has reached peak maturity. Ready for bottling.`,
               'good',
+              true,
             );
         }
       }

@@ -199,8 +199,13 @@ export default function App() {
           setReveal(next.wines.at(-1)!);
         }
         if (action.type === 'advance') setToast(null);
-        if (next.bankruptcy) setSpeed(0);
         if (
+          next.bankruptcy ||
+          (action.type === 'advance' && next.pendingEvents > 0)
+        )
+          setSpeed(0);
+        if (
+          action.type !== 'acknowledgeEvents' &&
           action.type !== 'bottle' &&
           action.type !== 'advance' &&
           action.type !== 'price' &&
@@ -658,6 +663,12 @@ export default function App() {
                     aria-label={`Play at ${s}x speed`}
                     aria-pressed={speed === s}
                     className={speed === s ? 'selected' : ''}
+                    disabled={state.pendingEvents > 0}
+                    title={
+                      state.pendingEvents > 0
+                        ? 'Acknowledge estate updates to resume time'
+                        : undefined
+                    }
                     onClick={() => setSpeed(s)}
                   >
                     {s}×
@@ -672,6 +683,30 @@ export default function App() {
               </button>
             </div>
           </div>
+          {state.pendingEvents > 0 && (
+            <section
+              className="estate-updates"
+              aria-label="Estate updates"
+              role="status"
+            >
+              <h2>Estate updates</h2>
+              <p>
+                Time is paused for these events. Their history stays in your
+                Journal.
+              </p>
+              <ul>
+                {state.events.slice(0, state.pendingEvents).map((event, i) => (
+                  <li key={i}>{event.text}</li>
+                ))}
+              </ul>
+              <button
+                className="button secondary"
+                onClick={() => dispatch({ type: 'acknowledgeEvents' })}
+              >
+                Acknowledge updates
+              </button>
+            </section>
+          )}
           <div key={view} className="view-content">
             {view === 'estate' ? (
               <>
