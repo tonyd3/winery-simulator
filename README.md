@@ -249,3 +249,5 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 Using an investment for a harvest, fermentation, or wholesale sale commits its operating charge until the next weekly payment. Suspending afterward stops further benefits but does not erase that charge. Multiple uses in the same week share the bill; saved games retain unpaid charges.
 
 The research outcome planner includes a first two-grape blend for each home region. Cellar foundations shows the recipe, missing grape studies, planting links and costs, and the same-estate, same-year harvest requirement. Research estimates exclude growing and winemaking.
+
+On the Estate screen, Space harvests the selected ripe parcel when its harvest fee is affordable. Select a map parcel first; input fields, other controls, and open dialogs keep their usual keyboard behavior. Harvest and tend controls sit at the top of the inspector. The cellar remembers its department while navigating, and narrow-screen bottling puts the form ahead of the bottle preview.

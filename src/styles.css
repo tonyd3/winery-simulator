@@ -3015,3 +3015,11 @@ h1 {
   color: var(--ink);
   font-size: 12px;
 }
+
+.parcel-actions {
+  margin-top: 16px;
+}
+.parcel-actions .fine-print {
+  font-size: 10px;
+  line-height: 1.6;
+}
