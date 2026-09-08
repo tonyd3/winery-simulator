@@ -92,6 +92,16 @@ import {
 import { qualityResponse, signedPrestige, prestigeInfluence } from './prestige';
 import { tastingProfile, tastingNotesSchema } from './wineSensory';
 import { harvestCharacterSchema } from './winemaking';
+import {
+  MATURATION_LIMIT,
+  VESSELS,
+  createMaturationProfile,
+  maturationProfileSchema,
+  maturationPlanSchema,
+  maturationCost,
+  maturationOutlook,
+} from './maturation';
+import type { MaturationVessel } from './maturation';
 
 export const SAVE_KEY = 'terroir.save.v1';
 export const BACKUP_KEY = 'terroir.backup.v1';
@@ -287,12 +297,14 @@ const batchSchema = z
     stage: z.enum(['fermenting', 'ready', 'aging']),
     remaining: integer(8),
     techniques: cellarTechniquesSchema.optional(),
-    age: integer(8),
+    age: integer(MATURATION_LIMIT),
     oak: z.boolean(),
     year: integer(10000),
     harvest: harvestCharacterSchema.optional(),
     // Absent in older saves: preserve those batches' existing maturation curve.
-    agingProfile: z.literal('balanced').optional(),
+    agingProfile: z.enum(['balanced', 'varietal-v1']).optional(),
+    maturationProfile: maturationProfileSchema.optional(),
+    maturationPlan: maturationPlanSchema.optional(),
     estateId: z.number().int().min(1).max(8).optional(),
   })
   .strict();
@@ -603,6 +615,20 @@ export const stateSchema = z
         capacity += tank?.capacity ?? 0;
       }
       if (batch.liters > capacity) fail('Wine exceeds its tank capacity.');
+      if (batch.agingProfile === 'varietal-v1') {
+        if (
+          !batch.maturationProfile ||
+          (batch.stage === 'aging') !== Boolean(batch.maturationPlan) ||
+          (batch.stage !== 'aging' && batch.age !== 0)
+        )
+          fail('Invalid maturation plan.');
+      } else if (
+        batch.maturationProfile ||
+        batch.maturationPlan ||
+        batch.age > 8
+      ) {
+        fail('Invalid legacy maturation.');
+      }
     }
     const ids = [
       ...s.grapes,
@@ -768,7 +794,13 @@ export type Action =
       oak: boolean;
       techniques?: CellarTechnique[];
     }
-  | { type: 'age'; id: number }
+  | {
+      type: 'age';
+      id: number;
+      vessel?: MaturationVessel;
+      targetWeeks?: number;
+      autoTransfer?: boolean;
+    }
   | { type: 'reserve'; id: number }
   | { type: 'tasteReserve'; id: number }
   | { type: 'discardSmallReserves'; lots: { id: number; ml: number }[] }
@@ -1241,6 +1273,18 @@ export function demand(wine: Wine, s: GameState) {
   return weeklySales({ ...s, wines }).get(wine.id) ?? 0;
 }
 export const quality = (b: Batch) => {
+  if (b.agingProfile === 'varietal-v1' && b.maturationProfile) {
+    const outlook = maturationOutlook(
+      b.maturationProfile,
+      b.maturationPlan?.vessel ?? 'steel',
+      b.age,
+      b.oak,
+    );
+    return Math.max(
+      0,
+      Math.min(100, Math.round(b.quality + outlook.adjustment)),
+    );
+  }
   const gain =
     b.agingProfile === 'balanced'
       ? (b.oak ? CELLAR_QUALITY.oakMaturity : CELLAR_QUALITY.steelMaturity) *
@@ -1442,6 +1486,68 @@ export function act(current: GameState, action: Action): GameState {
     const b = s.batches.find((b) => b.id === id);
     if (!b) throw new Error('Wine batch not found.');
     return b;
+  };
+  const storeBatch = (b: Batch) => {
+    if (b.stage === 'fermenting')
+      throw new Error(
+        'Let fermentation and any cellar techniques finish before storing wine.',
+      );
+    if (s.reserves.length >= ESTATE_LIMITS.reserves)
+      throw new Error(
+        'Your 256 reserve spaces are full. Blend, bottle, or clear small leftovers to make room.',
+      );
+    const modern = b.agingProfile === 'varietal-v1';
+    const vessel = modern
+      ? (b.maturationPlan?.vessel ?? 'steel')
+      : b.oak
+        ? 'oak'
+        : 'steel';
+    s.reserves.push({
+      id: s.nextId++,
+      name: `${getVariety(s, b.variety).name} ${vessel === 'steel' ? 'Estate' : 'Réserve'}`.slice(
+        0,
+        40,
+      ),
+      stored: s.week,
+      score: null,
+      components: [
+        {
+          variety: b.variety,
+          year: b.year,
+          ml: b.liters * 1000,
+          quality: quality(b),
+          ...(b.harvest ? { harvest: { ...b.harvest } } : {}),
+          ...(b.directCostCents !== undefined
+            ? { directCostCents: b.directCostCents }
+            : {}),
+          maturation: modern
+            ? {
+                version: 1,
+                vessel,
+                weeks: b.age,
+                oakDominant: maturationOutlook(
+                  b.maturationProfile!,
+                  vessel,
+                  b.age,
+                  b.oak,
+                ).overOaked,
+              }
+            : { vessel: b.oak ? 'oak' : 'steel', weeks: b.age },
+          ...(modern
+            ? { fermentation: b.oak ? ('oak' as const) : ('steel' as const) }
+            : {}),
+          ...(b.techniques ? { techniques: [...b.techniques] } : {}),
+          ...(b.estateId !== undefined ? { estateId: b.estateId } : {}),
+        },
+      ],
+    });
+    s.batches = s.batches.filter((x) => x.id !== b.id);
+    note(
+      s,
+      `${b.liters} L moved into reserves. ${b.tankIds.length} tank${b.tankIds.length === 1 ? ' is' : 's are'} free for your next harvest.`,
+      'good',
+      action.type === 'advance',
+    );
   };
   const getWine = (id: number) => {
     const w = s.wines.find((w) => w.id === id);
@@ -1658,10 +1764,11 @@ export function act(current: GameState, action: Action): GameState {
           const previousStage = vinificationStage(b);
           b.remaining--;
           if (b.remaining === 0) {
-            b.stage = 'aging';
+            const needsPlan = b.agingProfile === 'varietal-v1';
+            b.stage = needsPlan ? 'ready' : 'aging';
             note(
               s,
-              `${getVariety(s, b.variety).name} finished ${b.techniques?.length ? 'its cellar plan' : 'fermenting'}. Maturation has begun automatically; store it whenever you are ready.`,
+              `${getVariety(s, b.variety).name} finished ${b.techniques?.length ? 'its cellar plan' : 'fermenting'}. ${needsPlan ? 'Choose a maturation plan or move it to reserves.' : 'Maturation has begun automatically; store it whenever you are ready.'}`,
               'good',
               true,
             );
@@ -1671,16 +1778,61 @@ export function act(current: GameState, action: Action): GameState {
               `${getVariety(s, b.variety).name}: ${vinificationStage(b)} has begun. ${b.remaining} weeks until ready for reserves.`,
             );
           }
-        } else if (b.age < 8) {
-          b.stage = 'aging';
-          b.age++;
-          if (b.age === 8)
-            note(
-              s,
-              `${getVariety(s, b.variety).name} has reached peak maturity. Ready for bottling.`,
-              'good',
-              true,
+        } else if (b.stage === 'aging' || b.agingProfile !== 'varietal-v1') {
+          if (
+            b.agingProfile === 'varietal-v1' &&
+            b.maturationProfile &&
+            b.maturationPlan
+          ) {
+            const plan = b.maturationPlan;
+            const previous = maturationOutlook(
+              b.maturationProfile,
+              plan.vessel,
+              b.age,
+              b.oak,
             );
+            b.age = Math.min(MATURATION_LIMIT, b.age + 1);
+            const current = maturationOutlook(
+              b.maturationProfile,
+              plan.vessel,
+              b.age,
+              b.oak,
+            );
+            if (b.age === current.readyFrom)
+              note(
+                s,
+                `${getVariety(s, b.variety).name} is ready to release from ${VESSELS[plan.vessel].name.toLowerCase()}.`,
+                'good',
+                true,
+              );
+            if (!previous.overOaked && current.overOaked)
+              note(
+                s,
+                `${getVariety(s, b.variety).name}: oak is becoming dominant. Move it to reserves to stop further exposure.`,
+                'warning',
+              );
+            if (plan.autoTransfer && b.age >= plan.targetWeeks) {
+              if (s.reserves.length < ESTATE_LIMITS.reserves) storeBatch(b);
+              else {
+                plan.autoTransfer = false;
+                note(
+                  s,
+                  `${getVariety(s, b.variety).name} could not move to reserves: all 256 spaces are full. Its automatic transfer has stopped; free a space and transfer it manually. Aging continues in its vessels.`,
+                  'warning',
+                );
+              }
+            }
+          } else if (b.age < 8) {
+            b.stage = 'aging';
+            b.age++;
+            if (b.age === 8)
+              note(
+                s,
+                `${getVariety(s, b.variety).name} has reached peak maturity. Ready for bottling.`,
+                'good',
+                true,
+              );
+          }
         }
       }
       for (const d of s.deliveries.filter((d) => d.arrival <= s.week)) {
@@ -2097,7 +2249,14 @@ export function act(current: GameState, action: Action): GameState {
         oak: action.oak,
         year: calendar(g.picked).year,
         ...(g.harvest ? { harvest: { ...g.harvest } } : {}),
-        agingProfile: 'balanced',
+        agingProfile: 'varietal-v1',
+        maturationProfile: createMaturationProfile(
+          g.variety,
+          s.hybrids,
+          getEstate(s, g.estateId ?? 1).region,
+          g.quality,
+          techniques,
+        ),
         ...(g.estateId !== undefined ? { estateId: g.estateId } : {}),
       });
       if (plan.remainingKg > 0) {
@@ -2113,57 +2272,54 @@ export function act(current: GameState, action: Action): GameState {
     }
     case 'age': {
       const b = getBatch(action.id);
-      if (b.stage === 'fermenting')
+      if (
+        b.stage === 'fermenting' ||
+        (b.agingProfile === 'varietal-v1' && b.stage !== 'ready')
+      )
         throw new Error(
           'Only finished fermentations and cellar techniques can begin further aging.',
         );
-      b.stage = 'aging';
-      note(
-        s,
-        `${getVariety(s, b.variety).name} is maturing. Quality improves each week, up to 8 weeks.`,
-      );
+      if (b.agingProfile === 'varietal-v1' && b.maturationProfile) {
+        const vessel = action.vessel ?? b.maturationProfile.preferred;
+        const selection = maturationPlanSchema.safeParse({
+          vessel,
+          targetWeeks:
+            action.targetWeeks ?? b.maturationProfile.routes[vessel]?.readyFrom,
+          autoTransfer: action.autoTransfer ?? false,
+        });
+        if (!selection.success)
+          throw new Error(
+            'Choose a vessel and 1–12 whole game weeks of maturation.',
+          );
+        const cost = maturationCost(selection.data.vessel, b.tankIds.length);
+        if (cost > 0)
+          spend(s, `${VESSELS[selection.data.vessel].name} maturation`, cost);
+        if (b.directCostCents !== undefined) b.directCostCents += cost * 100;
+        b.maturationPlan = selection.data;
+        b.stage = 'aging';
+        note(
+          s,
+          `${getVariety(s, b.variety).name} is maturing in ${VESSELS[selection.data.vessel].name.toLowerCase()}.${selection.data.autoTransfer ? ` Automatic transfer to reserves after ${selection.data.targetWeeks} game weeks.` : ' Move it to reserves when ready to release.'}`,
+        );
+      } else {
+        if (
+          action.vessel !== undefined ||
+          action.targetWeeks !== undefined ||
+          action.autoTransfer !== undefined
+        )
+          throw new Error(
+            'This older batch keeps its original vessel and eight-week aging plan.',
+          );
+        b.stage = 'aging';
+        note(
+          s,
+          `${getVariety(s, b.variety).name} is maturing on its original eight-week aging curve.`,
+        );
+      }
       break;
     }
     case 'reserve': {
-      const b = getBatch(action.id);
-      if (b.stage === 'fermenting')
-        throw new Error(
-          'Let fermentation and any cellar techniques finish before storing wine.',
-        );
-      if (s.reserves.length >= ESTATE_LIMITS.reserves)
-        throw new Error(
-          'Your 256 reserve spaces are full. Blend, bottle, or clear small leftovers to make room.',
-        );
-      s.reserves.push({
-        id: s.nextId++,
-        name: `${getVariety(s, b.variety).name} ${b.oak ? 'Réserve' : 'Estate'}`.slice(
-          0,
-          40,
-        ),
-        stored: s.week,
-        score: null,
-        components: [
-          {
-            variety: b.variety,
-            year: b.year,
-            ml: b.liters * 1000,
-            quality: quality(b),
-            ...(b.harvest ? { harvest: { ...b.harvest } } : {}),
-            ...(b.directCostCents !== undefined
-              ? { directCostCents: b.directCostCents }
-              : {}),
-            maturation: { vessel: b.oak ? 'oak' : 'steel', weeks: b.age },
-            ...(b.techniques ? { techniques: [...b.techniques] } : {}),
-            ...(b.estateId !== undefined ? { estateId: b.estateId } : {}),
-          },
-        ],
-      });
-      s.batches = s.batches.filter((x) => x.id !== b.id);
-      note(
-        s,
-        `${b.liters} L moved into reserves. ${b.tankIds.length} tank${b.tankIds.length === 1 ? ' is' : 's are'} free for your next harvest.`,
-        'good',
-      );
+      storeBatch(getBatch(action.id));
       break;
     }
     case 'discardSmallReserves': {

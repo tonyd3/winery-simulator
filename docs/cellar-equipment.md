@@ -8,9 +8,14 @@ Cellar floor space and fermentation tanks are separate investments shared by all
 | Tank | $1,200 each | One 150 L tank; occupies one existing empty bay |
 | Floor extension | $3,200 first; +$1,600 for each later extension | Four empty bays; +$15 weekly upkeep |
 | Steel processing | $140 per tank used | Two-week fermentation |
-| French oak processing | $320 per tank used | Two-week fermentation; existing oak aging curve |
+| French oak processing | $320 per tank used | Two-week fermentation with wood character; maturation chosen separately |
+| Steel maturation | $0 per reserved tank | Freshness route after fermentation and techniques |
+| Neutral oak maturation | $80 per reserved tank | Barrel service with little wood flavor |
+| French oak maturation | $180 per reserved tank | Barrel service with wood flavor and over-oaking risk |
 
 Players can buy several tanks at once. New tank purchases add no recurring upkeep; floor extensions do. There is a limit of 256 bays and installed tanks. Prices are game balance values, not equipment market estimates.
+
+Maturation charges are paid once when a finished batch starts its plan. All three choices reserve its existing cellar capacity until transfer; a wood plan includes barrel service without removing or replacing owned tanks. Separate barrel inventories are outside this equipment model. See [maturation](aging.md) for grape-specific release windows, scheduled transfers, and older batches.
 
 ## Harvest allocation
 

@@ -127,9 +127,11 @@ The postcards use a `640 × 400` viewBox and an `8 / 5` aspect ratio. Fill the p
 
 Keep optional cellar recipes inside a native disclosure beneath each harvest row. The main fermentation action always shows the complete charge, tank allocation, and total weeks, even with the recipe collapsed. Expanded recipes use fine-divided rows with a labeled checkbox, a concrete style effect, time and per-tank cost, and a direct study link when locked. Stack terms below their technique on narrow screens. Preserve the distinction between character and quality points. See [GrapeArrival.tsx](../src/GrapeArrival.tsx) and [winemaking.css](../src/winemaking.css). Tank status names the current step; tasting notes list the treated proportion when wine is blended.
 
+Keep fermentation choices local to each harvest. Once its cellar plan finishes, group maturation advice, vessel, suggested release window, duration, automatic transfer, and total charge inside that batch's existing card. Use native labeled controls and a fine divider; selecting one batch must not change another. Readiness and oak influence are separate plain-language messages. On narrow screens, stack duration and automatic transfer. Wood maturation uses the label “Cellar slot” and explains the included barrel service; owned tanks remain equipment. See [BatchMaturation.tsx](../src/BatchMaturation.tsx) and `.batch-maturation` in [winemaking.css](../src/winemaking.css).
+
 ### Vintage tasting notes
 
-The shared [TastingNotes.tsx](../src/TastingNotes.tsx) keeps aromas above fine-divided Palate, Vintage, Origins, Aging, and optional Cellar rows. Describe each vintage within its grape's character, using recorded picking conditions when available. State the recorded share in blends and mark missing harvest history as estimated. Keep saved release notes stable; do not imply that viewing or waiting changes the wine. See [tasting-notes.md](tasting-notes.md) for the model and save behavior.
+The shared [TastingNotes.tsx](../src/TastingNotes.tsx) keeps aromas above fine-divided Palate, Vintage, Origins, Ferment, Aging, and optional Cellar rows. Describe each vintage within its grape's character, using recorded picking conditions when available. State the recorded share in blends and mark missing harvest history as estimated. Keep saved release notes stable; do not imply that viewing or waiting changes the wine. See [tasting-notes.md](tasting-notes.md) for the model and save behavior.
 
 ## Motion and responsive behavior
 

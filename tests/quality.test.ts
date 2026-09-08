@@ -18,6 +18,16 @@ import type { GameState } from '../src/game.ts';
 import { assess, CELLAR_TASTING } from '../src/winemaking.ts';
 import { BLEND_COMPATIBILITY } from '../src/blendCompatibility.ts';
 import { bottleBatch } from './helpers.ts';
+import { VESSEL_IDS } from '../src/maturation.ts';
+import type { MaturationVessel } from '../src/maturation.ts';
+
+function mature(s: GameState, vessel: MaturationVessel) {
+  s = act(act(s, { type: 'advance' }), { type: 'advance' });
+  s = act(s, { type: 'age', id: s.batches[0].id, vessel });
+  const weeks = s.batches[0].maturationProfile!.routes[vessel].readyFrom;
+  for (let i = 0; i < weeks; i++) s = act(s, { type: 'advance' });
+  return s;
+}
 
 function ferment(s: GameState, oak = true) {
   s = act(s, { type: 'harvest', id: 1 });
@@ -32,9 +42,14 @@ test('ordinary first vintages stay below 90 even with temperature control and fu
     start.upgrades = ['lab'];
     for (const oak of [false, true]) {
       const s = ferment(start, oak);
-      assert.equal(s.batches[0].agingProfile, 'balanced');
-      const matured = quality({ ...s.batches[0], age: 8 });
-      assert.ok(matured + CELLAR_TASTING.variation < 90, region);
+      assert.equal(s.batches[0].agingProfile, 'varietal-v1');
+      for (const vessel of VESSEL_IDS) {
+        const matured = quality(mature(s, vessel).batches[0]);
+        assert.ok(
+          matured + CELLAR_TASTING.variation < 90,
+          `${region}: ${vessel}`,
+        );
+      }
     }
   }
 });
@@ -60,7 +75,7 @@ test('health, ripeness, site and finesse create a broad earned quality spread', 
   elite.plots[0].health = elite.plots[0].growth = 100;
   elite.upgrades = ['lab'];
   const s = ferment(elite);
-  const matured = quality({ ...s.batches[0], age: 8 });
+  const matured = quality(mature(s, 'neutral').batches[0]);
   assert.ok(
     matured >= 90,
     `Exceptional Pinot must remain achievable: ${matured}`,
@@ -94,7 +109,7 @@ test('90+ results remain a small tail across classic grapes and growing conditio
           health,
           growth,
         });
-        // Give every scenario full temperature control and oak maturity.
+        // Give every scenario the maximum six-point maturation benefit.
         const base = fruit + 3 + 6;
         for (let tasting = -3; tasting <= 3; tasting++) {
           const score = Math.max(0, Math.min(100, base + tasting));
@@ -111,8 +126,10 @@ test('90+ results remain a small tail across classic grapes and growing conditio
   assert.ok(exceptional / total < 0.02, `${exceptional}/${total} reached 90+`);
 });
 
-test('new maturation has limited diminishing gains and older batches retain their saved curve', () => {
+test('older balanced and original batches retain their saved aging curves', () => {
   const s = ferment(newGame());
+  s.batches[0].agingProfile = 'balanced';
+  delete s.batches[0].maturationProfile;
   const b = s.batches[0];
   const gains = Array.from(
     { length: 9 },

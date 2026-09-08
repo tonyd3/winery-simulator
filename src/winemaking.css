@@ -1448,6 +1448,91 @@
   line-height: 1.6;
   margin: -12px 0 20px;
 }
+.batch-maturation {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 12px;
+}
+.batch-maturation h4 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 19px;
+  margin: 0 0 10px;
+}
+.batch-maturation p,
+.fermentation-advice,
+.maturation-footnote {
+  line-height: 1.6;
+  margin: 10px 0;
+  color: var(--ink);
+}
+.maturation-field {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+.maturation-field select,
+.maturation-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+.maturation-window {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 0;
+  margin: 8px 0;
+  border-block: 1px solid var(--line);
+}
+.maturation-order {
+  display: grid;
+  grid-template-columns: 95px minmax(0, 1fr);
+  gap: 16px;
+  align-items: end;
+}
+.maturation-auto {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  line-height: 1.5;
+}
+.maturation-auto input {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--wine);
+}
+.batch-maturation .maturation-warning {
+  color: var(--wine);
+  font-weight: 500;
+}
+.maturation-footnote {
+  font-size: 11px;
+}
+.batch-maturation .button {
+  min-height: 42px;
+  white-space: normal;
+}
+@media (max-width: 620px) {
+  .maturation-order {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .maturation-footnote {
+    font-size: 12px;
+  }
+}
 @media (max-width: 700px) {
   .cellar-recipe summary span {
     display: block;

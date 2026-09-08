@@ -592,7 +592,7 @@ export default function Reserves({
               </form>
               <p className="fine-print">
                 Unselected wine stays in storage. Reserves keep indefinitely;
-                aging happens in your fermentation tanks.
+                maturation happens in the cellar before transfer.
               </p>
             </aside>
           </div>
