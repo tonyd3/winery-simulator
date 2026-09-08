@@ -371,6 +371,7 @@ export function PlotInspector({
 }
 
 export function Cellar(props: Props) {
+  const { state, dispatch } = props;
   const [tab, setTab] = useState<
     'fermentation' | 'reserves' | 'lines' | 'equipment'
   >('fermentation');
@@ -396,6 +397,34 @@ export function Cellar(props: Props) {
           </button>
         ))}
       </nav>
+      <section className="supply-strip" aria-label="Bottling supplies">
+        <div className="supply-icon" aria-hidden="true">
+          <Icon name="package" size={26} />
+        </div>
+        <div>
+          <span className="eyebrow">BOTTLING SUPPLIES</span>
+          <h2>Bottles, corks & a label of your own.</h2>
+          <p>
+            <b>{state.kits.toLocaleString()}</b> bottling kits in stock
+            {state.deliveries.length > 0
+              ? ` · ${state.deliveries.reduce((n, d) => n + d.kits, 0).toLocaleString()} arriving next week`
+              : ' · New orders arrive next week'}
+          </p>
+        </div>
+        <div className="supply-order">
+          <button
+            className="button primary"
+            disabled={state.cash < 480}
+            onClick={() => dispatch({ type: 'supplies' })}
+          >
+            <Plus size={16} />
+            Order 600 kits <span className="button-price">$480</span>
+          </button>
+          {state.cash < 480 && (
+            <p>Need {money(480 - state.cash)} more to order.</p>
+          )}
+        </div>
+      </section>
       {tab === 'fermentation' ? (
         <Fermentation
           {...props}
@@ -725,28 +754,6 @@ function Fermentation({
             </div>
           );
         })}
-      </div>
-      <div className="supply-strip">
-        <div className="supply-icon">
-          <Icon name="package" size={26} />
-        </div>
-        <div>
-          <h3>Bottles, corks & a label of your own.</h3>
-          <p>
-            <b>{state.kits}</b> bottling kits in stock
-            {state.deliveries.length > 0
-              ? ` · ${state.deliveries.reduce((n, d) => n + d.kits, 0)} arriving next week`
-              : ' · New orders arrive next week'}
-          </p>
-        </div>
-        <button
-          className="button secondary"
-          disabled={state.cash < 480}
-          onClick={() => dispatch({ type: 'supplies' })}
-        >
-          <Plus size={16} />
-          600 kits · $480
-        </button>
       </div>
       <div className="cellar-note">
         <Icon name="help" size={17} />

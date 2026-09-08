@@ -23,6 +23,10 @@ Use spacing, alignment, typography, and thin dividers to group information. Tint
 
 The Journal focuses on accounts: financial totals above a full-width transaction ledger. Keep entries readable on narrow screens. There are no neighboring-work or loan controls. The estate may show a contextual winemaker note for available actions; do not add achievement checklists, milestone targets, or completion bars.
 
+### Bottling supplies
+
+Keep the bottling-supplies strip directly beneath the Cellar department navigation, visible in every department, including Reserves & blending. Group stock, incoming deliveries, and the explicit order action with its price and next-week delivery timing. On narrow screens, place a full-width order button beneath the supply details. See `Cellar` in [Panels.tsx](../src/Panels.tsx) and `.supply-strip` in [styles.css](../src/styles.css).
+
 ### Prestige
 
 Prestige is an uncapped estate score, separate from 100-point wine quality. Keep its current tier visible beneath the score on desktop and mobile. The resource is a keyboard-accessible button opening a ledger of 16 named tiers with thresholds and one current-tier highlight. Use the shared modal and existing paper/ink styling; omit achievement checklists, claim buttons, and cash rewards. See [EstatePrestige.tsx](../src/EstatePrestige.tsx) and [prestige.css](../src/prestige.css).

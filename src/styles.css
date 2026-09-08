@@ -1208,29 +1208,35 @@ h1 {
   margin-top: 8px;
 }
 .supply-strip {
-  display: flex;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
-  padding: 24px 0;
-  border-top: 1px solid var(--line);
-  margin-top: 28px;
+  padding: 22px 30px;
+  border-bottom: 1px solid var(--line);
+  background: #f1eee5;
 }
 .supply-icon {
-  color: #9c9d7c;
+  color: var(--wine);
 }
-.supply-strip h3 {
-  font-size: 12px;
-  font-weight: 500;
+.supply-strip h2 {
+  margin-top: 8px;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 400;
 }
 .supply-strip p {
-  font-size: 10px;
-  color: #919b80;
+  font-size: 12px;
+  color: var(--ink);
   margin-top: 7px;
   line-height: 1.7;
 }
+.supply-order {
+  text-align: right;
+}
 .supply-strip .button {
-  margin-left: auto;
-  font-size: 10px;
+  min-height: 42px;
+  font-size: 12px;
 }
 .cellar-note {
   display: flex;
@@ -1238,6 +1244,7 @@ h1 {
   align-items: center;
   color: #9da689;
   padding: 15px 0 0;
+  margin-top: 28px;
   border-top: 1px solid var(--line);
 }
 .cellar-note p {
@@ -2209,16 +2216,6 @@ h1 {
   .tank-actions {
     flex-direction: column;
   }
-  .supply-strip {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .supply-strip .button {
-    margin-left: 0;
-  }
-  .supply-strip h3 {
-    font-size: 11px;
-  }
   .grape-arrivals .section-line {
     flex-direction: column;
     align-items: flex-start;
@@ -2645,16 +2642,20 @@ h1 {
     flex-wrap: wrap;
   }
   .supply-strip {
-    align-items: flex-start;
+    grid-template-columns: 26px minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    padding: 20px 16px;
   }
-  .supply-strip > div:nth-child(2) {
-    flex: 1;
+  .supply-strip h2 {
+    font-size: 18px;
+  }
+  .supply-order {
+    grid-column: 1 / -1;
+    text-align: left;
   }
   .supply-strip .button {
-    margin-left: 37px;
-  }
-  .supply-icon svg {
-    width: 23px;
+    width: 100%;
   }
   .wine-card {
     flex-direction: column;
@@ -2852,7 +2853,6 @@ h1 {
 .advisor p,
 .section-intro p,
 .tank-detail,
-.supply-strip p,
 .market-guide p,
 .upgrade p,
 .guide-step p,
