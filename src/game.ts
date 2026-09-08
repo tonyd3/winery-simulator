@@ -1101,6 +1101,7 @@ export const harvestQuality = (s: GameState, p: Plot) =>
         -10 +
           p.health * 0.4 +
           p.growth * 0.3 +
+          vintageWeatherQuality(s.week, getLand(s, p.id).region) +
           (upgradeActive(s, 'sorting') ? 2 : 0) +
           suitability(
             s,
@@ -1154,6 +1155,17 @@ function scoreReserve(s: GameState, reserve: Reserve) {
     );
   return reserve.score;
 }
+// Calendar-based weather is independent of action order and survives reloads
+// without consuming the random stream used for breeding and tasting.
+function weatherRoll(week: number, region: RegionId, channel: string) {
+  let hash = 2166136261;
+  for (const char of `${region}:${week}:${channel}`)
+    hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  hash = Math.imul(hash ^ (hash >>> 16), 0x21f0aaad);
+  hash = Math.imul(hash ^ (hash >>> 15), 0x735a2d97);
+  return ((hash ^ (hash >>> 15)) >>> 0) / 4294967296;
+}
+
 export function weather(week: number, region: RegionId = 'bordeaux') {
   const season = calendar(week).season;
   const kinds =
@@ -1162,9 +1174,18 @@ export function weather(week: number, region: RegionId = 'bordeaux') {
       : season === 'Summer'
         ? ['Sunshine', 'Dry spell', 'Sunshine']
         : ['Sunshine', 'Light rain', 'Overcast'];
-  const name = kinds[(week * 7 + Math.floor(week / 3)) % 3];
+  const name =
+    kinds[Math.floor(weatherRoll(week, region, 'sky') * kinds.length)];
   return {
     name,
+    growth:
+      name === 'Sunshine'
+        ? 1
+        : name === 'Dry spell'
+          ? -2
+          : name === 'Overcast'
+            ? -1
+            : 0,
     temp:
       (season === 'Summer'
         ? 26
@@ -1173,9 +1194,21 @@ export function weather(week: number, region: RegionId = 'bordeaux') {
           : season === 'Autumn'
             ? 18
             : 17) +
-      (week % 4) +
+      Math.floor(weatherRoll(week, region, 'temperature') * 8) -
+      2 +
       (REGIONS[region].heat - 3) * 2,
   };
+}
+
+function vintageWeatherQuality(week: number, region: RegionId) {
+  const date = calendar(week);
+  const firstWeek = (date.year - 1) * 12 + 1;
+  let conditions = 0;
+  // Spring and summer establish the vintage. Freeze the adjustment for autumn
+  // so waiting a week cannot reroll it; never include weather still to come.
+  for (let i = 0; i < Math.min(date.week, 6); i++)
+    conditions += weather(firstWeek + i, region).growth;
+  return Math.max(-3, Math.min(3, Math.round(conditions / 2)));
 }
 
 // All gameplay changes pass through this pure transition, including timer ticks.
@@ -1360,6 +1393,7 @@ export function act(current: GameState, action: Action): GameState {
             p.growth +
               9 +
               Math.round(random(s) * 5) +
+              sky.growth +
               (upgradeActive(s, 'irrigation') ? 3 : 0) +
               (upgradeActive(s, 'viticulturist') ? 2 : 0) +
               fit.growth,
