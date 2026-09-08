@@ -1,6 +1,6 @@
 import type { ResearchId } from './catalog';
 import { EstateToolbar } from './Holdings';
-import { plotId, estateIdForPlot } from './estates';
+import { plotId, estateIdForPlot, districtForPlot, DISTRICTS } from './estates';
 import './holdings.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -35,6 +35,9 @@ import { PrestigeDetails, PrestigeResource } from './EstatePrestige';
 import {
   act,
   getEstate,
+  getLand,
+  getVariety,
+  plotPlantingCost,
   REGIONS,
   BACKUP_KEY,
   calendar,
@@ -122,11 +125,20 @@ export default function App() {
   )
     ? selection
     : plotId(state.activeEstate);
+  const [plantingVariety, setPlantingVariety] = useState<string | null>(null);
+  const [plantingPlot, setPlantingPlot] = useState(0);
+  const [plantingTarget, setPlantingTarget] = useState<{
+    plot: number;
+    variety: string;
+  } | null>(null);
+  const plantingPlots = state.plots.filter((p) => p.owned && !p.variety);
+  const plantingChoice =
+    plantingPlots.find((p) => p.id === plantingPlot) ?? plantingPlots[0];
   const [buildLand, setBuildLand] = useState(false);
   const [speed, setSpeed] = useState(0);
-  const [modal, setModal] = useState<'help' | 'settings' | 'prestige' | null>(
-    null,
-  );
+  const [modal, setModal] = useState<
+    'help' | 'settings' | 'prestige' | 'planting' | null
+  >(null);
   const prestigeTrigger = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     // Opening makes the resource bar inert before the modal can capture focus.
@@ -233,6 +245,7 @@ export default function App() {
   }, []);
   const navigate = useCallback((next: View, study?: ResearchId) => {
     setResearchFocus(study);
+    setPlantingTarget(null);
     setView(next);
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
@@ -264,6 +277,8 @@ export default function App() {
         current.current = incoming;
         setState(incoming);
         setReveal(null);
+        setModal(null);
+        setPlantingTarget(null);
         setSetup(null);
         setSaved(true);
         notify('Loaded the latest estate changes from your other tab.');
@@ -750,7 +765,12 @@ export default function App() {
                     onCellar={() => navigate('cellar')}
                   />
                   <PlotInspector
-                    key={`${selected}-${state.region}-${state.hybrids.map((h) => h.id).join()}`}
+                    key={`${selected}-${state.region}-${state.hybrids.map((h) => h.id).join()}-${plantingTarget?.variety ?? ''}`}
+                    initialVariety={
+                      plantingTarget?.plot === selected
+                        ? plantingTarget.variety
+                        : undefined
+                    }
                     state={state}
                     dispatch={dispatch}
                     selected={selected}
@@ -804,6 +824,12 @@ export default function App() {
                 dispatch={dispatch}
                 navigate={navigate}
                 focusId={researchFocus}
+                onPlant={(variety) => {
+                  setSpeed(0);
+                  setPlantingVariety(variety);
+                  setPlantingPlot(plantingPlots[0]?.id ?? 0);
+                  setModal('planting');
+                }}
               />
             ) : (
               <Journal state={state} dispatch={dispatch} navigate={navigate} />
@@ -1019,6 +1045,75 @@ export default function App() {
               Start a new game
             </button>
           </div>
+        </Modal>
+      )}
+      {modal === 'planting' && plantingVariety && (
+        <Modal
+          title={`Plant ${getVariety(state, plantingVariety).name}`}
+          onClose={closeModal}
+        >
+          {plantingChoice ? (
+            <>
+              <p>
+                Choose an empty parcel. Review its climate fit and planting cost
+                before spending.
+              </p>
+              <label className="planting-destination">
+                Planting parcel
+                <select
+                  value={plantingChoice.id}
+                  onChange={(e) => setPlantingPlot(Number(e.target.value))}
+                >
+                  {plantingPlots.map((p) => (
+                    <option value={p.id} key={p.id}>
+                      {getEstate(state, estateIdForPlot(p.id)).name} ·{' '}
+                      {DISTRICTS[districtForPlot(p.id)]} ·{' '}
+                      {getLand(state, p.id).name} ·{' '}
+                      {money(plotPlantingCost(state, p, plantingVariety))}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="button primary"
+                onClick={() => {
+                  if (
+                    !dispatch({
+                      type: 'visitEstate',
+                      id: estateIdForPlot(plantingChoice.id),
+                    })
+                  )
+                    return;
+                  navigate('estate');
+                  setSelected(plantingChoice.id);
+                  setPlantingTarget({
+                    plot: plantingChoice.id,
+                    variety: plantingVariety,
+                  });
+                  closeModal();
+                }}
+              >
+                Review planting <ArrowRight size={16} />
+              </button>
+            </>
+          ) : (
+            <>
+              <p>
+                All owned parcels are planted. Buy another parcel or clear vines
+                before planting this variety.
+              </p>
+              <button
+                className="button secondary"
+                onClick={() => {
+                  closeModal();
+                  setBuildLand(true);
+                  navigate('improvements');
+                }}
+              >
+                View available land
+              </button>
+            </>
+          )}
         </Modal>
       )}
       {modal === 'prestige' && (

@@ -1,5 +1,6 @@
 import {
   researchComplete,
+  studyDurationLimit,
   researchTerms,
   blendResearchMissing,
   breedingWeeks,
@@ -341,6 +342,11 @@ export const stateSchema = z
           .optional(),
       })
       .strict()
+      .transform((project) =>
+        project.duration === undefined
+          ? { ...project, duration: studyDurationLimit(project.id) }
+          : project,
+      )
       .nullable(),
     hybrids: z.array(hybridSchema).max(60),
     breedingProject: z
@@ -463,9 +469,9 @@ export const stateSchema = z
       (researchComplete(s, s.researchProject.id) ||
         s.researchProject.remaining >
           (s.researchProject.duration ??
-            RESEARCH[s.researchProject.id].weeks) ||
+            studyDurationLimit(s.researchProject.id)) ||
         (s.researchProject.duration ?? 0) >
-          RESEARCH[s.researchProject.id].weeks ||
+          studyDurationLimit(s.researchProject.id) ||
         RESEARCH[s.researchProject.id].requires.some(
           (r) => !s.research.includes(r),
         ))

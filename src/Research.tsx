@@ -37,11 +37,13 @@ export default function Research({
   dispatch,
   navigate,
   focusId,
+  onPlant,
 }: {
   state: GameState;
   dispatch: Dispatch;
   navigate: (v: View) => void;
   focusId?: ResearchId;
+  onPlant: (variety: string) => void;
 }) {
   const [tab, setTab] = useState<'projects' | 'library' | 'nursery'>(
     'projects',
@@ -432,7 +434,7 @@ export default function Research({
                   </div>
                   <button
                     className="button secondary"
-                    onClick={() => navigate('estate')}
+                    onClick={() => onPlant(h.id)}
                   >
                     Plant in vineyard
                     <ArrowRight size={15} />

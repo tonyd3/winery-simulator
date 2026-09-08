@@ -1,3 +1,4 @@
+import { BREEDING } from '../src/catalog.ts';
 import { learn, allGrapes } from './helpers.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -293,8 +294,8 @@ test('research facilities accelerate studies and breeding without overshooting c
   const slow = pause(s, 'researchLab');
   assert.equal(studyWeeks(s, 24), 12);
   assert.equal(studyWeeks(slow, 24), 24);
-  assert.equal(tick(slow, 2).breedingProject!.remaining, 22);
-  const ready = tick(deserialize(serialize(s)), 12);
+  assert.equal(tick(slow, 2).breedingProject!.remaining, BREEDING.weeks - 2);
+  const ready = tick(deserialize(serialize(s)), BREEDING.weeks / 2);
   assert.equal(ready.breedingProject, null);
   assert.deepEqual({ ...ready.hybrids[0], created: result.created }, result);
   valid(ready);
