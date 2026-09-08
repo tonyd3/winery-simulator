@@ -1512,11 +1512,6 @@ h1 {
   font-size: 11px;
   letter-spacing: 0;
 }
-.journal-columns {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 40px;
-}
 .ledger {
   max-height: 560px;
   overflow: auto;
@@ -1546,30 +1541,6 @@ h1 {
 }
 .ledger-row strong.positive {
   color: #7f9469;
-}
-.support-box {
-  align-self: start;
-  padding: 20px;
-  background: #f0f1e5;
-  border-radius: 6px;
-}
-.support-box h3 {
-  font-family: var(--serif);
-  font-size: 20px;
-  font-weight: 400;
-}
-.support-box p {
-  font-size: 10px;
-  color: #969f85;
-  line-height: 1.8;
-  margin: 10px 0 17px;
-}
-.support-box .button {
-  font-size: 10px;
-}
-.support-box > .text-button {
-  margin-top: 9px;
-  font-size: 10px;
 }
 .toast {
   position: fixed;
@@ -1974,9 +1945,6 @@ h1 {
   .section-intro h2 {
     font-size: 24px;
   }
-  .journal-columns {
-    gap: 25px;
-  }
   .ledger-row {
     gap: 8px;
   }
@@ -2174,9 +2142,6 @@ h1 {
   .upgrade .button {
     font-size: 10px;
     padding: 9px;
-  }
-  .journal-columns {
-    grid-template-columns: 1fr;
   }
   .journal-stats strong {
     font-size: 24px;
@@ -2785,9 +2750,6 @@ h1 {
   }
   .journal-stats strong {
     font-size: 26px;
-  }
-  .journal-columns {
-    gap: 30px;
   }
   .ledger-row {
     gap: 9px;

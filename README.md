@@ -147,7 +147,7 @@ This premium uses the original bottle score. Independent judging adds its medal'
 
 Campaign countdowns and judging results persist in saves. The panel's outcome is fixed when you enter, so reloading while waiting does not reroll it. The original bottle rating stays separate from the panel score; reviews and medals remain visible in **Wine history** and **Cellar → Wine lines**, including after sellout. Older saves start with no campaigns or judging entries and keep existing prices, funds, and inventory.
 
-**Journal** contains the estate ledger, lifetime revenue, weekly upkeep, best vintage, and financial support. The estate’s winemaker note suggests practical next steps based on current inventory and crops. There are no achievement targets or completion checklists.
+**Journal** contains the estate ledger, lifetime revenue, weekly upkeep, and best vintage. Neighboring work and business loans are retired; old saves keep their cash and transaction history, without further loan interest. The estate’s winemaker note suggests practical next steps based on current inventory and crops. There are no achievement targets or completion checklists.
 
 ## Saves
 
@@ -175,7 +175,7 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `src/EstateMap.tsx`: interactive SVG estate districts and original vector art.
 - `src/Holdings.tsx`, `src/estates.ts`, `src/holdings.css`: estate selection, district expansion, regional acquisitions, and parcel addressing.
 - `tests/estates.test.ts`: estate migration, purchases, regional production, provenance, and full portfolio capacity.
-- `src/Panels.tsx`: vineyard inspector, production, pricing, ledger, and financial support.
+- `src/Panels.tsx`: vineyard inspector, production, pricing, and the estate ledger.
 - `src/EstateInvestments.tsx`, `src/investments.ts`, `src/investments.css`: investment catalog, running costs, suspension, hospitality forecasts, and staff benefits.
 - `tests/investments.test.ts`: investment economy, prerequisites, suspension, production and sales benefits, and save compatibility.
 - `src/winemaking.ts`: reserve, recipe, label, and line schemas; exact volume allocation and blending quality.

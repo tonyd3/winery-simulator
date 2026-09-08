@@ -194,12 +194,9 @@ test('wide pricing keeps demand bounded and weekly sales use the chosen amount',
   }
   assert.equal(previousDemand, 0);
 });
-test('tending and neighbor work cannot be repeated', () => {
-  let s = act(newGame(), { type: 'tend', id: 1 });
+test('tending cannot be repeated in the same week', () => {
+  const s = act(newGame(), { type: 'tend', id: 1 });
   assert.throws(() => act(s, { type: 'tend', id: 1 }), /already/);
-  s = act(s, { type: 'harvest', id: 1 });
-  s = act(s, { type: 'work' });
-  assert.throws(() => act(s, { type: 'work' }), /already/);
 });
 test('matching soil improves harvest quality', () => {
   const s = newGame();
@@ -259,7 +256,6 @@ test('save roundtrip preserves deterministic subsequent weather and outcomes', (
 test('extreme overhead and empty funds recover without invalid negative balance', () => {
   let s = newGame();
   s.cash = 0;
-  s.debt = 3000;
   s.upgrades = ['irrigation', 'cellar', 'lab'];
   s.plots.forEach((p) => (p.owned = true));
   s = tick(s);
@@ -272,17 +268,44 @@ test('100 years of neglected growth remains playable and serializable', () => {
   assert.equal(s.log.length, 40);
   assert.equal(s.ledger.length, 80);
   assert.deepEqual(deserialize(serialize(s)), s);
-  assert.ok(act(s, { type: 'work' }).cash > s.cash);
 });
-test('loan interest ends only on repayment and principal cannot be duplicated', () => {
-  const s = act(newGame(), { type: 'loan' });
-  assert.equal(s.cash, 15500);
-  assert.equal(upkeep(s), 220);
-  assert.throws(() => act(s, { type: 'loan' }), /Repay/);
-  const paid = act(s, { type: 'repay' });
-  assert.equal(paid.cash, 12500);
-  assert.equal(paid.debt, 0);
-  assert.equal(upkeep(paid), 160);
+test('new games omit financial support and reject retired actions without mutation', () => {
+  const s = newGame();
+  assert.equal(Object.hasOwn(s, 'helpWeek'), false);
+  assert.equal(Object.hasOwn(s, 'debt'), false);
+  assert.deepEqual(deserialize(serialize(s)), s);
+  const before = structuredClone(s);
+  for (const type of ['work', 'loan', 'repay']) {
+    assert.throws(() => act(s, { type } as Action), /Unknown game action/);
+    assert.deepEqual(s, before);
+  }
+});
+test('legacy financial support preserves cash and history without ongoing interest', () => {
+  const legacy = newGame();
+  legacy.debt = 3000;
+  legacy.helpWeek = legacy.week;
+  legacy.cash += 3250;
+  legacy.ledger.unshift(
+    { week: legacy.week, label: 'Neighboring vineyard work', amount: 250 },
+    { week: legacy.week, label: 'Small business loan', amount: 3000 },
+  );
+  for (const version of [5, 6]) {
+    const loaded = deserialize(serialize({ ...legacy, version } as GameState));
+    assert.equal(loaded.cash, legacy.cash);
+    assert.deepEqual(loaded.ledger, legacy.ledger);
+    assert.deepEqual(deserialize(serialize(loaded)), loaded);
+    const current = structuredClone(loaded);
+    delete current.debt;
+    delete current.helpWeek;
+    assert.equal(upkeep(loaded), upkeep(current));
+    const next = tick(loaded, 12);
+    assert.equal(next.debt, 3000);
+    assert.equal(next.helpWeek, legacy.helpWeek);
+    delete next.debt;
+    delete next.helpWeek;
+    assert.deepEqual(next, tick(current, 12));
+    assert.deepEqual(deserialize(serialize(next)), next);
+  }
 });
 test('volume conversion does not lose a liter to floating point multiplication', () => {
   assert.equal(grapeLiters(360), 252);

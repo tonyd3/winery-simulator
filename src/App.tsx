@@ -555,7 +555,7 @@ export default function App() {
                         ? 'Thoughtful additions for the vintages ahead.'
                         : view === 'research'
                           ? 'Study new grapes. Master your craft. Shape the estate’s future.'
-                          : 'Your accounts, transactions, and financial support.'}
+                          : 'Your income, expenses, and estate accounts.'}
               </p>
             </div>
             <div className="season-weather">
@@ -971,7 +971,7 @@ export default function App() {
                 'trend',
                 '04',
                 'Grow at your own pace',
-                'Advance one week at a time, or press 1×, 2×, or 4×. Build offers facilities and teams with substantial weekly costs. Visitor income depends on reputation and season. Suspend investments to cut their bills to 25%; their benefits stop. Check your journal for the estate ledger, neighboring vineyard work, and business loans.',
+                'Advance one week at a time, or press 1×, 2×, or 4×. Build offers facilities and teams with substantial weekly costs. Visitor income depends on reputation and season. Suspend investments to cut their bills to 25%; their benefits stop. Check your journal to track revenue and estate expenses.',
               ],
             ].map(([icon, number, title, text]) => (
               <div className="guide-step" key={number}>

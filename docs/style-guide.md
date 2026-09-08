@@ -21,7 +21,7 @@ Use spacing, alignment, typography, and thin dividers to group information. Tint
 
 ### Journal and estate guidance
 
-The Journal focuses on accounts: financial totals, a transaction ledger, and neighboring work or loan controls. Keep the ledger prominent and financial support compact alongside it, stacking them on narrow screens. The estate may show a contextual winemaker note for available actions; do not add achievement checklists, milestone targets, or completion bars.
+The Journal focuses on accounts: financial totals above a full-width transaction ledger. Keep entries readable on narrow screens. There are no neighboring-work or loan controls. The estate may show a contextual winemaker note for available actions; do not add achievement checklists, milestone targets, or completion bars.
 
 ### Investment decisions
 

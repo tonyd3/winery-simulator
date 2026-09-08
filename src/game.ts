@@ -392,8 +392,9 @@ export const stateSchema = z
     // Legacy save metadata only; no gameplay reads or writes achievements.
     claimed: z.array(z.string().max(20)).max(5).optional(),
     nextId: integer(),
-    helpWeek: z.number().int().min(-1).max(100000),
-    debt: bounded(3000),
+    // Retired financial support metadata; retained only for legacy saves.
+    helpWeek: z.number().int().min(-1).max(100000).optional(),
+    debt: bounded(3000).optional(),
     seed: integer(4294967295),
     marketSeed: integer(4294967295).default(MARKET_SEED),
   })
@@ -659,10 +660,7 @@ export type Action =
   | { type: 'marketWine'; id: number }
   | { type: 'judgeWine'; id: number }
   | { type: 'label'; id: number; name: string }
-  | { type: 'rename'; name: string }
-  | { type: 'work' }
-  | { type: 'loan' }
-  | { type: 'repay' };
+  | { type: 'rename'; name: string };
 
 export const calendar = (week: number) => ({
   year: Math.floor((week - 1) / 12) + 1,
@@ -734,8 +732,6 @@ export function newGame(
     ledger: [{ week: 6, label: 'Your starting capital', amount: 12500 }],
     stats: { harvested: 0, bottled: 0, sold: 0, revenue: 0, best: 0 },
     nextId: 1,
-    helpWeek: -1,
-    debt: 0,
     seed: 2026,
     marketSeed: MARKET_SEED,
   };
@@ -937,8 +933,7 @@ export const upkeep = (s: GameState) =>
   investmentUpkeep(s) +
   s.cellar.expansions * 15 +
   (s.estates.length - 1) * 100 +
-  s.estates.reduce((n, e) => n + (e.districts - 1) * 35, 0) +
-  (s.debt > 0 ? 60 : 0);
+  s.estates.reduce((n, e) => n + (e.districts - 1) * 35, 0);
 export const fairPrice = (
   wine: Pick<Wine, 'quality'> &
     Partial<Pick<Wine, 'marketingWeeks' | 'judging'>>,
@@ -2114,33 +2109,6 @@ export function act(current: GameState, action: Action): GameState {
       if (!name || name.length > 40)
         throw new Error('Use a label between 1 and 40 characters.');
       getWine(action.id).label = name;
-      break;
-    }
-    case 'work': {
-      if (s.helpWeek === s.week)
-        throw new Error(
-          'You have already helped a neighboring grower this week.',
-        );
-      transaction(s, 'Neighboring vineyard work', 250);
-      s.helpWeek = s.week;
-      note(s, 'An afternoon helping a neighbor earned you $250.', 'good');
-      break;
-    }
-    case 'loan': {
-      if (s.debt) throw new Error('Repay your existing loan first.');
-      s.debt = 3000;
-      transaction(s, 'Small business loan', 3000);
-      note(
-        s,
-        '$3,000 loan received. Interest adds $60 to weekly upkeep until repaid.',
-      );
-      break;
-    }
-    case 'repay': {
-      if (!s.debt) throw new Error('You have no outstanding loan.');
-      spend(s, 'Loan repayment', s.debt);
-      s.debt = 0;
-      note(s, 'Your business loan is fully repaid.', 'good');
       break;
     }
     default:

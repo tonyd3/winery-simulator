@@ -1144,7 +1144,7 @@ export function Improvements({
     </>
   );
 }
-export function Journal({ state, dispatch }: Props) {
+export function Journal({ state }: Props) {
   return (
     <div className="operations-page">
       <div className="section-intro">
@@ -1175,52 +1175,26 @@ export function Journal({ state, dispatch }: Props) {
           </strong>
         </div>
       </div>
-      <div className="journal-columns">
-        <section>
-          <div className="section-line">
-            <h3>The estate ledger</h3>
-            <span className="subtle">Latest 80 transactions</span>
-          </div>
-          <div className="ledger">
-            {state.ledger.map((l, i) => (
-              <div className="ledger-row" key={i}>
-                <span>
-                  Y{calendar(l.week).year} · W{calendar(l.week).week}
-                </span>
-                <b>{l.label}</b>
-                <strong className={l.amount > 0 ? 'positive' : ''}>
-                  {l.amount > 0 ? '+' : '−'}
-                  {money(Math.abs(l.amount))}
-                </strong>
-              </div>
-            ))}
-          </div>
-        </section>
-        <aside className="support-box" aria-labelledby="support-title">
-          <h3 id="support-title">A helping hand.</h3>
-          <p>
-            Help a neighboring grower for $250 once per week, or take a $3,000
-            loan with $60 weekly interest.
-          </p>
-          <button
-            className="button secondary wide"
-            disabled={state.helpWeek === state.week}
-            onClick={() => dispatch({ type: 'work' })}
-          >
-            {state.helpWeek === state.week
-              ? 'Neighbor helped this week'
-              : 'Help a neighbor · +$250'}
-          </button>
-          <button
-            className="text-button"
-            disabled={state.debt > 0 && state.cash < state.debt}
-            onClick={() => dispatch({ type: state.debt ? 'repay' : 'loan' })}
-          >
-            {state.debt ? 'Repay $3,000 loan' : 'Take a $3,000 business loan'}
-            <ArrowUpRight size={14} />
-          </button>
-        </aside>
-      </div>
+      <section>
+        <div className="section-line">
+          <h3>The estate ledger</h3>
+          <span className="subtle">Latest 80 transactions</span>
+        </div>
+        <div className="ledger">
+          {state.ledger.map((l, i) => (
+            <div className="ledger-row" key={i}>
+              <span>
+                Y{calendar(l.week).year} · W{calendar(l.week).week}
+              </span>
+              <b>{l.label}</b>
+              <strong className={l.amount > 0 ? 'positive' : ''}>
+                {l.amount > 0 ? '+' : '−'}
+                {money(Math.abs(l.amount))}
+              </strong>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

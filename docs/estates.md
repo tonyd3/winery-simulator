@@ -16,7 +16,7 @@ Each original vineyard has three additional neighboring parcels available at the
 
 Each estate can have four districts. There is one estate per region, up to eight. Each district has six individually managed parcels. At full ownership this is 192 parcels / 217.6 ha before individual plot enlargement. Four expansions per parcel can triple this to 652.8 ha. Select an owned parcel on the Estate map to enlarge it; see [plot expansion](plot-expansion.md) for costs and next-spring production timing. Land purchases supply no cellar equipment. Buy floor space and 150 L tanks separately, up to 256 installed tanks; see [cellar equipment](cellar-equipment.md). The shared cellar can hold 256 reserve lots; fresh-grape capacity and save validation support the larger portfolio. Existing release, recipe, and total-save-size limits still apply.
 
-Upkeep adds $100 for each estate beyond the home estate, $25 for each owned parcel, and $35 for each district beyond an estate's original vineyard. Each individual plot expansion adds another $15 per week. Existing base upkeep, equipment fees, and debt charges continue.
+Upkeep adds $100 for each estate beyond the home estate, $25 for each owned parcel, and $35 for each district beyond an estate's original vineyard. Each individual plot expansion adds another $15 per week. Existing base upkeep and equipment fees continue. Retired business loans no longer add interest charges.
 
 ## Regional simulation
 
