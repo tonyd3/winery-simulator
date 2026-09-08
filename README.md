@@ -155,7 +155,7 @@ This premium uses the original bottle score. Independent judging adds its medal'
 
 Campaign countdowns and judging results persist in saves. The panel's outcome is fixed when you enter, so reloading while waiting does not reroll it. The original bottle rating stays separate from the panel score; reviews and medals remain visible in **Wine history** and **Cellar → Wine lines**, including after sellout. Older saves start with no campaigns or judging entries and keep existing prices, funds, and inventory.
 
-**Journal** contains the estate ledger, lifetime revenue, weekly upkeep, and best vintage. Neighboring work and business loans are retired; old saves keep their cash and transaction history, without further loan interest. The estate’s winemaker note suggests practical next steps based on current inventory and crops. There are no achievement targets or completion checklists.
+**Journal** contains the estate ledger, lifetime revenue, weekly upkeep, best vintage, seasonal cash results, and release margins. [Estate accounts](docs/finances.md) explains cost allocation, promotion expenses, inventory value, and older-save limitations. Neighboring work and business loans are retired; old saves keep their cash and transaction history, without further loan interest. The estate’s winemaker note suggests practical next steps based on current inventory and crops. There are no achievement targets or completion checklists.
 
 ## Prestige
 

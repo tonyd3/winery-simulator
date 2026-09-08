@@ -1,3 +1,4 @@
+import { FinanceReport } from './FinanceReport';
 import { qualityResponse, signedPrestige } from './prestige';
 import { releaseCount, harvestAdvice } from './game';
 import type { ResearchId } from './catalog';
@@ -1184,6 +1185,7 @@ export function Journal({ state }: Props) {
         · {(state.stats.qualitySold ?? 0).toLocaleString()} bottles since
         quality tracking began. Older sales are not reconstructed.
       </p>
+      <FinanceReport state={state} />
       <section className="event-history" aria-label="Estate event history">
         <div className="section-line">
           <h3>Estate events</h3>
