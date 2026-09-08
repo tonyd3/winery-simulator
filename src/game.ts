@@ -50,6 +50,7 @@ import {
   upgradeActive,
   harvestInvestmentEffects,
   investmentUpkeep,
+  recordUpgradeUse,
   investmentDemand,
   upgradeBlocked,
   hospitalityForecast,
@@ -478,6 +479,9 @@ export const stateSchema = z
     lines: z.array(wineLineSchema).max(1000),
     kits: integer(1000000),
     upgrades: z.array(z.enum(UPGRADE_IDS)).max(UPGRADE_IDS.length),
+    incurredInvestmentCosts: z
+      .record(z.enum(UPGRADE_IDS), integer())
+      .optional(),
     suspendedUpgrades: z
       .array(z.enum(UPGRADE_IDS))
       .max(UPGRADE_IDS.length)
@@ -688,6 +692,12 @@ export const stateSchema = z
       fail('Unknown wine origin estate.');
     if (new Set(s.upgrades).size !== s.upgrades.length)
       fail('Duplicate upgrades.');
+    if (
+      Object.keys(s.incurredInvestmentCosts ?? {}).some(
+        (id) => !s.upgrades.includes(id as Upgrade),
+      )
+    )
+      fail('Unknown incurred investment charge.');
     if (
       new Set(s.suspendedUpgrades).size !== s.suspendedUpgrades.length ||
       s.suspendedUpgrades.some(
@@ -2141,6 +2151,7 @@ export function act(current: GameState, action: Action): GameState {
         break;
       }
       transaction(s, 'Weekly estate upkeep', -bill);
+      delete s.incurredInvestmentCosts;
       break;
     }
     case 'planResearch': {
@@ -2405,6 +2416,17 @@ export function act(current: GameState, action: Action): GameState {
       spend(s, 'Harvest crew', plotHarvestCost(p));
       const q = harvestQuality(s, p);
       const kg = harvestYield(s, p);
+      recordUpgradeUse(
+        s,
+        s.upgrades.filter((id) => {
+          const effect = UPGRADES[id].harvest;
+          return (
+            effect &&
+            p.health >= (effect.minHealth ?? 0) &&
+            p.growth >= (effect.minRipeness ?? 0)
+          );
+        }),
+      );
       const growingWeeks = calendar(s.week).week;
       const sunnyWeeks = Array.from(
         { length: growingWeeks },
@@ -2525,6 +2547,7 @@ export function act(current: GameState, action: Action): GameState {
         action.oak ? 'French oak vinification' : 'Stainless steel vinification',
         plan.cost,
       );
+      recordUpgradeUse(s, ['lab']);
       const harvestCost =
         g.directCostCents === undefined
           ? undefined
@@ -2970,7 +2993,7 @@ export function act(current: GameState, action: Action): GameState {
       }
       note(
         s,
-        `${u.name} ${action.active ? 'resumed' : 'suspended'}. ${action.active ? 'Full running costs and benefits apply.' : 'Benefits stop; 25% maintenance remains. Dependent investments also suspend.'}`,
+        `${u.name} ${action.active ? 'resumed' : 'suspended'}. ${action.active ? 'Full running costs and benefits apply.' : 'Benefits stop; maintenance is 25%. Any full operating bill already incurred remains due this week. Dependent investments also suspend.'}`,
       );
       break;
     }
@@ -3071,6 +3094,7 @@ export function act(current: GameState, action: Action): GameState {
       const w = getWine(action.id);
       if (!w.bottles) throw new Error('This vintage is sold out.');
       const revenue = w.bottles * wholesalePrice(w, s.reputation, s);
+      if (w.quality >= 85) recordUpgradeUse(s, ['exportOffice']);
       transaction(s, `${w.label} wholesale`, revenue);
       recordWineSale(w, w.bottles, revenue);
       s.stats.sold += w.bottles;

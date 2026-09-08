@@ -245,3 +245,5 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `docs/validation.md`: browser scenarios and current verification evidence.
 
 `npm run build` produces a static `dist/` directory that can be hosted on any static web host.
+
+Using an investment for a harvest, fermentation, or wholesale sale commits its operating charge until the next weekly payment. Suspending afterward stops further benefits but does not erase that charge. Multiple uses in the same week share the bill; saved games retain unpaid charges.

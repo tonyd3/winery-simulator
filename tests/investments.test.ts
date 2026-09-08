@@ -367,3 +367,59 @@ test('annual hospitality estimates reconcile with twelve fixed-Prestige weekly f
   assert.equal(annual.upkeep, 12 * investmentUpkeep(s));
   assert.deepEqual(annualHospitalityForecast({ ...s, week: 10 }), annual);
 });
+
+test('harvest benefits retain the full operating bill after suspension and reload', () => {
+  let s = buy(funded(), 'compost');
+  const activeBill = upkeep(s);
+  s = act(s, { type: 'harvest', id: 1 });
+  s = pause(s, 'compost');
+  assert.equal(upkeep(s), activeBill);
+  assert.equal(s.incurredInvestmentCosts?.compost, UPGRADES.compost.upkeep);
+  s = deserialize(serialize(s));
+  const cash = s.cash;
+  s = act(s, { type: 'advance' });
+  assert.equal(s.cash, cash - activeBill);
+  assert.equal(s.incurredInvestmentCosts, undefined);
+  assert.equal(
+    upkeep(s),
+    activeBill -
+      UPGRADES.compost.upkeep +
+      Math.ceil(UPGRADES.compost.upkeep * 0.25),
+  );
+});
+
+test('fermentation commits one bench bill for all batches, while unused toggles stay at maintenance', () => {
+  let s = pause(buy(funded(), 'lab'), 'lab');
+  assert.equal(s.incurredInvestmentCosts, undefined);
+  s = act(s, { type: 'operateUpgrade', upgrade: 'lab', active: true });
+  s = act(s, { type: 'harvest', id: 1 });
+  s = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
+  const quality = s.batches[0].quality;
+  s = pause(s, 'lab');
+  assert.equal(s.incurredInvestmentCosts?.lab, UPGRADES.lab.upkeep);
+  assert.equal(s.batches[0].quality, quality);
+  const used = structuredClone(s);
+  assert.throws(
+    () => act(s, { type: 'ferment', id: 999, oak: false }),
+    /not found/i,
+  );
+  assert.deepEqual(s, used);
+  assert.deepEqual(deserialize(serialize(s)), s);
+});
+
+test('premium wholesale commits the export team bill even when suspended immediately', () => {
+  let s = buy(funded(), 'exportOffice');
+  s = act(s, { type: 'harvest', id: 1 });
+  s = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
+  s = act(act(s, { type: 'advance' }), { type: 'advance' });
+  s = bottleBatch(s, s.batches[0].id);
+  s.wines[0].quality = 90;
+  s = act(s, { type: 'wholesale', id: s.wines[0].id });
+  const bill = upkeep(s);
+  s = pause(s, 'exportOffice');
+  assert.equal(upkeep(s), bill);
+  assert.equal(
+    s.incurredInvestmentCosts?.exportOffice,
+    UPGRADES.exportOffice.upkeep,
+  );
+});
