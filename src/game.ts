@@ -347,6 +347,11 @@ export const stateSchema = z
     name: z.string().trim().min(1).max(32),
     week: z.number().int().min(1).max(100000),
     cash: bounded(),
+    bankruptcy: z
+      .object({ week: integer(100000), bill: bounded(), unpaid: bounded() })
+      .strict()
+      .nullable()
+      .default(null),
     // The saved field name stays compatible; it now stores uncapped Prestige.
     reputation: z.number().finite().min(0),
     plots: z.array(plotSchema).min(6).max(192),
@@ -711,6 +716,7 @@ export function newGame(
     name: name.trim(),
     week: 6,
     cash: 12500,
+    bankruptcy: null,
     reputation: 12,
     plots: LAND.map((l) => ({
       id: l.id,
@@ -1122,6 +1128,8 @@ export function weather(week: number, region: RegionId = 'bordeaux') {
 // All gameplay changes pass through this pure transition, including timer ticks.
 // Failed actions leave the original state untouched.
 export function act(current: GameState, action: Action): GameState {
+  if (current.bankruptcy)
+    throw new Error('This estate is bankrupt. Start a new game to continue.');
   // A development hot update can retain an estate from the previous schema.
   const s =
     (current.version as number) < 6
@@ -1396,25 +1404,14 @@ export function act(current: GameState, action: Action): GameState {
       }
       const bill = upkeep(s);
       if (s.cash < bill) {
-        const running = s.upgrades.filter(
-          (id) => id !== 'cellar' && upgradeActive(s, id),
-        );
-        if (running.length) {
-          s.suspendedUpgrades = s.upgrades.filter((id) => id !== 'cellar');
-          note(
-            s,
-            'Running costs exhausted available funds. Investments are suspended; 25% maintenance remains. Resume them in Build when finances recover.',
-            'warning',
-          );
-        }
-        const assistance = Math.max(350, bill - s.cash);
-        transaction(s, 'Emergency vineyard work', assistance);
-        s.reputation = Math.max(0, s.reputation - 2);
+        s.bankruptcy = { week: s.week, bill, unpaid: bill - s.cash };
+        if (s.cash > 0) transaction(s, 'Final estate upkeep payment', -s.cash);
         note(
           s,
-          `A local grower paid ${money(assistance)} for your help. Your estate lost up to 2 Prestige while you were away.`,
+          `Bankruptcy: unable to pay ${money(s.bankruptcy.unpaid)} of the ${money(bill)} weekly upkeep. This estate has closed.`,
           'warning',
         );
+        break;
       }
       transaction(s, 'Weekly estate upkeep', -bill);
       break;

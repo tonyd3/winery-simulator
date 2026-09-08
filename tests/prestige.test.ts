@@ -106,17 +106,14 @@ test('wholesale sales keep earning beyond the final tier and cannot be collected
   assert.deepEqual(deserialize(serialize(next)), next);
 });
 
-test('financial trouble can lower the current tier but never makes Prestige negative', () => {
-  for (const score of [1, 25, 1000]) {
-    const s = newGame();
-    s.reputation = score;
-    s.cash = 0;
-    const next = act(s, { type: 'advance' });
-    assert.equal(next.reputation, Math.max(0, score - 2));
-    assert.ok(next.log.some((l) => l.text.includes('Prestige')));
-    if (score === 25) assert.equal(prestigeStanding(next.reputation).index, 0);
-    assert.deepEqual(deserialize(serialize(next)), next);
-  }
+test('bankruptcy preserves the final Prestige score', () => {
+  const s = newGame();
+  s.cash = 0;
+  s.reputation = 25;
+  const next = act(s, { type: 'advance' });
+  assert.ok(next.bankruptcy);
+  assert.equal(next.reputation, 25);
+  assert.deepEqual(deserialize(serialize(next)), next);
 });
 
 test('Prestige influence preserves early balance and grows with diminishing returns', () => {

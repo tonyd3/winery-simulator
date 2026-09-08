@@ -168,21 +168,18 @@ test('suspension stops benefits, retains 25 percent costs, and cascades without 
   valid(s);
 });
 
-test('insolvency suspends investments and resuming requires a full estate week of cash', () => {
+test('insolvency ends the estate after income and blocks every further action', () => {
   let s = hospitality();
   s.cash = 0;
   s.reputation = 0;
   s.week = 10;
   s = tick(s);
-  assert.equal(upgradeActive(s, 'visitorCenter'), false);
-  assert.equal(s.suspendedUpgrades.length, 3);
-  assert.ok(s.cash >= 0);
-  assert.equal(hospitalityForecast(s).revenue, 0);
-  assert.ok(s.log.some((x) => x.text.includes('Investments are suspended')));
-  const before = structuredClone(s);
-  assert.throws(() => resume(s, 'visitorCenter'), /one full week/);
-  assert.deepEqual(s, before);
-  valid(tick(s));
+  assert.ok(s.bankruptcy);
+  assert.equal(s.cash, 0);
+  assert.ok(s.bankruptcy.unpaid > 0);
+  assert.throws(() => resume(s, 'visitorCenter'), /bankrupt/);
+  assert.throws(() => tick(s), /bankrupt/);
+  valid(s);
 });
 
 test('sommeliers change suitable wine prices and demand without changing scores or chosen shelf prices', () => {

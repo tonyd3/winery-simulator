@@ -264,8 +264,10 @@ test('extreme overhead and empty funds recover without invalid negative balance'
   assert.ok(s.cash >= 0);
   assert.ok(stateSchema.safeParse(s).success);
 });
-test('100 years of neglected growth remains playable and serializable', () => {
-  const s = tick(newGame(), 1200);
+test('100 years of funded growth remains serializable', () => {
+  const initial = newGame();
+  initial.cash = 1000000;
+  const s = tick(initial, 1200);
   assert.ok(s.cash >= 0);
   assert.equal(s.log.length, 40);
   assert.equal(s.ledger.length, 80);

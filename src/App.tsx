@@ -199,6 +199,7 @@ export default function App() {
           setReveal(next.wines.at(-1)!);
         }
         if (action.type === 'advance') setToast(null);
+        if (next.bankruptcy) setSpeed(0);
         if (
           action.type !== 'bottle' &&
           action.type !== 'advance' &&
@@ -240,12 +241,12 @@ export default function App() {
     }
   }, [toast]);
   useEffect(() => {
-    if (!speed || modal || setup || reveal) return;
+    if (!speed || modal || setup || reveal || state.bankruptcy) return;
     const timer = setInterval(() => {
       if (!dispatch({ type: 'advance' })) setSpeed(0);
     }, 6000 / speed);
     return () => clearInterval(timer);
-  }, [speed, dispatch, modal, setup, reveal]);
+  }, [speed, dispatch, modal, setup, reveal, state.bankruptcy]);
   useEffect(() => {
     const visibility = () => {
       if (document.hidden) setSpeed(0);
@@ -342,6 +343,46 @@ export default function App() {
           window.scrollTo(0, 0);
         }}
       />
+    );
+  if (state.bankruptcy)
+    return (
+      <main className="estate-closure">
+        <span className="eyebrow">ESTATE CLOSED · YEAR {date.year}</span>
+        <h1>{state.name} has gone bankrupt.</h1>
+        <p>
+          The estate could not cover {money(state.bankruptcy.unpaid)} of its{' '}
+          {money(state.bankruptcy.bill)} weekly upkeep. This game has ended.
+        </p>
+        <dl>
+          <dt>Bottles sold</dt>
+          <dd>{state.stats.sold.toLocaleString()}</dd>
+          <dt>Best wine</dt>
+          <dd>{state.stats.best}/100</dd>
+          <dt>Total revenue</dt>
+          <dd>{money(state.stats.revenue)}</dd>
+        </dl>
+        {!saved && (
+          <p role="alert">
+            The final record could not be saved. Export it to keep a copy.
+          </p>
+        )}
+        <div className="closure-actions">
+          <button
+            className="button primary"
+            onClick={() => setSetup('replace')}
+          >
+            Start a new game <ArrowRight size={16} />
+          </button>
+          <button
+            className="button secondary"
+            onClick={() =>
+              download(serialize(state), 'terroir-final-estate.json')
+            }
+          >
+            Export final record
+          </button>
+        </div>
+      </main>
     );
   return (
     <div className="app-shell">
