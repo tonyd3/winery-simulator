@@ -269,7 +269,25 @@ export function harvestInvestmentEffects(s: GameState, p: Plot) {
   return { quality, yieldMultiplier };
 }
 export const investmentBill = (s: GameState, id: Upgrade) =>
-  Math.ceil(UPGRADES[id].upkeep * (upgradeActive(s, id) ? 1 : 0.25));
+  Math.max(
+    Math.ceil(UPGRADES[id].upkeep * (upgradeActive(s, id) ? 1 : 0.25)),
+    s.incurredInvestmentCosts?.[id] ?? 0,
+  );
+
+// Instant production benefits commit this week's operating charge. Suspending
+// afterward can stop future benefits, but cannot erase a bill already incurred.
+export function recordUpgradeUse(s: GameState, ids: readonly Upgrade[]) {
+  for (const id of ids) {
+    if (!upgradeActive(s, id)) continue;
+    s.incurredInvestmentCosts ??= {};
+    s.incurredInvestmentCosts[id] = Math.max(
+      s.incurredInvestmentCosts[id] ?? 0,
+      UPGRADES[id].upkeep,
+    );
+    const prerequisite = UPGRADES[id].requires;
+    if (prerequisite) recordUpgradeUse(s, [prerequisite]);
+  }
+}
 export const investmentUpkeep = (s: GameState) =>
   s.upgrades.reduce((sum, id) => sum + investmentBill(s, id), 0);
 export function upgradeBlocked(s: GameState, id: Upgrade) {

@@ -107,7 +107,9 @@ export function Investments({
         <p>
           Attendance follows Prestige and the season. Suspending stops benefits
           but retains 25% maintenance; dependent investments suspend too. Resume
-          when you can cover one week of total estate upkeep.
+          when you can cover one week of total estate upkeep. Using an
+          investment for harvest, fermentation, or wholesale commits its full
+          bill for that week, even if you suspend it afterward.
         </p>
       </section>
       <nav className="investment-filters" aria-label="Investment departments">
@@ -306,6 +308,12 @@ function InvestmentRow({
               {active ? <Pause size={14} /> : <Play size={14} />}
               {active ? 'Suspend' : 'Resume'}
             </button>
+            {!active && (state.incurredInvestmentCosts?.[id] ?? 0) > 0 && (
+              <small>
+                Used this week · full operating bill due once. Maintenance
+                starts after the next payment.
+              </small>
+            )}
             {!active && resumeBlocked && <small>{resumeBlocked}</small>}
           </>
         ) : (
