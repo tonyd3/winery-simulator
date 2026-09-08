@@ -35,6 +35,7 @@ import {
   JUDGING,
   MARKETING,
   judgingSchema,
+  judgingOutlook,
   wineAward,
   wineBenefits,
 } from './promotion';
@@ -1050,6 +1051,8 @@ export function marketingBlocked(s: GameState, wine: Wine) {
 export function judgingBlocked(s: GameState, wine: Wine) {
   if (wine.judging) return 'Each release can enter judging only once';
   if (!wine.bottles) return 'This release is sold out';
+  if (!judgingOutlook(wine.quality).medalPossible)
+    return 'This rating cannot reach the 80-point medal threshold';
   if (s.cash < JUDGING.cost) return `Need ${money(JUDGING.cost - s.cash)} more`;
   return null;
 }
