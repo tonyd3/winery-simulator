@@ -27,6 +27,10 @@ The Journal focuses on accounts: financial totals above a full-width transaction
 
 Keep the bottling-supplies strip directly beneath the Cellar department navigation, visible in every department, including Reserves & blending. Group stock, incoming deliveries, and the explicit order action with its price and next-week delivery timing. On narrow screens, place a full-width order button beneath the supply details. See `Cellar` in [Panels.tsx](../src/Panels.tsx) and `.supply-strip` in [styles.css](../src/styles.css).
 
+### Wine lines and release history
+
+Wine lines and the shop's wine history share a searchable ledger in [WineLines.tsx](../src/WineLines.tsx), styled in [winemaking.css](../src/winemaking.css). Each line starts collapsed, with a small original bottle illustration, its name, release count, stock, and sales totals in one row. Open a line to show its five newest releases and reveal older releases in groups of five. Keep vintage, stock, and tasting score in each release summary; production totals, judging, provenance, and tasting notes belong inside its disclosure. Preserve sold-out releases and incomplete historical sales indicators. On narrow screens, stack the line totals beneath its name and let release details use the full width. Avoid placing a tall release history beside a vertically centered bottle and label.
+
 ### Prestige
 
 Prestige is an uncapped estate score, separate from 100-point wine quality. Keep its current tier visible beneath the score on desktop and mobile. The resource is a keyboard-accessible button opening a ledger of 16 named tiers with thresholds and one current-tier highlight. Use the shared modal and existing paper/ink styling; omit achievement checklists, claim buttons, and cash rewards. See [EstatePrestige.tsx](../src/EstatePrestige.tsx) and [prestige.css](../src/prestige.css).
