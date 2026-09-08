@@ -105,12 +105,12 @@ import {
 } from './winemaking';
 import type { LabelDesign, Reserve } from './winemaking';
 import {
-  customerGroup,
+  customerShares,
+  customerDemandMultiplier,
   MARKET_SEED,
   WEEKLY_DEMAND,
   marketConditions,
   releaseInterest,
-  weeklyDemandMultiplier,
 } from './market';
 
 import { qualityResponse, signedPrestige, prestigeInfluence } from './prestige';
@@ -1366,16 +1366,20 @@ const demandCount = (wine: Wine, rate: number) =>
 
 // Build once per render or weekly sale; no mutable-state cache is retained.
 export function demandContext(s: GameState) {
-  const groups = new Map<string, { stock: number; wines: Wine[] }>();
+  const groups = new Map<
+    string,
+    { stock: number; entries: { wine: Wine; share: number }[] }
+  >();
   const byId = new Map<number, Wine>();
   for (const wine of s.wines) {
     byId.set(wine.id, wine);
     if (!shelfStock(wine)) continue;
-    const key = customerGroup(wine);
-    const group = groups.get(key) ?? { stock: 0, wines: [] };
-    group.stock += wine.bottles;
-    group.wines.push(wine);
-    groups.set(key, group);
+    for (const [key, share] of customerShares(wine)) {
+      const group = groups.get(key) ?? { stock: 0, entries: [] };
+      group.stock += wine.bottles * share;
+      group.entries.push({ wine, share });
+      groups.set(key, group);
+    }
   }
   return { groups, byId, shelfUsed: shelvesUsed(s) };
 }
@@ -1387,15 +1391,22 @@ export function demandForecast(
   context = demandContext(s),
 ) {
   const outlook = demandOutlook(wine, s);
-  const key = customerGroup(wine);
   const existing = context.byId.get(wine.id);
-  const previousStock =
-    existing && shelfStock(existing) && customerGroup(existing) === key
-      ? existing.bottles
-      : 0;
-  const stock =
-    (context.groups.get(key)?.stock ?? 0) - previousStock + wine.bottles;
-  const rate = stock ? (outlook.rate * wine.bottles) / stock : 0;
+  const oldShares =
+    existing && shelfStock(existing)
+      ? customerShares(existing)
+      : new Map<string, number>();
+  let low = 0,
+    high = 0;
+  for (const [key, share] of customerShares(wine)) {
+    const oldStock = (existing?.bottles ?? 0) * (oldShares.get(key) ?? 0);
+    const stock =
+      (context.groups.get(key)?.stock ?? 0) - oldStock + wine.bottles * share;
+    const rate =
+      stock > 0 ? (outlook.rate * share * wine.bottles * share) / stock : 0;
+    low += Math.floor(rate * WEEKLY_DEMAND.min);
+    high += Math.ceil(rate * WEEKLY_DEMAND.max);
+  }
   const available = Math.min(
     wine.bottles,
     Math.max(
@@ -1408,36 +1419,46 @@ export function demandForecast(
       (!existing?.listed && wine.listed ? suggestedShelfSpace(s, wine) : 0),
   );
   return {
-    low: Math.min(available, demandCount(wine, rate * WEEKLY_DEMAND.min)),
-    high: Math.min(available, Math.ceil(rate * WEEKLY_DEMAND.max)),
+    low: Math.min(available, demandCount(wine, low)),
+    high: Math.min(available, demandCount(wine, high)),
     outlook: outlook.market.outlook,
   };
 }
 
 export function weeklySales(s: GameState) {
   const sales = new Map<number, number>();
-  for (const group of demandContext(s).groups.values()) {
-    let preceding = 0;
-    const roll = weeklyDemandMultiplier(group.wines[0], s);
-    for (const wine of group.wines.sort((a, b) => a.id - b.id)) {
-      const rate = (demandOutlook(wine, s).rate * wine.bottles) / group.stock;
-      // Cumulative rounding preserves the group's total for one-bottle releases.
-      sales.set(
-        wine.id,
-        Math.min(
-          shelfStock(wine),
-          Math.max(
-            0,
-            Math.floor((preceding + rate) * roll + 1e-9) -
-              Math.floor(preceding * roll + 1e-9),
-          ),
-        ),
-      );
-      preceding += rate;
+  const expected = new Map<number, number>();
+  const context = demandContext(s);
+  const rates = new Map(
+    s.wines.map((wine) => [wine.id, demandOutlook(wine, s).rate]),
+  );
+  for (const [key, group] of [...context.groups].sort(([a], [b]) =>
+    a.localeCompare(b),
+  )) {
+    const roll = customerDemandMultiplier(key, s);
+    for (const { wine, share } of group.entries.sort(
+      (a, b) => a.wine.id - b.wine.id,
+    )) {
+      const rate =
+        (rates.get(wine.id)! * share * wine.bottles * share) / group.stock;
+      expected.set(wine.id, (expected.get(wine.id) ?? 0) + rate * roll);
     }
+  }
+  // Combine overlapping audiences before rounding. Cap fractional demand first
+  // so two audiences cannot allocate the same final bottle and drop a sale.
+  let preceding = 0;
+  for (const wine of [...context.byId.values()].sort((a, b) => a.id - b.id)) {
+    if (!shelfStock(wine)) continue;
+    const count = Math.min(shelfStock(wine), expected.get(wine.id) ?? 0);
+    sales.set(
+      wine.id,
+      Math.floor(preceding + count + 1e-9) - Math.floor(preceding + 1e-9),
+    );
+    preceding += count;
   }
   return sales;
 }
+
 export function demand(wine: Wine, s: GameState) {
   if (!wine.listed || !wine.bottles) return 0;
   // Public single-release queries support a counterfactual wine without changing s.
