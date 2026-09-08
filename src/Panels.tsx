@@ -1180,6 +1180,23 @@ export function Journal({ state }: Props) {
           </strong>
         </div>
       </div>
+      <section className="event-history" aria-label="Estate event history">
+        <div className="section-line">
+          <h3>Estate events</h3>
+          <span className="subtle">Latest 200 important events</span>
+        </div>
+        {!state.events?.length && (
+          <p>Important estate events will be recorded here.</p>
+        )}
+        {state.events?.map((event, i) => (
+          <div className="event-row" key={i}>
+            <span>
+              Y{calendar(event.week).year} · W{calendar(event.week).week}
+            </span>
+            <p>{event.text}</p>
+          </div>
+        ))}
+      </section>
       <section>
         <div className="section-line">
           <h3>The estate ledger</h3>
