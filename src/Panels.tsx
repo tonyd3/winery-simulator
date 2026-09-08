@@ -6,6 +6,8 @@ import type { ResearchId } from './catalog';
 import { Investments } from './EstateInvestments';
 import { HarvestForecast } from './HarvestForecast';
 import { GrapeArrival } from './GrapeArrival';
+import { BatchMaturation } from './BatchMaturation';
+import { VESSELS, maturationOutlook } from './maturation';
 import {
   CELLAR_TECHNIQUES,
   vinificationStage,
@@ -40,7 +42,6 @@ import {
   demandForecast,
   retailPrice,
   BOTTLE_PRICE,
-  CELLAR_QUALITY,
   wholesalePrice,
   money,
   quality,
@@ -466,7 +467,6 @@ function Fermentation({
   onStored,
   onEquipment,
 }: Props & { onStored: () => void; onEquipment: () => void }) {
-  const [oak, setOak] = useState(false);
   const used = new Set(state.batches.flatMap((b) => b.tankIds));
   const groups = [
     ...state.batches.map((batch) => ({ batch, ids: batch.tankIds })),
@@ -506,22 +506,12 @@ function Fermentation({
               Fresh from the vineyard{' '}
               <span className="count">{state.grapes.length}</span>
             </h3>
-            <label className="oak-toggle">
-              <input
-                type="checkbox"
-                checked={oak}
-                onChange={(e) => setOak(e.target.checked)}
-              />{' '}
-              French oak · $320 per tank{' '}
-              <span className="subtle">/ steel · $140 per tank</span>
-            </label>
           </div>
           {state.grapes.map((grapes) => (
             <GrapeArrival
               key={grapes.id}
               state={state}
               grapes={grapes}
-              oak={oak}
               dispatch={dispatch}
               navigate={navigate}
             />
@@ -531,11 +521,19 @@ function Fermentation({
       <div className="section-line">
         <h3>The cellar floor</h3>
         <span className="subtle">
-          Each batch stays together through fermentation & aging
+          Cellar capacity stays reserved until transfer
         </span>
       </div>
       <div className="tank-grid">
         {groups.map(({ batch: b, ids }) => {
+          const modern = b?.agingProfile === 'varietal-v1';
+          const vessel =
+            b?.maturationPlan?.vessel ?? (b?.oak ? 'oak' : 'steel');
+          const wooden = vessel !== 'steel';
+          const outlook =
+            b?.maturationProfile && b.maturationPlan
+              ? maturationOutlook(b.maturationProfile, vessel, b.age, b.oak)
+              : undefined;
           const capacity = ids.reduce(
             (n, id) =>
               n + state.cellar.tanks.find((t) => t.id === id)!.capacity,
@@ -544,23 +542,29 @@ function Fermentation({
           return (
             <div
               className={`tank-card ${b ? 'occupied' : ''}`}
-              key={ids.join('-')}
+              key={b ? `batch-${b.id}` : ids.join('-')}
             >
               <div className="tank-top">
                 <span className="eyebrow">
-                  {ids.length > 3
-                    ? `${ids.length} TANKS`
-                    : `TANK${ids.length > 1 ? 'S' : ''} ${ids.map((id) => String(id).padStart(2, '0')).join(' + ')}`}
+                  {modern && b?.maturationPlan && wooden
+                    ? `CELLAR SLOT${ids.length > 1 ? 'S' : ''} ${ids.join(' + ')}`
+                    : ids.length > 3
+                      ? `${ids.length} TANKS`
+                      : `TANK${ids.length > 1 ? 'S' : ''} ${ids.map((id) => String(id).padStart(2, '0')).join(' + ')}`}
                 </span>
                 <span
-                  className={`status-tag ${b && b.stage !== 'fermenting' && b.age === 8 ? 'ripe' : ''}`}
+                  className={`status-tag ${modern ? (b?.stage === 'ready' || outlook?.readiness === 'Ready to release' ? 'ripe' : '') : b && b.stage !== 'fermenting' && b.age === 8 ? 'ripe' : ''}`}
                 >
                   {b
                     ? b.stage === 'fermenting'
                       ? vinificationStage(b)
-                      : b.age === 8
-                        ? 'Peak maturity'
-                        : 'Aging automatically'
+                      : modern
+                        ? b.stage === 'aging'
+                          ? (outlook?.readiness ?? 'Aging')
+                          : 'Ready for reserves'
+                        : b.age === 8
+                          ? 'Peak maturity'
+                          : 'Aging automatically'
                     : 'Available'}
                 </span>
               </div>
@@ -601,31 +605,31 @@ function Fermentation({
                         />
                         <path
                           d="M43 34V114Q90 146 137 114V34"
-                          fill={b?.oak ? '#c5a077' : '#bec5b5'}
+                          fill={wooden ? '#c5a077' : '#bec5b5'}
                         />
                         <path
                           d="M98 47V133Q121 130 137 114V34Z"
-                          fill={b?.oak ? '#ad8963' : '#a6b19f'}
+                          fill={wooden ? '#ad8963' : '#a6b19f'}
                         />
                         <ellipse
                           cx="90"
                           cy="34"
                           rx="47"
                           ry="21"
-                          fill={b?.oak ? '#d5b48c' : '#d9dece'}
+                          fill={wooden ? '#d5b48c' : '#d9dece'}
                         />
                         <ellipse
                           cx="90"
                           cy="34"
                           rx="35"
                           ry="14"
-                          fill={b?.oak ? '#bf9a72' : '#c7cebd'}
+                          fill={wooden ? '#bf9a72' : '#c7cebd'}
                         />
                         <path d="M83 16V8H98V17" fill="#adb8a2" />
                         <path
                           d="M43 56Q90 82 137 56M43 105Q90 133 137 105"
                           fill="none"
-                          stroke={b?.oak ? '#81725a' : '#9da991'}
+                          stroke={wooden ? '#81725a' : '#9da991'}
                           strokeWidth="4"
                         />
                         <rect
@@ -682,7 +686,9 @@ function Fermentation({
                   <h3>{getVariety(state, b.variety).name}</h3>
                   <p className="tank-detail">
                     Year {b.year} · {b.liters} / {capacity} L ·{' '}
-                    {b.oak ? 'French oak' : 'Stainless steel'}
+                    {b.maturationPlan
+                      ? `${VESSELS[vessel].name} maturation`
+                      : `${b.oak ? 'French oak' : 'Stainless steel'} fermentation`}
                   </p>
                   {Boolean(b.techniques?.length) && (
                     <p className="tank-techniques">
@@ -695,7 +701,11 @@ function Fermentation({
                     <span>
                       {b.stage === 'fermenting'
                         ? `${b.remaining} ${b.remaining === 1 ? 'week' : 'weeks'} until ready for reserves`
-                        : `${b.age} / 8 weeks aged`}
+                        : b.stage === 'aging'
+                          ? modern
+                            ? `${b.age} game weeks matured`
+                            : `${b.age} / 8 weeks aged`
+                          : 'Cellar plan complete'}
                     </span>
                     <b>
                       {quality(b)}
@@ -711,9 +721,28 @@ function Fermentation({
                               b.remaining / vinificationWeeks(b.techniques)) *
                               100,
                           )
-                        : (b.age / 8) * 100
+                        : b.stage === 'aging'
+                          ? Math.min(
+                              100,
+                              (b.age / (outlook?.readyFrom ?? 8)) * 100,
+                            )
+                          : 100
                     }
                   />
+                  {modern && b.stage !== 'fermenting' && (
+                    <BatchMaturation
+                      batch={b}
+                      name={getVariety(state, b.variety).name}
+                      cash={state.cash}
+                      dispatch={dispatch}
+                    />
+                  )}
+                  {!modern && b.stage !== 'fermenting' && (
+                    <p className="maturation-footnote">
+                      This older batch keeps its original vessel and eight-week
+                      quality curve.
+                    </p>
+                  )}
                   <div className="tank-actions">
                     <button
                       className="button primary"
@@ -757,10 +786,10 @@ function Fermentation({
         <Icon name="help" size={17} />
         <p>
           Great wine starts with healthy, fully ripe grapes suited to their
-          site. New batches gain up to {CELLAR_QUALITY.oakMaturity} points from
-          oak aging or {CELLAR_QUALITY.steelMaturity} in steel over 8 weeks.
-          Maturation begins automatically after fermentation. Move wine to
-          reserves to stop maturation and free all of its tanks.
+          site. Choose maturation for each finished batch: steel for freshness,
+          neutral oak for texture, or French oak for wood character. Readiness
+          depends on the grape; more oak is not always better. Barrel service
+          uses the same reserved cellar capacity. Transfer frees your tanks.
         </p>
       </div>
     </div>

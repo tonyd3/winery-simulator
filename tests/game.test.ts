@@ -109,8 +109,10 @@ test('occupied tanks require a separate tank purchase, and floor expansion alone
   assert.equal(occupiedTankCount(s), 4);
   assert.equal(s.batches.length, 2);
 });
-test('unfinished wine cannot be bottled; oak aging stops improving at eight weeks', () => {
+test('unfinished wine cannot be bottled; legacy oak aging still stops at eight weeks', () => {
   let s = ferment(true);
+  s.batches[0].agingProfile = 'balanced';
+  delete s.batches[0].maturationProfile;
   assert.throws(() => bottleBatch(s, s.batches[0].id), /finish/);
   s = tick(s, 2);
   s = act(s, { type: 'age', id: s.batches[0].id });
@@ -367,8 +369,11 @@ test('legacy achievement metadata and payouts survive loading without affecting 
   assert.equal(migrated.cash, legacy.cash);
 });
 
-test('fermentation starts maturation automatically and reserves stop the clock', () => {
-  let s = tick(ferment(), 2);
+test('legacy fermentation starts maturation automatically and reserves stop the clock', () => {
+  let s = ferment();
+  s.batches[0].agingProfile = 'balanced';
+  delete s.batches[0].maturationProfile;
+  s = tick(s, 2);
   assert.equal(s.batches[0].stage, 'aging');
   assert.equal(s.batches[0].age, 0);
   s = tick(s, 3);
@@ -382,6 +387,8 @@ test('fermentation starts maturation automatically and reserves stop the clock',
 
 test('old ready batches start maturing on the next week without retroactive aging', () => {
   let s = tick(ferment(), 2);
+  delete s.batches[0].maturationProfile;
+  s.batches[0].agingProfile = 'balanced';
   s.batches[0].stage = 'ready';
   s = deserialize(serialize(s));
   assert.equal(s.batches[0].age, 0);

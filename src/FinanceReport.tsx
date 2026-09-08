@@ -107,11 +107,11 @@ export function FinanceReport({ state }: { state: GameState }) {
           <span className="subtle">Recorded costs and sales</span>
         </div>
         <p>
-          Direct costs include harvest crew, fermentation, cellar tasting and
-          the actual cost of bottling kits. Starting kits are free. Partial
-          blends and releases carry their share of costs. Margin is recorded
-          sales minus the cost of bottles sold and all marketing and judging
-          fees. Unsold production cost stays in inventory.
+          Direct costs include harvest crew, fermentation, maturation service,
+          cellar tasting and the actual cost of bottling kits. Starting kits are
+          free. Partial blends and releases carry their share of costs. Margin
+          is recorded sales minus the cost of bottles sold and all marketing and
+          judging fees. Unsold production cost stays in inventory.
         </p>
         <p>
           Margins exclude vine care, upkeep, research and capital purchases; use

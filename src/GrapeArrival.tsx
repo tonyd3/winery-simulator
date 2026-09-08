@@ -14,21 +14,21 @@ import type { ResearchId } from './catalog';
 import { grapeStorageWeeks } from './investments';
 import { CELLAR_TECHNIQUES, CELLAR_TECHNIQUE_IDS } from './cellarTechniques';
 import type { CellarTechnique } from './cellarTechniques';
+import { resolveMaturation } from './maturation';
 
 export function GrapeArrival({
   state,
   grapes: g,
-  oak,
   dispatch,
   navigate,
 }: {
   state: GameState;
   grapes: GameState['grapes'][number];
-  oak: boolean;
   dispatch: Dispatch;
   navigate: (view: View, study?: ResearchId) => void;
 }) {
   const [selected, setSelected] = useState<CellarTechnique[]>([]);
+  const [oak, setOak] = useState(false);
   const techniques = selected.filter((id) => state.research.includes(id));
   const plan = fermentationPlan(state, g.kg, oak, techniques);
   const name = getVariety(state, g.variety).name;
@@ -102,9 +102,30 @@ export function GrapeArrival({
           </span>
         </summary>
         <p className="cellar-recipe-intro">
-          Choose this batch’s style before you start. Extra steps run
-          automatically and keep the tanks occupied. These change character, not
-          quality points.
+          Ferment in steel for {money(140)} per tank, or choose oak fermentation
+          below. Choose a separate maturation vessel when this cellar plan
+          finishes. Extra steps change character and keep the tanks occupied.
+        </p>
+        <div className="cellar-technique">
+          <label>
+            <input
+              type="checkbox"
+              checked={oak}
+              onChange={(event) => setOak(event.target.checked)}
+              aria-label={`French oak fermentation for ${name}`}
+            />
+            <span>
+              <strong>French oak fermentation</strong>
+              <span>
+                Add a little wood character during fermentation. Subsequent
+                maturation is chosen separately.
+              </span>
+            </span>
+          </label>
+          <div className="cellar-technique-terms">+{money(180)} per tank</div>
+        </div>
+        <p className="fermentation-advice">
+          {resolveMaturation(g.variety, state.hybrids).advice}
         </p>
         <div className="cellar-technique-list">
           {CELLAR_TECHNIQUE_IDS.map((id) => {

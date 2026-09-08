@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { cellarTechniquesSchema, techniqueKey } from './cellarTechniques';
 import { grapeCompatibility } from './blendCompatibility';
 import type { GrapeLineage } from './blendCompatibility';
+import { MATURATION_LIMIT, vesselSchema } from './maturation';
 
 export const CELLAR_TASTING = { cost: 60, variation: 3 };
 
@@ -43,12 +44,24 @@ export const componentSchema = z
     techniques: cellarTechniquesSchema.optional(),
     harvest: harvestCharacterSchema.optional(),
     directCostCents: centsSchema.optional(),
+    fermentation: z.enum(['oak', 'steel']).optional(),
     maturation: z
-      .object({
-        vessel: z.enum(['oak', 'steel']),
-        weeks: count(8),
-      })
-      .strict()
+      .union([
+        z
+          .object({
+            vessel: z.enum(['oak', 'steel']),
+            weeks: count(8),
+          })
+          .strict(),
+        z
+          .object({
+            version: z.literal(1),
+            vessel: vesselSchema,
+            weeks: count(MATURATION_LIMIT),
+            oakDominant: z.boolean(),
+          })
+          .strict(),
+      ])
       .optional(),
   })
   .strict();
@@ -179,7 +192,10 @@ export function combine(parts: WineComponent[]): WineComponent[] {
   for (const part of parts) {
     const aging = part.maturation;
     const harvest = part.harvest;
-    const key = `${part.variety}:${part.year}:${part.quality}:${part.estateId ?? 1}:${aging ? `${aging.vessel}:${aging.weeks}` : 'unrecorded'}:${part.techniques ? techniqueKey(part.techniques) : 'unrecorded'}:${harvest ? `${harvest.ripeness}:${harvest.health}:${harvest.sunExposure}` : 'unrecorded'}`;
+    const maturationKey = aging
+      ? `${aging.vessel}:${aging.weeks}:${'version' in aging ? `${aging.version}:${aging.oakDominant}` : 'legacy'}`
+      : 'unrecorded';
+    const key = `${part.variety}:${part.year}:${part.quality}:${part.estateId ?? 1}:${maturationKey}:${part.fermentation ?? 'unrecorded'}:${part.techniques ? techniqueKey(part.techniques) : 'unrecorded'}:${harvest ? `${harvest.ripeness}:${harvest.health}:${harvest.sunExposure}` : 'unrecorded'}`;
     const existing = grouped.get(key);
     if (existing) {
       existing.ml += part.ml;

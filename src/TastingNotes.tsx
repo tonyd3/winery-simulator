@@ -24,6 +24,16 @@ export function TastingNotes({ profile }: { profile: TastingProfile }) {
             ))}
           </dd>
         </div>
+        {profile.fermentation && (
+          <div>
+            <dt>Ferment</dt>
+            <dd>
+              {profile.fermentation.map((note) => (
+                <p key={note}>{note}</p>
+              ))}
+            </dd>
+          </div>
+        )}
         <div>
           <dt>Aging</dt>
           <dd>
