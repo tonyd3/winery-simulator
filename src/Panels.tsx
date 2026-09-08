@@ -75,7 +75,12 @@ export function PlotInspector({
   const harvested = plot.harvestedYear === calendar(state.week).year;
   const winter = calendar(state.week).season === 'Winter';
   return (
-    <aside className="plot-inspector" id="parcel-inspector">
+    <aside
+      className="plot-inspector"
+      id="parcel-inspector"
+      tabIndex={0}
+      aria-labelledby="parcel-title"
+    >
       <div className="eyebrow">
         PARCEL {String(selected).padStart(2, '0')}
         <span className={`status-tag ${ready ? 'ripe' : ''}`}>
@@ -92,7 +97,7 @@ export function PlotInspector({
             : 'For sale'}
         </span>
       </div>
-      <h2>{land.name}</h2>
+      <h2 id="parcel-title">{land.name}</h2>
       <p className="inspector-subtitle">
         {land.area} hectares · {land.aspect}
       </p>

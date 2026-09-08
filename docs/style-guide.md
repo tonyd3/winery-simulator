@@ -23,6 +23,10 @@ Use spacing, alignment, typography, and thin dividers to group information. Tint
 
 Build groups facilities and staff in department-filtered ledger rows, implemented in [EstateInvestments.tsx](../src/EstateInvestments.tsx) and [investments.css](../src/investments.css). Keep upfront prices, operating costs, suspended maintenance, prerequisites, and purchase/resume actions together. The budget summary separates hospitality income from wine sales and distinguishes forecasts from guaranteed returns. On narrow screens, stack purchase details beneath each description; retain readable long prices and disabled reasons.
 
+### Estate framing
+
+The desktop estate workspace has a viewport-based height that stays fixed while switching parcels. Long parcel details scroll inside the inspector; its children must not shrink to fit. Plot selection updates the highlight and details while preserving the map framing and manual zoom. At 620px and below, the map and inspector stack: the map keeps its 350px height and the details use normal page scrolling. See `.estate-workspace` and `.plot-inspector` in `styles.css`.
+
 ### Research decisions
 
 Research uses branch-filtered ledger rows with a description and linked prerequisites beside a compact cost/duration/action column. `ResearchProjects.tsx` and `research.css` own this layout. Keep the active study visible across the project, grape-library, and nursery tabs. Show the single occupied slot, remaining game weeks, separate investment costs, and the no-refund consequence before abandoning. Grape-library climate and study terms must occupy separate columns; stack them under the grape name on narrow screens.

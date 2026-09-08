@@ -528,7 +528,8 @@ h1 {
   border-top: 0;
   border-radius: 0 0 8px 8px;
   overflow: hidden;
-  min-height: 530px;
+  /* Parcel details must not resize the map when selection changes. */
+  height: clamp(540px, 65vh, 760px);
 }
 .estate-map {
   background: #e9ebd0;
@@ -684,7 +685,17 @@ h1 {
   padding: 26px 24px 0;
   display: flex;
   flex-direction: column;
-  min-height: 535px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+}
+.plot-inspector > * {
+  flex-shrink: 0;
+}
+.plot-inspector:focus-visible {
+  outline: 2px solid var(--wine);
+  outline-offset: -3px;
 }
 .eyebrow {
   font-size: 8px;
@@ -1957,7 +1968,7 @@ h1 {
     padding-top: 37px;
   }
   .estate-workspace {
-    min-height: 625px;
+    height: clamp(625px, 65vh, 820px);
     grid-template-columns: minmax(0, 1fr) 330px;
   }
   .estate-bottom {
@@ -2592,6 +2603,7 @@ h1 {
     width: 12px;
   }
   .estate-workspace {
+    height: auto;
     grid-template-columns: 1fr;
   }
   .estate-map {
@@ -2635,6 +2647,9 @@ h1 {
     font-size: 6px;
   }
   .plot-inspector {
+    overflow-y: visible;
+    overscroll-behavior-y: auto;
+    scrollbar-gutter: auto;
     border-left: 0;
     padding: 24px 24px 0;
     min-height: auto;
