@@ -1,3 +1,4 @@
+import { DEFAULT_DESIGN } from '../src/winemaking.ts';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -11,6 +12,7 @@ import {
   stateSchema,
   upkeep,
   wholesalePrice,
+  weeklySales,
 } from '../src/game.ts';
 import { bottleBatch } from './helpers.ts';
 import {
@@ -370,4 +372,121 @@ test('batched forecasts preserve counterfactual listing and pricing without stal
   const refreshed = demandContext(s);
   assert.equal(weeklySales(s).get(w.id), undefined);
   assert.ok(demandForecast({ ...w, listed: true }, s, refreshed).high > 0);
+});
+
+test('crossing the dominant-grape threshold does not unlock another audience', () => {
+  const s = stocked();
+  const template = s.wines[0];
+  const release = (id: number, merlot: number) => ({
+    ...structuredClone(template),
+    id,
+    variety: merlot >= 37500 ? 'merlot' : 'cabernet',
+    bottles: 100,
+    produced: 100,
+    components: [
+      { variety: 'merlot', year: 1, ml: merlot, quality: 80 },
+      { variety: 'cabernet', year: 1, ml: 75000 - merlot, quality: 80 },
+    ],
+  });
+  const sold = (wines: typeof s.wines) =>
+    wines.reduce((sum, wine) => sum + demand(wine, { ...s, wines }), 0);
+  const same = [release(1, 37501), release(2, 37501)];
+  const crossed = [release(1, 37501), release(2, 37499)];
+  for (let week = 6; week <= 65; week++) {
+    s.week = week;
+    assert.ok(Math.abs(sold(same) - sold(crossed)) <= 2, `week ${week}`);
+    for (const wine of crossed) {
+      const forecast = demandForecast(wine, { ...s, wines: crossed });
+      const count = demand(wine, { ...s, wines: crossed });
+      assert.ok(count >= forecast.low && count <= forecast.high);
+    }
+  }
+});
+
+test('splitting a mixed recipe into releases preserves total customer demand', () => {
+  const s = stocked();
+  s.bottleStorage.shelves = 2;
+  const template = {
+    ...s.wines[0],
+    bottles: 200,
+    shelfSpace: 200,
+    components: [
+      { variety: 'merlot', year: 1, ml: 75000, quality: 80 },
+      { variety: 'cabernet', year: 1, ml: 75000, quality: 80 },
+    ],
+  };
+  const split = [1, 2, 3, 4].map((id) => ({
+    ...template,
+    id,
+    bottles: 50,
+    shelfSpace: 50,
+  }));
+  for (let week = 6; week <= 30; week++) {
+    s.week = week;
+    const expected = demand(template, { ...s, wines: [template] });
+    assert.equal(
+      split.reduce(
+        (sum, wine) => sum + demand(wine, { ...s, wines: split }),
+        0,
+      ),
+      expected,
+    );
+  }
+});
+
+test('overlapping audiences conserve sales when a blend is split into one-bottle releases', () => {
+  let s = newGame();
+  s.cash = 1000000;
+  s.reputation = 40;
+  s.reserves = [
+    {
+      id: 1,
+      name: 'Boundary blend',
+      stored: s.week,
+      score: 80,
+      components: [
+        { variety: 'merlot', year: 1, quality: 80, ml: 75000 },
+        { variety: 'cabernet', year: 1, quality: 80, ml: 75000 },
+      ],
+    },
+  ];
+  s.nextId = 2;
+  const bottle = (state: typeof s, count: number) => {
+    let next = act(state, {
+      type: 'bottle',
+      id: 1,
+      bottles: count,
+      line: state.lines.length
+        ? { id: state.lines[0].id }
+        : { name: 'Boundary blend', design: DEFAULT_DESIGN },
+    });
+    const id = next.wines.at(-1)!.id;
+    next = act(next, { type: 'list', id });
+    return act(next, { type: 'price', id, price: 52 });
+  };
+  const whole = bottle(s, 2),
+    split = bottle(bottle(s, 1), 1);
+  const total = (state: typeof s) =>
+    [...weeklySales(state).values()].reduce((a, b) => a + b, 0);
+  assert.equal(total(whole), 2);
+  assert.equal(total(split), 2);
+  for (let week = 6; week <= 78; week++) {
+    whole.week = split.week = week;
+    for (const state of [whole, split]) {
+      const restored = deserialize(serialize(state));
+      const counts = weeklySales(restored);
+      for (const wine of restored.wines) {
+        const forecast = demandForecast(wine, restored);
+        assert.ok(
+          counts.get(wine.id)! >= forecast.low &&
+            counts.get(wine.id)! <= forecast.high,
+        );
+      }
+      assert.equal(
+        act(restored, { type: 'advance' }).stats.sold,
+        total(restored),
+      );
+    }
+    assert.equal(total(whole), total(split));
+  }
 });

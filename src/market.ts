@@ -31,18 +31,29 @@ export function releaseInterest(weeksSinceBottling: number) {
   return 0.2 + 0.8 * 2 ** (-Math.max(0, weeksSinceBottling) / 36);
 }
 
-// Labels, line IDs and bottling splits cannot create another set of customers.
-export const customerGroup = (wine: Wine) => `${wine.variety}:${wine.year}`;
+// Each source contributes proportionally; the dominant grape is only a label.
+export function customerShares(wine: Wine) {
+  const total = wine.components.reduce((sum, part) => sum + part.ml, 0);
+  const shares = new Map<string, number>();
+  for (const part of wine.components) {
+    const key = `${part.variety}:${part.year}`;
+    shares.set(key, (shares.get(key) ?? 0) + part.ml / total);
+  }
+  return shares;
+}
 
-export function weeklyDemandMultiplier(wine: Wine, s: GameState) {
+export function customerDemandMultiplier(key: string, s: GameState) {
   return (
     WEEKLY_DEMAND.min +
     (WEEKLY_DEMAND.max - WEEKLY_DEMAND.min) *
-      noise(
-        s.marketSeed ?? MARKET_SEED,
-        `wine:${customerGroup(wine)}`,
-        s.week + 1,
-      )
+      noise(s.marketSeed ?? MARKET_SEED, `wine:${key}`, s.week + 1)
+  );
+}
+
+export function weeklyDemandMultiplier(wine: Wine, s: GameState) {
+  return [...customerShares(wine)].reduce(
+    (sum, [key, share]) => sum + share * customerDemandMultiplier(key, s),
+    0,
   );
 }
 
