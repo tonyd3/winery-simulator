@@ -367,16 +367,6 @@ select {
   white-space: nowrap;
   margin-left: auto;
 }
-.reputation-label {
-  background: #eeefe3;
-  color: #8b9274;
-  font-size: 8px;
-  padding: 5px 7px;
-  border-radius: 4px;
-  white-space: nowrap;
-  margin-left: auto;
-  align-self: flex-end;
-}
 main {
   max-width: 1660px;
   margin: auto;
@@ -1878,8 +1868,7 @@ h1 {
   }
 }
 @media (max-width: 1250px) {
-  .resource-secondary,
-  .reputation-label {
+  .resource-secondary {
     display: none;
   }
   .resource {

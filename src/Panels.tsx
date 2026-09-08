@@ -1036,7 +1036,7 @@ export function Market({ state, dispatch, navigate }: Props) {
             <div>
               <span className="eyebrow">A VINTAGE WORTH SHARING</span>
               <h2>From your estate, to their table.</h2>
-              <p>Set your price. Build your reputation. Find your regulars.</p>
+              <p>Set your price. Build your Prestige. Find your regulars.</p>
             </div>
             <span className="capacity-chip">
               <Icon name="shop" />
@@ -1081,7 +1081,7 @@ export function Market({ state, dispatch, navigate }: Props) {
               <h3>The wine shop</h3>
               <p>
                 Above 90 points, each extra point commands a larger price
-                premium. Reputation strengthens that premium. Use the suggested
+                premium. Prestige strengthens that premium. Use the suggested
                 price and sales forecast to find your market. Interest fades
                 gradually over several years. Seasons, grape trends, and visitor
                 surges or slumps move demand up and down. The range allows for

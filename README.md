@@ -77,7 +77,7 @@ See [estate expansion rules](docs/estates.md) for costs, save compatibility, and
 
 **Build → Buildings & equipment** now has 14 investments grouped into vineyard/cellar, hospitality, sales, and research. Prices range from **$6,000 to $180,000**, with **$180–$3,000 weekly running costs per investment**. Existing irrigation, tasting terrace, and winemaker’s bench purchases remain owned and now use their listed running costs.
 
-Visitor centers, tasting rooms, sommeliers, restaurants, and a guesthouse earn visitor income or improve wine demand. Attendance and room occupancy depend on reputation and season; there is no guaranteed $140 visitor payment. The page previews current hospitality income after costs, each purchase's incremental return before wine sales, and its purchase price plus eight weeks of operating costs. Wine sales still depend on stock, quality, prices, and the market.
+Visitor centers, tasting rooms, sommeliers, restaurants, and a guesthouse earn visitor income or improve wine demand. Attendance and room occupancy depend on Prestige and season; there is no guaranteed $140 visitor payment. The page previews current hospitality income after costs, each purchase's incremental return before wine sales, and its purchase price plus eight weeks of operating costs. Wine sales still depend on stock, quality, prices, and the market.
 
 Optical sorting improves new harvests, viticulture staff support larger vineyards, refrigeration extends fresh-grape life to five weeks, and the research/nursery lab accelerates studies and breeding. Wine-club and export teams target older releases and premium wines. Benefits only apply while an investment and its prerequisites operate.
 
@@ -130,11 +130,11 @@ Set any whole-dollar shelf price from **$1 to $1,000** using the exact price fie
 
 Retail sales taper over several years from each release's bottling date. Underlying interest follows `20% + 80% × 2^(-weeks / 36)`: 100% at bottling, about 83% after one game year (12 weeks), 60% after three years, 40% after six, and 25% after twelve, approaching a lasting 20% audience. This is six times the previous decay period. Age alone does not reduce the wine's score, suggested value, or wholesale offer.
 
-Actual demand moves above and below that longer curve. Shop traffic changes smoothly over 18-week periods (75–125%); individual grape popularity changes over 12-week periods (70–130%). Seasonal tastes favor whites in summer and reds in winter by up to 18%, weighted by the blend's composition. Three-week market windows can bring a wine fair (+45%) or quiet tourism (−35%); each has a 14% chance per window. Each release also gets an independent weekly shopper variation of ±35%. Pricing, reputation, the tasting terrace, marketing, and medals continue to apply. Sales are rounded down to whole bottles and capped by remaining stock.
+Actual demand moves above and below that longer curve. Shop traffic changes smoothly over 18-week periods (75–125%); individual grape popularity changes over 12-week periods (70–130%). Seasonal tastes favor whites in summer and reds in winter by up to 18%, weighted by the blend's composition. Three-week market windows can bring a wine fair (+45%) or quiet tourism (−35%); each has a 14% chance per window. Each release also gets an independent weekly shopper variation of ±35%. Pricing, Prestige, the tasting terrace, marketing, and medals continue to apply. Sales are rounded down to whole bottles and capped by remaining stock.
 
 The shop shows a **forecast range** for the next weekly sale, weeks since bottling, and the strongest market influence. Events show how many sales weeks remain. Judging results arriving that week can raise actual sales above the range. A dedicated saved market seed keeps forecasts and sales reproducible: reloading, renaming, changing prices back and forth, or unrelated cellar actions do not reroll shoppers. Pausing a listing does not freeze release age or the market. Each new release has its own bottling date and weekly shopper pattern. Older saves receive a default market seed and keep recorded bottling dates, inventory, funds, prices, and sales history.
 
-Above **90 points**, suggested value includes a quadratic premium: each additional point adds more value than the previous one. Reputation strengthens that premium. For example, at 50 reputation before medals or marketing:
+Above **90 points**, suggested value includes a quadratic premium: each additional point adds more value than the previous one. Prestige strengthens that premium. For example, at 50 Prestige before medals or marketing:
 
 | Bottle score | Suggested price |
 | --- | --- |
@@ -150,6 +150,12 @@ This premium uses the original bottle score. Independent judging adds its medal'
 Campaign countdowns and judging results persist in saves. The panel's outcome is fixed when you enter, so reloading while waiting does not reroll it. The original bottle rating stays separate from the panel score; reviews and medals remain visible in **Wine history** and **Cellar → Wine lines**, including after sellout. Older saves start with no campaigns or judging entries and keep existing prices, funds, and inventory.
 
 **Journal** contains the estate ledger, lifetime revenue, weekly upkeep, and best vintage. Neighboring work and business loans are retired; old saves keep their cash and transaction history, without further loan interest. The estate’s winemaker note suggests practical next steps based on current inventory and crops. There are no achievement targets or completion checklists.
+
+## Prestige
+
+**Prestige** replaces Reputation with a score that has no gameplay ceiling. Click it in the resource bar to see 16 named tiers, from **Two-Buck Beginning** and **Grocery Aisle Darling** to **Pétrus Pantheon**. Wine sales earn 0.04 Prestige per shop bottle or 0.01 per wholesale bottle. Tier titles follow the current total; they provide no cash awards or purchase unlocks.
+
+Prestige improves suggested prices, shopper interest, and hospitality attendance. Benefits grow more slowly above 100, while the score continues accumulating beyond the last tier. Wine quality retains its separate 100-point rating. Existing saves keep their current score and assets. See the [Prestige rules and tier ladder](docs/prestige.md).
 
 ## Saves
 
@@ -177,6 +183,7 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `src/EstateMap.tsx`: interactive SVG estate districts and original vector art.
 - `src/Holdings.tsx`, `src/estates.ts`, `src/holdings.css`: estate selection, district expansion, regional acquisitions, and parcel addressing.
 - `tests/estates.test.ts`: estate migration, purchases, regional production, provenance, and full portfolio capacity.
+- `src/prestige.ts`, `src/EstatePrestige.tsx`, `src/prestige.css`: uncapped Prestige, named tiers, economic influence, and the tier browser.
 - `src/Panels.tsx`: vineyard inspector, production, pricing, and the estate ledger.
 - `src/EstateInvestments.tsx`, `src/investments.ts`, `src/investments.css`: investment catalog, running costs, suspension, hospitality forecasts, and staff benefits.
 - `tests/investments.test.ts`: investment economy, prerequisites, suspension, production and sales benefits, and save compatibility.

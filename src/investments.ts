@@ -1,4 +1,5 @@
 import { RESEARCH } from './catalog';
+import { prestigeInfluence } from './prestige';
 import type { ResearchId } from './catalog';
 import type { GameState, Wine } from './game';
 
@@ -64,7 +65,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
     upkeep: 400,
     category: 'hospitality',
     kind: 'facility',
-    text: '24 visitor places, $14 admission, and +12 base shoppers per listed release. Visitor attendance varies with reputation and season.',
+    text: '24 visitor places, $14 admission, and +12 base shoppers per listed release. Visitor attendance varies with Prestige and season.',
   },
   lab: {
     research: 'cellar_control',
@@ -122,7 +123,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
     category: 'hospitality',
     kind: 'facility',
     requires: 'visitorCenter',
-    text: 'Up to 24 room bookings each week at $220. Occupancy follows reputation and season; rooms can sit empty.',
+    text: 'Up to 24 room bookings each week at $220. Occupancy follows Prestige and season; rooms can sit empty.',
   },
   wineClub: {
     research: 'direct_sales',
@@ -227,7 +228,7 @@ export function hospitalityForecast(s: GameState) {
   const season = ['Spring', 'Summer', 'Autumn', 'Winter'][seasonIndex];
   const seasonFactor = [0.85, 1.15, 1.35, 0.45][seasonIndex];
   const potential = Math.floor(
-    (20 + s.reputation * 1.3) *
+    (20 + prestigeInfluence(s.reputation) * 1.3) *
       seasonFactor *
       (active('visitorCenter') ? 1.25 : 1),
   );

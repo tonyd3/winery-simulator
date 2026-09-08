@@ -25,11 +25,11 @@ These are fictional game balance values. Each investment also requires its corre
 
 ## Hospitality
 
-Potential weekly visitors equal floor((20 + reputation × 1.3) × season factor × attraction factor). Spring is 0.85, summer 1.15, autumn 1.35, and winter 0.45. An operating visitor center multiplies attraction by 1.25. Attendance is capped by the sum of operating terrace (24), center (60), and tasting-room (80) places. This is one shared hospitality business, not a duplicate income stream for every estate.
+Prestige influence equals the score up to 100, then `100 + 25 × log2(Prestige / 100)` above it; this preserves early balance and tapers later growth. Potential weekly visitors equal floor((20 + Prestige influence × 1.3) × season factor × attraction factor). Spring is 0.85, summer 1.15, autumn 1.35, and winter 0.45. An operating visitor center multiplies attraction by 1.25. Attendance is capped by the sum of operating terrace (24), center (60), and tasting-room (80) places. This is one shared hospitality business, not a duplicate income stream for every estate.
 
 Admission is $14 with the terrace, otherwise $12 with the center. The tasting room adds $8 and sommeliers add $12 per visitor. A restaurant adds $20 per visitor for at most 100 visitors, plus 20% shop demand. A guesthouse fills min(24, floor(potential visitors × 0.14)) bookings at $220 each. Hospitality pays money, records lifetime revenue, and does not consume bottles or increment bottle sales. Wine sales remain separate.
 
-Forecasts use the starting week's reputation, season, and active facilities, matching the following weekly transaction. The displayed hospitality net subtracts hospitality operating and suspended bills, but excludes wine sales and non-hospitality estate overhead. Prospective purchases show incremental hospitality income minus the new facility's bill. Quiet facilities can lose money even when they cost a great deal to build.
+Forecasts use the starting week's Prestige, season, and active facilities, matching the following weekly transaction. The displayed hospitality net subtracts hospitality operating and suspended bills, but excludes wine sales and non-hospitality estate overhead. Prospective purchases show incremental hospitality income minus the new facility's bill. Quiet facilities can lose money even when they cost a great deal to build.
 
 ## Wine, production, and research benefits
 
@@ -44,6 +44,6 @@ Forecasts use the starting week's reputation, season, and active facilities, mat
 
 Suspend preserves ownership, removes benefits, and charges 25% of the listed weekly bill, rounded up. Suspending a prerequisite explicitly suspends its dependents. Reopening the prerequisite does not automatically restart their bills; resume each investment individually. Resuming is free but requires enough cash for one full week of total estate upkeep after the change.
 
-If available cash after that week's revenue cannot cover its bill, the game suspends all non-legacy investments. The full bill for the week just operated is still charged; reduced bills apply afterward. Existing emergency vineyard work and its reputation penalty keep the game playable, but do not leave expensive facilities active. This first iteration has no sale, demolition, partial shifts, or refund.
+If available cash after that week's revenue cannot cover its bill, the game suspends all non-legacy investments. The full bill for the week just operated is still charged; reduced bills apply afterward. Existing emergency vineyard work and its Prestige penalty keep the game playable, but do not leave expensive facilities active. This first iteration has no sale, demolition, partial shifts, or refund.
 
 Version-five saves add a default-empty suspendedUpgrades list and accept the expanded catalog. Older owned irrigation, terrace, bench, and legacy cellar assets remain owned; funds, crop state, stored wine, and scores are preserved. Existing facilities adopt the new operating prices. The old cellar extension retains its $15 upkeep and cannot be suspended, since its tanks remain usable. Prerequisite ownership, enum values, duplicate entries, and valid owned suspension IDs are validated on import. No storage key change is required.

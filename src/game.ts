@@ -59,6 +59,8 @@ import {
   weeklyDemandMultiplier,
 } from './market';
 
+import { PRESTIGE_EARNINGS, prestigeInfluence } from './prestige';
+
 export const SAVE_KEY = 'terroir.save.v1';
 export const BACKUP_KEY = 'terroir.backup.v1';
 export const BOTTLE_PRICE = { min: 1, max: 1000 };
@@ -339,7 +341,8 @@ export const stateSchema = z
     name: z.string().trim().min(1).max(32),
     week: z.number().int().min(1).max(100000),
     cash: bounded(),
-    reputation: bounded(100),
+    // The saved field name stays compatible; it now stores uncapped Prestige.
+    reputation: z.number().finite().min(0),
     plots: z.array(plotSchema).min(6).max(192),
     grapes: z.array(grapeSchema).max(576),
     batches: z.array(batchSchema).max(CELLAR_EQUIPMENT.maxBays),
@@ -937,15 +940,16 @@ export const upkeep = (s: GameState) =>
 export const fairPrice = (
   wine: Pick<Wine, 'quality'> &
     Partial<Pick<Wine, 'marketingWeeks' | 'judging'>>,
-  reputation: number,
+  prestige: number,
   retail = true,
 ) => {
-  // Exceptional scores command an accelerating premium, amplified by reputation.
+  // Wine quality keeps its 100-point scale; estate Prestige has diminishing influence.
+  const influence = prestigeInfluence(prestige);
   const premium =
-    6 * Math.max(0, wine.quality - 90) ** 2 * (0.6 + reputation * 0.008);
+    6 * Math.max(0, wine.quality - 90) ** 2 * (0.6 + influence * 0.008);
   return Math.min(
     BOTTLE_PRICE.max,
-    Math.round(7 + wine.quality * 0.24 + reputation * 0.055 + premium) +
+    Math.round(7 + wine.quality * 0.24 + influence * 0.055 + premium) +
       wineBenefits(wine, retail).price,
   );
 };
@@ -961,9 +965,9 @@ export const retailPrice = (
         (upgradeActive(s, 'sommelier') && wine.quality >= 80 ? 1.08 : 1),
     ),
   );
-export const wholesalePrice = (wine: Wine, reputation: number, s?: GameState) =>
+export const wholesalePrice = (wine: Wine, prestige: number, s?: GameState) =>
   Math.round(
-    fairPrice(wine, reputation, false) *
+    fairPrice(wine, prestige, false) *
       0.6 *
       (s && upgradeActive(s, 'exportOffice') && wine.quality >= 85 ? 1.08 : 1),
   );
@@ -988,7 +992,9 @@ function demandOutlook(wine: Wine, s: GameState) {
   const rate =
     !wine.listed || !wine.bottles
       ? 0
-      : (18 + s.reputation * 0.55 + (upgradeActive(s, 'tasting') ? 12 : 0)) *
+      : (18 +
+          prestigeInfluence(s.reputation) * 0.55 +
+          (upgradeActive(s, 'tasting') ? 12 : 0)) *
         (1 + wineBenefits(wine).demand) *
         investmentDemand(wine, s) *
         releaseInterest(s.week - wine.bottled) *
@@ -1367,7 +1373,9 @@ export function act(current: GameState, action: Action): GameState {
         transaction(s, 'Wine shop sales', sales);
         s.stats.sold += bottles;
         s.stats.revenue += sales;
-        s.reputation = Math.min(100, s.reputation + bottles * 0.04);
+        s.reputation = Number(
+          (s.reputation + bottles * PRESTIGE_EARNINGS.retail).toFixed(2),
+        );
         note(
           s,
           `${bottles} bottles found a home. ${money(sales)} in wine sales.`,
@@ -1397,7 +1405,7 @@ export function act(current: GameState, action: Action): GameState {
         s.reputation = Math.max(0, s.reputation - 2);
         note(
           s,
-          `A local grower paid ${money(assistance)} for your help. Your estate lost 2 reputation while you were away.`,
+          `A local grower paid ${money(assistance)} for your help. Your estate lost up to 2 Prestige while you were away.`,
           'warning',
         );
       }
@@ -2085,7 +2093,9 @@ export function act(current: GameState, action: Action): GameState {
       transaction(s, `${w.label} wholesale`, revenue);
       s.stats.sold += w.bottles;
       s.stats.revenue += revenue;
-      s.reputation = Math.min(100, s.reputation + w.bottles * 0.01);
+      s.reputation = Number(
+        (s.reputation + w.bottles * PRESTIGE_EARNINGS.wholesale).toFixed(2),
+      );
       if (w.produced === null)
         w.salesSinceTracking = (w.salesSinceTracking ?? 0) + w.bottles;
       w.bottles = 0;

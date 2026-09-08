@@ -95,9 +95,9 @@ export function Investments({
           </div>
         </dl>
         <p>
-          Attendance follows reputation and the season. Suspending stops
-          benefits but retains 25% maintenance; dependent investments suspend
-          too. Resume when you can cover one week of total estate upkeep.
+          Attendance follows Prestige and the season. Suspending stops benefits
+          but retains 25% maintenance; dependent investments suspend too. Resume
+          when you can cover one week of total estate upkeep.
         </p>
       </section>
       <nav className="investment-filters" aria-label="Investment departments">

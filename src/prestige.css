@@ -1,0 +1,129 @@
+.resource.prestige-resource {
+  min-width: 0;
+  height: auto;
+  min-height: 55px;
+  text-align: left;
+}
+.prestige-resource:hover {
+  color: var(--wine);
+}
+.prestige-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.prestige-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 5px;
+  font-size: 9px;
+  line-height: 1.35;
+  color: var(--wine);
+}
+.prestige-current {
+  padding: 10px 0 24px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+}
+.prestige-current > strong {
+  display: block;
+  margin: 12px 0 6px;
+  font: 500 48px var(--serif);
+  overflow-wrap: anywhere;
+}
+.prestige-current h3 {
+  font: 400 25px var(--serif);
+  margin-bottom: 8px;
+}
+.prestige-current p,
+.prestige-explainer {
+  font-size: 12px;
+  line-height: 1.75;
+  color: #727a65;
+}
+.prestige-current .prestige-next {
+  margin-top: 10px;
+  color: var(--wine);
+}
+.prestige-ladder {
+  padding: 0;
+  margin: 24px 0 16px;
+  list-style: none;
+}
+.prestige-ladder li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.prestige-ladder li[aria-current] {
+  background: #eeefe3;
+}
+.prestige-rank {
+  font-size: 10px;
+  color: var(--green);
+}
+.prestige-ladder h4 {
+  font-size: 13px;
+  font-weight: 500;
+}
+.prestige-ladder p {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #727a65;
+  margin-top: 4px;
+}
+.prestige-threshold {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.prestige-threshold strong {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.prestige-threshold span {
+  display: block;
+  margin-top: 5px;
+  font-size: 9px;
+  color: var(--wine);
+}
+.prestige-footnote {
+  font-size: 11px;
+  color: #727a65;
+  text-align: center;
+}
+@media (max-width: 620px) {
+  .resource-bar {
+    height: 96px;
+    grid-template-columns:
+      minmax(0, 1.15fr) minmax(0, 1.1fr) minmax(0, 1fr)
+      minmax(0, 0.9fr);
+  }
+  .resource.prestige-resource {
+    min-height: 62px;
+  }
+  .prestige-label {
+    font-size: 8px;
+  }
+  .prestige-label svg {
+    display: none;
+  }
+  .prestige-current > strong {
+    font-size: 40px;
+  }
+  .prestige-ladder li {
+    gap: 8px;
+    padding: 14px 4px;
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+  }
+  .prestige-ladder h4 {
+    font-size: 12px;
+  }
+  .prestige-ladder p {
+    font-size: 10px;
+  }
+}

@@ -31,6 +31,7 @@ import { liters, volume } from './winemaking';
 import { Cellar, Improvements, Journal, Market, PlotInspector } from './Panels';
 import type { View } from './Panels';
 import { Icon, Modal } from './components';
+import { PrestigeDetails, PrestigeResource } from './EstatePrestige';
 import {
   act,
   getEstate,
@@ -123,7 +124,18 @@ export default function App() {
     : plotId(state.activeEstate);
   const [buildLand, setBuildLand] = useState(false);
   const [speed, setSpeed] = useState(0);
-  const [modal, setModal] = useState<'help' | 'settings' | null>(null);
+  const [modal, setModal] = useState<'help' | 'settings' | 'prestige' | null>(
+    null,
+  );
+  const prestigeTrigger = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    // Opening makes the resource bar inert before the modal can capture focus.
+    // Restore the trigger after closing has made the page interactive again.
+    if (modal === null && prestigeTrigger.current) {
+      prestigeTrigger.current.focus();
+      prestigeTrigger.current = null;
+    }
+  }, [modal]);
   const [reveal, setReveal] = useState<Wine | null>(null);
   const closeReveal = useCallback(() => setReveal(null), []);
   const [notice, setNotice] = useState(initial.warning);
@@ -470,25 +482,14 @@ export default function App() {
               −{money(upkeep(state))} / week
             </span>
           </div>
-          <div className="resource">
-            <span className="resource-icon">
-              <Icon name="trophy" size={20} />
-            </span>
-            <div>
-              <small>REPUTATION</small>
-              <strong>
-                {Math.floor(state.reputation)}
-                <span> / 100</span>
-              </strong>
-            </div>
-            <span className="reputation-label">
-              {state.reputation < 30
-                ? 'A new beginning'
-                : state.reputation < 65
-                  ? 'Local favorite'
-                  : 'Renowned estate'}
-            </span>
-          </div>
+          <PrestigeResource
+            value={state.reputation}
+            onOpen={(trigger) => {
+              prestigeTrigger.current = trigger;
+              setSpeed(0);
+              setModal('prestige');
+            }}
+          />
           <div className="resource">
             <span className="resource-icon">
               <Icon name="barrel" size={20} />
@@ -938,6 +939,9 @@ export default function App() {
           </div>
         </Modal>
       )}
+      {modal === 'prestige' && (
+        <PrestigeDetails value={state.reputation} onClose={closeModal} />
+      )}
       {modal === 'help' && (
         <Modal
           title="A field guide to your first vintage."
@@ -965,13 +969,13 @@ export default function App() {
                 'glass',
                 '03',
                 'Blend, bottle & share',
-                'Blend reserves across grapes and vintages, then bottle into a new or existing wine line. Each 750 mL bottle uses one kit; orders arrive next week. Above 90 points, each extra point earns a larger price premium. Reputation amplifies it; judging medals add value. Set your price and list the wine.',
+                'Blend reserves across grapes and vintages, then bottle into a new or existing wine line. Each 750 mL bottle uses one kit; orders arrive next week. Above 90 points, each extra point earns a larger price premium. Prestige amplifies it; judging medals add value. Set your price and list the wine.',
               ],
               [
                 'trend',
                 '04',
                 'Grow at your own pace',
-                'Advance one week at a time, or press 1×, 2×, or 4×. Build offers facilities and teams with substantial weekly costs. Visitor income depends on reputation and season. Suspend investments to cut their bills to 25%; their benefits stop. Check your journal to track revenue and estate expenses.',
+                'Advance one week at a time, or press 1×, 2×, or 4×. Build offers facilities and teams with substantial weekly costs. Visitor income depends on Prestige and season. Suspend investments to cut their bills to 25%; their benefits stop. Check your journal to track revenue and estate expenses.',
               ],
             ].map(([icon, number, title, text]) => (
               <div className="guide-step" key={number}>

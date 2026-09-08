@@ -1,6 +1,6 @@
 # Estate expansion
 
-The wine business now owns a portfolio of estates, sharing funds, research, equipment, kits, cellar inventory, wine lines, reputation, and a single 12-week calendar. The first property remains the home estate and the bottling business retains its existing brand name.
+The wine business now owns a portfolio of estates, sharing funds, research, equipment, kits, cellar inventory, wine lines, Prestige, and a single 12-week calendar. The first property remains the home estate and the bottling business retains its existing brand name.
 
 ## Land and capacity
 

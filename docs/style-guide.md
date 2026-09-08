@@ -23,6 +23,10 @@ Use spacing, alignment, typography, and thin dividers to group information. Tint
 
 The Journal focuses on accounts: financial totals above a full-width transaction ledger. Keep entries readable on narrow screens. There are no neighboring-work or loan controls. The estate may show a contextual winemaker note for available actions; do not add achievement checklists, milestone targets, or completion bars.
 
+### Prestige
+
+Prestige is an uncapped estate score, separate from 100-point wine quality. Keep its current tier visible beneath the score on desktop and mobile. The resource is a keyboard-accessible button opening a ledger of 16 named tiers with thresholds and one current-tier highlight. Use the shared modal and existing paper/ink styling; omit achievement checklists, claim buttons, and cash rewards. See [EstatePrestige.tsx](../src/EstatePrestige.tsx) and [prestige.css](../src/prestige.css).
+
 ### Investment decisions
 
 Build groups facilities and staff in department-filtered ledger rows, implemented in [EstateInvestments.tsx](../src/EstateInvestments.tsx) and [investments.css](../src/investments.css). Keep upfront prices, operating costs, suspended maintenance, prerequisites, and purchase/resume actions together. The budget summary separates hospitality income from wine sales and distinguishes forecasts from guaranteed returns. On narrow screens, stack purchase details beneath each description; retain readable long prices and disabled reasons.
@@ -121,7 +125,7 @@ Keep the task sequence and important actions available when columns stack. Let l
 
 ## Implementation and review
 
-The app uses React, TypeScript, and plain CSS. Shared styles live in [styles.css](../src/styles.css), region/research styles in [expansion.css](../src/expansion.css), and cellar/bottle styles in [winemaking.css](../src/winemaking.css). [main.tsx](../src/main.tsx) imports them in that order. Check later overrides before assuming an earlier rule is the rendered value.
+The app uses React, TypeScript, and plain CSS. Shared styles live in [styles.css](../src/styles.css), region/research styles in [expansion.css](../src/expansion.css), and cellar/bottle styles in [winemaking.css](../src/winemaking.css). [main.tsx](../src/main.tsx) imports them in that order, followed by [prestige.css](../src/prestige.css) for the resource and tier dialog. Check later overrides before assuming an earlier rule is the rendered value.
 
 Extend an existing component or class when its role matches. Keep new rules near the related feature and name classes by their role. Use inline styles for data-dependent values, such as composition proportions or grape colors; put reusable presentation rules in CSS. A routine feature should not introduce another CSS framework, font family, icon set, or animation dependency.
 
