@@ -51,7 +51,14 @@ function BottlingForm({
     panel.current?.scrollIntoView({ behavior: 'instant', block: 'start' });
     panel.current?.querySelector('select')?.focus({ preventScroll: true });
   }, []);
-  const [lineId, setLineId] = useState('new');
+  const [lineId, setLineId] = useState(() => {
+    const existing = state.lines.find(
+      (line) =>
+        line.name.toLocaleLowerCase() ===
+        reserve.name.trim().toLocaleLowerCase(),
+    );
+    return existing ? String(existing.id) : 'new';
+  });
   const [name, setName] = useState(reserve.name);
   const [design, setDesign] = useState<LabelDesign>({ ...DEFAULT_DESIGN });
   const total = volume(reserve.components);
@@ -60,6 +67,13 @@ function BottlingForm({
   const limit = Math.min(max, state.kits, room);
   const [count, setCount] = useState(String(limit));
   const line = state.lines.find((l) => String(l.id) === lineId);
+  const duplicateLine =
+    lineId === 'new'
+      ? state.lines.find(
+          (line) =>
+            line.name.toLocaleLowerCase() === name.trim().toLocaleLowerCase(),
+        )
+      : undefined;
   const activeDesign = line?.design ?? design;
   const q = assess(reserve.components, state.hybrids);
   const bottles = Number(count);
@@ -73,7 +87,7 @@ function BottlingForm({
     bottles <= max &&
     bottles <= state.kits &&
     bottles <= room &&
-    (line || (lineId === 'new' && name.trim()));
+    (line || (lineId === 'new' && name.trim() && !duplicateLine));
   return (
     <section
       ref={panel}
@@ -172,6 +186,18 @@ function BottlingForm({
                 maxLength={40}
                 required
               />
+              {duplicateLine && (
+                <p className="line-inheritance" role="status">
+                  This wine line already exists.{' '}
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => setLineId(String(duplicateLine.id))}
+                  >
+                    Use {duplicateLine.name}
+                  </button>
+                </p>
+              )}
               <div className="design-selects">
                 <div>
                   <label className="field-label" htmlFor="label-style">
