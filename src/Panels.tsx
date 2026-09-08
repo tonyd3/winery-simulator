@@ -1,5 +1,6 @@
 import type { ResearchId } from './catalog';
 import { Investments } from './EstateInvestments';
+import { HarvestForecast } from './HarvestForecast';
 import { GrapeArrival } from './GrapeArrival';
 import {
   CELLAR_TECHNIQUES,
@@ -203,6 +204,13 @@ export function PlotInspector({
             </div>
             <Progress value={plot.health} />
           </div>
+          {!harvested && !winter && (
+            <HarvestForecast
+              state={state}
+              plot={plot}
+              onBuild={() => navigate('improvements')}
+            />
+          )}
           <div className="parcel-tip">
             <Icon name={ready ? 'sun' : 'sprout'} size={19} />
             <p>

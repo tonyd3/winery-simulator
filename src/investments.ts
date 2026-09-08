@@ -1,10 +1,13 @@
 import { RESEARCH } from './catalog';
 import { prestigeInfluence } from './prestige';
 import type { ResearchId } from './catalog';
-import type { GameState, Wine } from './game';
+import type { GameState, Plot, Wine } from './game';
 
 export const UPGRADE_IDS = [
   'irrigation',
+  'compost',
+  'canopy',
+  'precisionIrrigation',
   'cellar',
   'tasting',
   'lab',
@@ -16,6 +19,7 @@ export const UPGRADE_IDS = [
   'wineClub',
   'exportOffice',
   'sorting',
+  'selectiveHarvest',
   'viticulturist',
   'researchLab',
   'coldStorage',
@@ -38,6 +42,12 @@ type Investment = {
   requires?: Upgrade;
   research?: ResearchId;
   legacy?: boolean;
+  harvest?: {
+    quality: number;
+    minHealth?: number;
+    minRipeness?: number;
+    yieldMultiplier?: number;
+  };
 };
 export const UPGRADES: Record<Upgrade, Investment> = {
   irrigation: {
@@ -48,6 +58,37 @@ export const UPGRADES: Record<Upgrade, Investment> = {
     category: 'vineyard',
     kind: 'facility',
     text: '+3 growth each week and protection from dry spells across your vineyards.',
+  },
+  compost: {
+    research: 'ampelography',
+    name: 'Compost program',
+    cost: 8000,
+    upkeep: 180,
+    category: 'vineyard',
+    kind: 'facility',
+    text: 'Enrich vineyard soils with estate compost. +1 quality point on new harvests across every estate.',
+    harvest: { quality: 1 },
+  },
+  canopy: {
+    research: 'soil_mapping',
+    name: 'Canopy management team',
+    cost: 14000,
+    upkeep: 320,
+    category: 'vineyard',
+    kind: 'team',
+    text: 'Balance shade and airflow around the fruit. +2 harvest quality points when vine health is at least 80%. Tend weaker vines to benefit.',
+    harvest: { quality: 2, minHealth: 80 },
+  },
+  precisionIrrigation: {
+    research: 'precision_viticulture',
+    name: 'Precision irrigation controls',
+    cost: 26000,
+    upkeep: 600,
+    category: 'vineyard',
+    kind: 'facility',
+    requires: 'irrigation',
+    text: 'Fine-tune water delivery as fruit matures. +2 harvest quality points at 95%+ ripeness. Requires operating drip irrigation; its running cost is separate.',
+    harvest: { quality: 2, minRipeness: 95 },
   },
   cellar: {
     name: 'Legacy cellar extension',
@@ -152,6 +193,17 @@ export const UPGRADES: Record<Upgrade, Investment> = {
     category: 'vineyard',
     kind: 'facility',
     text: '+2 quality points on new harvests. Improves selection of fruit; it cannot repair stored wine.',
+    harvest: { quality: 2 },
+  },
+  selectiveHarvest: {
+    research: 'fruit_selection',
+    name: 'Selective harvest crew',
+    cost: 38000,
+    upkeep: 1000,
+    category: 'vineyard',
+    kind: 'team',
+    text: 'Pick only the best bunches. +3 quality points on new harvests, with 10% fewer kilograms picked. Applies across every estate while operating.',
+    harvest: { quality: 3, yieldMultiplier: 0.9 },
   },
   viticulturist: {
     research: 'precision_viticulture',
@@ -193,6 +245,28 @@ export function upgradeActive(
     return false;
   const prerequisite = UPGRADES[id].requires;
   return !prerequisite || upgradeActive(s, prerequisite);
+}
+
+// Apply the same operating and crop conditions to both the preview and picking.
+// Scores and quantities already recorded on harvested lots are never recalculated.
+export function harvestInvestmentEffects(s: GameState, p: Plot) {
+  let quality = 0;
+  let yieldMultiplier = 1;
+  if (p.variety) {
+    for (const id of s.upgrades) {
+      const effect = UPGRADES[id].harvest;
+      if (
+        !effect ||
+        !upgradeActive(s, id) ||
+        p.health < (effect.minHealth ?? 0) ||
+        p.growth < (effect.minRipeness ?? 0)
+      )
+        continue;
+      quality += effect.quality;
+      yieldMultiplier *= effect.yieldMultiplier ?? 1;
+    }
+  }
+  return { quality, yieldMultiplier };
 }
 export const investmentBill = (s: GameState, id: Upgrade) =>
   Math.ceil(UPGRADES[id].upkeep * (upgradeActive(s, id) ? 1 : 0.25));

@@ -64,13 +64,13 @@ function hospitality(s = funded()) {
 }
 const valid = (s: GameState) => assert.deepEqual(deserialize(serialize(s)), s);
 
-test('14 substantial investments charge once, enforce prerequisites and retain equipment separately', () => {
+test('18 substantial investments charge once, enforce prerequisites and retain equipment separately', () => {
   let s = funded();
   const equipment = structuredClone(s.cellar);
   let capital = 0,
     operating = 0;
   const ids = UPGRADE_IDS.filter((id) => id !== 'cellar');
-  assert.equal(ids.length, 14);
+  assert.equal(ids.length, 18);
   for (const id of ids) {
     assert.ok(UPGRADES[id].cost >= 6000);
     assert.ok(UPGRADES[id].upkeep >= 180);

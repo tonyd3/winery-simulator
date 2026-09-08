@@ -1,0 +1,59 @@
+.harvest-forecast {
+  border-block: 1px solid var(--line);
+  padding-block: 16px;
+  margin-block: 16px;
+}
+.harvest-estimate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.harvest-estimate > span {
+  font-size: 12px;
+}
+.harvest-estimate strong {
+  font-family: var(--serif);
+  font-size: 27px;
+  font-weight: 500;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.harvest-estimate small {
+  font:
+    12px 'DM Sans',
+    sans-serif;
+}
+.harvest-forecast p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 8px 0 12px;
+}
+.harvest-upgrades {
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+.harvest-upgrades summary {
+  cursor: pointer;
+  padding-block: 8px;
+}
+.harvest-upgrades summary:focus-visible {
+  outline: 2px solid var(--wine);
+  outline-offset: 3px;
+}
+.harvest-upgrades ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.harvest-upgrades li {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding-block: 8px;
+  border-top: 1px solid var(--line);
+}
+.harvest-upgrades b {
+  font-weight: 500;
+}

@@ -701,7 +701,7 @@ export const TECHNIQUES = {
     1200,
     6,
     [],
-    'Gain 2 knowledge each week. Opens individual studies of classic grapes and nursery propagation.',
+    'Gain 2 knowledge each week. Unlocks the compost program for purchase, individual studies of classic grapes, and nursery propagation.',
   ),
   heritage: study(
     'vineyard',
@@ -719,7 +719,7 @@ export const TECHNIQUES = {
     7000,
     12,
     ['ampelography'],
-    'Unlocks drip irrigation for purchase and the path to a specialist viticulture team.',
+    'Unlocks drip irrigation and the canopy management team for purchase. Opens the path to precision viticulture.',
   ),
   adaptation: study(
     'vineyard',
@@ -737,7 +737,7 @@ export const TECHNIQUES = {
     24000,
     24,
     ['soil_mapping', 'adaptation'],
-    'Unlocks the viticulture team: faster growth and healthier vines across your holdings.',
+    'Unlocks the viticulture team for growth and health, and precision irrigation controls for higher quality in ripe grapes. Each is purchased separately.',
   ),
   breeding: study(
     'vineyard',
@@ -863,7 +863,7 @@ export const TECHNIQUES = {
     18500,
     20,
     ['cellar_control'],
-    'Unlocks the optical sorting line for purchase. Better fruit selection improves future harvest quality.',
+    'Unlocks the optical sorting line and selective harvest crew for separate purchase. The crew trades 10% of the crop for higher grape quality.',
   ),
   cold_chain: study(
     'cellar',
