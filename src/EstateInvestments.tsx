@@ -20,6 +20,7 @@ import {
   UPGRADES,
   UPGRADE_IDS,
   hospitalityForecast,
+  annualHospitalityForecast,
   investmentBill,
   investmentUpkeep,
   upgradeActive,
@@ -52,6 +53,7 @@ export function Investments({
     InvestmentDepartment | 'all' | 'equipment'
   >('all');
   const visitors = hospitalityForecast(state);
+  const annual = annualHospitalityForecast(state);
   const running = state.upgrades.filter(
     (id) => !UPGRADES[id].legacy && upgradeActive(state, id),
   ).length;
@@ -94,6 +96,12 @@ export function Investments({
             <small>{visitors.season} estimate · excludes wine sales</small>
           </div>
         </dl>
+        <p>
+          <strong>Next 12 weeks:</strong> {money(annual.revenue)} hospitality
+          income − {money(annual.upkeep)} hospitality costs ={' '}
+          {signedMoney(annual.net)}. Includes all four seasons at current
+          Prestige; excludes wine sales, estate overhead and purchase costs.
+        </p>
         <p>
           Attendance follows Prestige and the season. Suspending stops benefits
           but retains 25% maintenance; dependent investments suspend too. Resume
@@ -205,6 +213,11 @@ function InvestmentRow({
       ? hospitalityForecast(projected).revenue -
         hospitalityForecast(state).revenue
       : null;
+  const extraAnnual =
+    extraRevenue === null
+      ? null
+      : annualHospitalityForecast(projected).net -
+        annualHospitalityForecast(state).net;
   return (
     <article
       className={`investment-row ${owned ? 'owned' : ''}`}
@@ -250,6 +263,19 @@ function InvestmentRow({
             At current traffic: {signedMoney(extraRevenue)} income −{' '}
             {money(u.upkeep)} running costs ={' '}
             {signedMoney(extraRevenue - u.upkeep)} / week, before wine sales.
+          </p>
+        )}
+        {extraAnnual !== null && (
+          <p
+            className={
+              extraAnnual < 0
+                ? 'investment-return investment-loss'
+                : 'investment-return'
+            }
+          >
+            Across all seasons: {signedMoney(extraAnnual)} extra hospitality
+            income after running costs per 12 weeks, at current Prestige.
+            Purchase cost is additional.
           </p>
         )}
       </div>

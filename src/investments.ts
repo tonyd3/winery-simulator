@@ -62,7 +62,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
     research: 'tourism',
     name: 'Tasting terrace',
     cost: 12000,
-    upkeep: 400,
+    upkeep: 280,
     category: 'hospitality',
     kind: 'facility',
     text: '24 visitor places, $14 admission, and +12 base shoppers per listed release. Visitor attendance varies with Prestige and season.',
@@ -80,7 +80,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
     research: 'visitor_services',
     name: 'Visitor center',
     cost: 35000,
-    upkeep: 1000,
+    upkeep: 600,
     category: 'hospitality',
     kind: 'facility',
     text: '60 visitor places, $12 admission, and 25% more potential visitors. Opens the way to larger hospitality facilities.',
@@ -264,3 +264,15 @@ export function hospitalityForecast(s: GameState) {
 
 export const studyWeeks = (s: GameState, remaining: number) =>
   Math.ceil(remaining / (upgradeActive(s, 'researchLab') ? 2 : 1));
+
+// A full game year covers every season; Prestige and facilities stay fixed.
+export function annualHospitalityForecast(s: GameState) {
+  const weeks = Array.from({ length: 12 }, (_, i) =>
+    hospitalityForecast({ ...s, week: s.week + i }),
+  );
+  return {
+    revenue: weeks.reduce((n, w) => n + w.revenue, 0),
+    upkeep: weeks.reduce((n, w) => n + w.upkeep, 0),
+    net: weeks.reduce((n, w) => n + w.net, 0),
+  };
+}

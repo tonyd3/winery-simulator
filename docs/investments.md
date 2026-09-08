@@ -7,9 +7,9 @@ Open **Build → Buildings & equipment**. Department filters cover vineyard/cell
 | Investment | Purchase | Weekly operating | Weekly suspended | Operating prerequisite |
 | --- | ---: | ---: | ---: | --- |
 | Drip irrigation | $6,000 | $180 | $45 | None |
-| Tasting terrace | $12,000 | $400 | $100 | None |
+| Tasting terrace | $12,000 | $280 | $70 | None |
 | Winemaker’s bench | $18,000 | $550 | $138 | None |
-| Visitor center | $35,000 | $1,000 | $250 | None |
+| Visitor center | $35,000 | $600 | $150 | None |
 | Tasting room | $50,000 | $1,600 | $400 | Visitor center |
 | Sommelier team | $24,000 | $1,400 | $350 | Tasting room |
 | Estate restaurant | $95,000 | $2,800 | $700 | Visitor center |
@@ -47,3 +47,5 @@ Suspend preserves ownership, removes benefits, and charges 25% of the listed wee
 If available cash after that week's revenue cannot cover its bill, the game suspends all non-legacy investments. The full bill for the week just operated is still charged; reduced bills apply afterward. Existing emergency vineyard work and its Prestige penalty keep the game playable, but do not leave expensive facilities active. This first iteration has no sale, demolition, partial shifts, or refund.
 
 Version-five saves add a default-empty suspendedUpgrades list and accept the expanded catalog. Older owned irrigation, terrace, bench, and legacy cellar assets remain owned; funds, crop state, stored wine, and scores are preserved. Existing facilities adopt the new operating prices. The old cellar extension retains its $15 upkeep and cannot be suspended, since its tanks remain usable. Prerequisite ownership, enum values, duplicate entries, and valid owned suspension IDs are validated on import. No storage key change is required.
+
+Entry hospitality can cover its operating bill at full attendance: the terrace earns $336 against $280 upkeep; the visitor center earns $720 against $600. Quiet seasons can still lose money. Build shows a 12-week estimate at fixed current Prestige, including every season, and the incremental hospitality return before buying. Wine sales, general estate overhead and upfront costs are separate.
