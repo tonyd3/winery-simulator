@@ -1,4 +1,4 @@
-import { releaseCount } from './game';
+import { releaseCount, harvestAdvice } from './game';
 import type { ResearchId } from './catalog';
 import { Investments } from './EstateInvestments';
 import { grapeStorageWeeks } from './investments';
@@ -210,15 +210,7 @@ export function PlotInspector({
           </div>
           <div className="parcel-tip">
             <Icon name={ready ? 'sun' : 'sprout'} size={19} />
-            <p>
-              {ready
-                ? 'A promising harvest. Pick now, or leave the grapes a little longer for more ripeness.'
-                : harvested
-                  ? 'A well-earned rest. These vines will grow again next spring.'
-                  : winter
-                    ? 'The vineyard is resting. Bud break begins in spring.'
-                    : 'A little care goes a long way. Tend your vines to improve the quality of your next harvest.'}
-            </p>
+            <p>{harvestAdvice(plot, state.week)}</p>
           </div>
           <button
             className="button primary wide"

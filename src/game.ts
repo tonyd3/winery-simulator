@@ -1144,6 +1144,21 @@ export const readyToHarvest = (p: Plot, week: number) =>
   p.growth >= 80 &&
   p.harvestedYear !== calendar(week).year &&
   calendar(week).season !== 'Winter';
+export function harvestAdvice(plot: Plot, week: number) {
+  if (readyToHarvest(plot, week)) {
+    if (calendar(week).week === 9)
+      return 'Last chance to harvest. Winter arrives next week and all unpicked fruit will be lost.';
+    if (plot.growth >= 100)
+      return 'These grapes are fully ripe. Waiting cannot add ripeness, and declining vine health can reduce quality. Harvest when your cellar has room.';
+    return 'Ready to pick. More ripeness can improve quality, but watch vine health and harvest before winter.';
+  }
+  if (plot.harvestedYear === calendar(week).year)
+    return 'A well-earned rest. These vines will grow again next spring.';
+  if (calendar(week).season === 'Winter')
+    return 'The vineyard is resting. Bud break begins in spring.';
+  return 'Tend your vines to improve the quality of your next harvest.';
+}
+
 function note(
   s: GameState,
   text: string,
@@ -1414,6 +1429,15 @@ export function act(current: GameState, action: Action): GameState {
               'good',
             );
         }
+      }
+      if (date.week === 9) {
+        const remaining = s.plots.filter((p) => readyToHarvest(p, s.week));
+        if (remaining.length)
+          note(
+            s,
+            `Last harvest week: ${remaining.length} ripe parcel${remaining.length === 1 ? '' : 's'} will lose unpicked fruit when winter arrives next week.`,
+            'warning',
+          );
       }
       s.grapes = s.grapes.filter((g) => {
         if (s.week - g.picked >= grapeStorageWeeks(s)) {

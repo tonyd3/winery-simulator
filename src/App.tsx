@@ -285,6 +285,12 @@ export default function App() {
   const harvests = state.plots.filter((p) => readyToHarvest(p, state.week));
   const bottled = state.wines.reduce((n, w) => n + w.bottles, 0);
   const getNextStep = (): { title: string; text: string; view: View } => {
+    if (date.week === 9 && harvests.length)
+      return {
+        title: 'Harvest before winter.',
+        text: `${harvests.length} ripe parcel${harvests.length === 1 ? '' : 's'} will lose unpicked fruit next week. Pick now.`,
+        view: 'estate',
+      };
     if (state.grapes.length)
       return {
         title: 'Your grapes are waiting.',
