@@ -103,6 +103,8 @@ The cellar has **Fermentation**, **Reserves & blending**, **Wine lines**, and **
 
 Select two or more lots and enter liters to create a blend. Mix different grape varieties, harvest years, and existing blends. Only the selected amounts are consumed, and each source grape and year remains in the recipe. Liquid is measured internally in whole milliliters, including the remainder after filling 750 mL bottles.
 
+Lots smaller than 750 mL appear in a **Small leftovers** summary. **Select for blending** fills the blending selection with their full volumes; normal recipe and research requirements still apply. **Clear small leftovers** reviews the exact lots and total volume before permanently discarding them to free reserve spaces. Clearing earns no cash, knowledge, or Prestige and consumes no kits or game time. Lots of 750 mL or more and bottled releases are preserved. Bottling continues to keep remainders until you choose what to do with them.
+
 Use **Generate** beside **Name this blend** for a name inspired by your estate's region. Click again for another suggestion, or edit it before creating the blend.
 
 The bottling preview and reveal include **Likely tasting notes**: aromas, body, acidity, tannins, regional influence, and recorded oak or steel maturation. The forecast reflects grape proportions and hybrid ancestry. Each release saves its notes for the shop and wine history. Older wines still receive grape and region estimates, with missing aging history marked as unrecorded. See [how tasting notes work](docs/tasting-notes.md).

@@ -63,6 +63,10 @@ export type Reserve = z.infer<typeof reserveSchema>;
 export type WineLine = z.infer<typeof wineLineSchema>;
 export const volume = (parts: WineComponent[]) =>
   parts.reduce((n, p) => n + p.ml, 0);
+export const isSmallReserve = (reserve: Reserve) => {
+  const ml = volume(reserve.components);
+  return ml > 0 && ml < 750;
+};
 export const liters = (ml: number) =>
   (ml / 1000).toLocaleString('en-US', { maximumFractionDigits: 3 });
 export const vintage = (parts: WineComponent[]) => {
