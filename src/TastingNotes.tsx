@@ -10,6 +10,12 @@ export function TastingNotes({ profile }: { profile: TastingProfile }) {
           <dt>Palate</dt>
           <dd>{profile.palate}</dd>
         </div>
+        {profile.vintage && (
+          <div>
+            <dt>Vintage</dt>
+            <dd>{profile.vintage}</dd>
+          </div>
+        )}
         <div>
           <dt>Origins</dt>
           <dd>
@@ -38,7 +44,7 @@ export function TastingNotes({ profile }: { profile: TastingProfile }) {
         )}
       </dl>
       <p className="tasting-caption">
-        A style forecast from your grapes, regions, and cellar choices.
+        A style forecast from your grapes, vintage, and cellar choices.
       </p>
     </section>
   );

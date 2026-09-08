@@ -117,6 +117,10 @@ The postcards use a `640 × 400` viewBox and an `8 / 5` aspect ratio. Fill the p
 
 Keep optional cellar recipes inside a native disclosure beneath each harvest row. The main fermentation action always shows the complete charge, tank allocation, and total weeks, even with the recipe collapsed. Expanded recipes use fine-divided rows with a labeled checkbox, a concrete style effect, time and per-tank cost, and a direct study link when locked. Stack terms below their technique on narrow screens. Preserve the distinction between character and quality points. See [GrapeArrival.tsx](../src/GrapeArrival.tsx) and [winemaking.css](../src/winemaking.css). Tank status names the current step; tasting notes list the treated proportion when wine is blended.
 
+### Vintage tasting notes
+
+The shared [TastingNotes.tsx](../src/TastingNotes.tsx) keeps aromas above fine-divided Palate, Vintage, Origins, Aging, and optional Cellar rows. Describe each vintage within its grape's character, using recorded picking conditions when available. State the recorded share in blends and mark missing harvest history as estimated. Keep saved release notes stable; do not imply that viewing or waiting changes the wine. See [tasting-notes.md](tasting-notes.md) for the model and save behavior.
+
 ## Motion and responsive behavior
 
 Use short motion to explain a change: a selected row changes emphasis, a region scene enters, an inspector appears, or a score is revealed. Ordinary controls currently transition in roughly 160–200ms, region art in 400ms, and the special bottle arrival in 750ms. Match those relationships instead of applying the longest animation everywhere. Avoid scroll theatrics or continuous decorative motion on working screens.

@@ -324,3 +324,178 @@ test('save validation rejects malformed maturation and tasting snapshots', () =>
   broken.wines[0].tasting!.aromas = [];
   assert.equal(stateSchema.safeParse(broken).success, false);
 });
+
+test('annual expressions vary within a grape family and never reroll on viewing', () => {
+  const s = newGame('bordeaux');
+  const original = structuredClone(s);
+  const profiles = Array.from({ length: 12 }, (_, i) =>
+    tastingProfile([{ ...part('cabernet'), year: i + 1 }], s),
+  );
+  assert.ok(new Set(profiles.map((p) => p.aromas.join('|'))).size >= 5);
+  assert.ok(new Set(profiles.map((p) => p.palate)).size >= 2);
+  assert.notDeepEqual(profiles[7].aromas, profiles[8].aromas);
+  for (const profile of profiles) {
+    assert.ok(
+      profile.aromas.some((aroma) => /blackcurrant|cassis/i.test(aroma)),
+    );
+    assert.ok(!profile.aromas.includes('Vanilla'));
+    assert.match(profile.vintage!, /harvest conditions unrecorded/);
+  }
+  assert.deepEqual(s, original);
+  s.week += 36;
+  s.seed = 123;
+  s.name = 'A renamed estate';
+  assert.deepEqual(tastingProfile([part('cabernet')], s), profiles[0]);
+  assert.equal(s.seed, 123);
+});
+
+const freshHarvest = { ripeness: 80, health: 95, sunExposure: 0.5 };
+const ripeHarvest = { ripeness: 100, health: 95, sunExposure: 0.5 };
+
+test('picking decisions change fruit and structure, while vine condition changes the finish', () => {
+  const s = newGame();
+  const profile = (harvest: WineComponent['harvest']) =>
+    tastingProfile([{ ...part('cabernet'), harvest }], s);
+  const fresh = profile(freshHarvest);
+  const ripe = profile(ripeHarvest);
+  assert.notDeepEqual(fresh.aromas, ripe.aromas);
+  assert.match(fresh.palate, /bright acidity.*Fresh, lifted fruit/);
+  assert.match(ripe.palate, /fresh acidity.*Generous, ripe fruit/);
+  assert.match(fresh.vintage!, /fresher side.*healthy vines/);
+  assert.match(ripe.vintage!, /full ripeness/);
+  const stressed = profile({ ...ripeHarvest, health: 40 });
+  assert.match(stressed.palate, /subdued fruit finish/);
+  assert.match(stressed.vintage!, /stressed vines/);
+  assert.notEqual(stressed.palate, ripe.palate);
+  const shaded = profile({ ...ripeHarvest, ripeness: 90, sunExposure: 0 });
+  const sunny = profile({ ...ripeHarvest, ripeness: 90, sunExposure: 1 });
+  assert.notDeepEqual(shaded.aromas, sunny.aromas);
+});
+
+test('harvest character survives partial fermentation, reserves, bottling and save reload', () => {
+  let s = newGame();
+  s.plots[0].expansions = 1;
+  s.plots[0].bearingExpansions = 1;
+  const plot = { ...s.plots[0] };
+  s = act(s, { type: 'harvest', id: 1 });
+  const harvest = structuredClone(s.grapes[0].harvest!);
+  assert.equal(harvest.ripeness, plot.growth);
+  assert.equal(harvest.health, plot.health);
+  assert.equal(harvest.sunExposure, 3 / 6);
+  assert.equal(s.plots[0].growth, 0);
+  const id = s.grapes[0].id;
+  s = act(reload(s), { type: 'ferment', id, oak: false });
+  assert.ok(
+    s.grapes[0].kg > 0,
+    'the expanded plot produces more than the two tanks can hold',
+  );
+  assert.deepEqual(s.grapes[0].harvest, harvest);
+  assert.deepEqual(s.batches[0].harvest, harvest);
+  while (s.batches[0].stage === 'fermenting') s = act(s, { type: 'advance' });
+  s = act(reload(s), { type: 'reserve', id: s.batches[0].id });
+  assert.deepEqual(s.reserves[0].components[0].harvest, harvest);
+  const reserve = s.reserves[0];
+  const preview = tastingProfile(portion(reserve.components, 7500), s);
+  const withoutHarvest = structuredClone(s);
+  delete withoutHarvest.reserves[0].components[0].harvest;
+  const baseline = bottle(withoutHarvest, reserve.id);
+  s = bottle(s, reserve.id);
+  assert.deepEqual(s.wines[0].tasting, preview);
+  assert.deepEqual(s.wines[0].components[0].harvest, harvest);
+  assert.equal(s.wines[0].quality, baseline.wines[0].quality);
+  assert.equal(s.wines[0].price, baseline.wines[0].price);
+  assert.equal(s.seed, baseline.seed);
+  s = bottle(reload(s), reserve.id, 1);
+  assert.deepEqual(s.wines[1].tasting, preview);
+  reload(s);
+});
+
+test('blends preserve different picking histories even at equal quality and vintage', () => {
+  const recipe = [
+    { ...part('cabernet', 8000), harvest: freshHarvest },
+    { ...part('cabernet', 2000), harvest: ripeHarvest },
+    part('cabernet', 1000),
+  ];
+  assert.equal(combine(recipe).length, 3);
+  const s = newGame();
+  const original = tastingProfile(recipe, s);
+  assert.match(original.vintage!, /91% recorded harvest/);
+  assert.match(original.vintage!, /9% harvest conditions unrecorded/);
+  assert.deepEqual(tastingProfile([...recipe].reverse(), s), original);
+  const reserve: Reserve = {
+    id: 1,
+    name: 'Picking trials',
+    stored: 6,
+    score: 75,
+    components: combine(recipe),
+  };
+  const poured = take(reserve, 750);
+  assert.deepEqual(
+    combine([...poured, ...reserve.components]),
+    combine(recipe),
+  );
+  const trace = tastingProfile(
+    [
+      { ...recipe[0], ml: 99999 },
+      { ...recipe[1], ml: 1, year: 2 },
+    ],
+    s,
+  );
+  const single = tastingProfile([recipe[0]], s);
+  assert.deepEqual(trace.aromas, single.aromas);
+  assert.equal(trace.palate, single.palate);
+});
+
+test('all grapes and regions produce valid notes at harvest and cellar extremes', () => {
+  for (const region of REGION_IDS) {
+    const s = newGame(region);
+    for (const variety of Object.keys(VARIETIES)) {
+      for (const harvest of [
+        freshHarvest,
+        ripeHarvest,
+        { ...ripeHarvest, health: 0 },
+      ]) {
+        const profile = tastingProfile(
+          [
+            {
+              ...part(variety, 10000, { vessel: 'oak', weeks: 8 }),
+              harvest,
+              techniques: ['skin_contact', 'malolactic', 'lees_aging'],
+            },
+            { ...part(variety, 1), year: 2 },
+          ],
+          s,
+        );
+        assert.ok(
+          tastingNotesSchema.safeParse(profile).success,
+          `${region}/${variety}`,
+        );
+      }
+    }
+  }
+});
+
+test('old snapshots remain intact and invalid harvest metadata is rejected on import', () => {
+  let s = blendedCellar();
+  s = bottle(s, s.reserves.at(-1)!.id);
+  delete s.wines[0].tasting!.vintage;
+  s.wines[0].tasting!.aromas = ['Original recorded aroma'];
+  const loaded = reload(s);
+  assert.deepEqual(releaseTasting(loaded.wines[0], loaded), s.wines[0].tasting);
+  for (const harvest of [
+    { ...freshHarvest, ripeness: 79 },
+    { ...freshHarvest, health: 101 },
+    { ...freshHarvest, sunExposure: -1 },
+    { ...freshHarvest, sunExposure: 2 },
+    { ...freshHarvest, health: NaN },
+    { ripeness: 90 },
+  ]) {
+    assert.equal(
+      componentSchema.safeParse({ ...part(), harvest }).success,
+      false,
+    );
+    const broken = structuredClone(s);
+    Object.assign(broken.wines[0].components[0], { harvest });
+    assert.equal(stateSchema.safeParse(broken).success, false);
+  }
+});
