@@ -4,6 +4,10 @@ import {
   blendResearchMissing,
   breedingWeeks,
   breedingPermission,
+  STUDY_SLOTS,
+  studySlotCount,
+  studySlotCost,
+  activeStudies,
 } from './researchProgression';
 import {
   UPGRADES,
@@ -30,6 +34,14 @@ import {
   acquisitionCost,
 } from './estates';
 import { z } from 'zod';
+import {
+  CELLAR_TECHNIQUES,
+  CELLAR_TECHNIQUE_IDS,
+  cellarTechniquesSchema,
+  vinificationWeeks,
+  vinificationStage,
+} from './cellarTechniques';
+import type { CellarTechnique } from './cellarTechniques';
 import {
   JUDGING,
   MARKETING,
@@ -217,6 +229,18 @@ const plotSchema = z
     bearingExpansions: integer(PLOT_EXPANSION.max).default(0),
   })
   .strict();
+const researchProjectSchema = z
+  .object({
+    id: z.enum(RESEARCH_IDS),
+    remaining: z.number().int().min(1).max(96),
+    duration: z.number().int().min(1).max(96).optional(),
+    paused: z.boolean().default(false),
+    legacyGrapes: z
+      .array(z.string().refine((id) => Object.hasOwn(VARIETIES, id)))
+      .max(24)
+      .optional(),
+  })
+  .strict();
 const grapeSchema = z
   .object({
     id: integer(),
@@ -235,7 +259,8 @@ const batchSchema = z
     tankIds: z.array(z.number().int().min(1).max(256)).min(1).max(9),
     quality: bounded(100),
     stage: z.enum(['fermenting', 'ready', 'aging']),
-    remaining: integer(3),
+    remaining: integer(8),
+    techniques: cellarTechniquesSchema.optional(),
     age: integer(8),
     oak: z.boolean(),
     year: integer(10000),
@@ -319,19 +344,13 @@ export const stateSchema = z
     grapeLicenses: z
       .array(z.string().refine((id) => Object.hasOwn(VARIETIES, id)))
       .max(Object.keys(VARIETIES).length),
-    researchProject: z
-      .object({
-        id: z.enum(RESEARCH_IDS),
-        remaining: z.number().int().min(1).max(96),
-        duration: z.number().int().min(1).max(96).optional(),
-        paused: z.boolean().default(false),
-        legacyGrapes: z
-          .array(z.string().refine((id) => Object.hasOwn(VARIETIES, id)))
-          .max(24)
-          .optional(),
-      })
-      .strict()
-      .nullable(),
+    // Keep the original study field so existing saves retain their paid project.
+    researchProject: researchProjectSchema.nullable(),
+    researchSlots: z.number().int().min(1).max(STUDY_SLOTS.max).default(1),
+    additionalResearchProjects: z
+      .array(researchProjectSchema)
+      .max(STUDY_SLOTS.max - 1)
+      .default([]),
     hybrids: z.array(hybridSchema).max(60),
     breedingProject: z
       .object({
@@ -441,17 +460,17 @@ export const stateSchema = z
       )
     )
       fail('Invalid research progression.');
+    const studies = activeStudies(s);
     if (
-      s.researchProject &&
-      (researchComplete(s, s.researchProject.id) ||
-        s.researchProject.remaining >
-          (s.researchProject.duration ??
-            RESEARCH[s.researchProject.id].weeks) ||
-        (s.researchProject.duration ?? 0) >
-          RESEARCH[s.researchProject.id].weeks ||
-        RESEARCH[s.researchProject.id].requires.some(
-          (r) => !s.research.includes(r),
-        ))
+      studies.length > s.researchSlots ||
+      new Set(studies.map((p) => p.id)).size !== studies.length ||
+      studies.some(
+        (p) =>
+          researchComplete(s, p.id) ||
+          p.remaining > (p.duration ?? RESEARCH[p.id].weeks) ||
+          (p.duration ?? 0) > RESEARCH[p.id].weeks ||
+          RESEARCH[p.id].requires.some((r) => !s.research.includes(r)),
+      )
     )
       fail('Invalid research project.');
     if (s.hybrids.length && !s.research.includes('breeding'))
@@ -601,7 +620,10 @@ export const stateSchema = z
       fail('Invalid inventory dates.');
     if (
       s.batches.some((b) =>
-        b.stage === 'fermenting' ? b.remaining < 1 : b.remaining !== 0,
+        b.stage === 'fermenting'
+          ? b.remaining < 1 ||
+            b.remaining > (b.techniques ? vinificationWeeks(b.techniques) : 3)
+          : b.remaining !== 0,
       )
     )
       fail('Invalid fermentation progress.');
@@ -632,8 +654,9 @@ export type Action =
   | { type: 'visitEstate'; id: number }
   | { type: 'advance' }
   | { type: 'research'; id: ResearchId }
-  | { type: 'pauseResearch'; paused: boolean }
-  | { type: 'abandonResearch' }
+  | { type: 'buyStudySlot' }
+  | { type: 'pauseResearch'; id?: ResearchId; paused: boolean }
+  | { type: 'abandonResearch'; id?: ResearchId }
   | {
       type: 'breed';
       parents: [Variety, Variety];
@@ -646,7 +669,12 @@ export type Action =
   | { type: 'buyPlot'; id: number }
   | { type: 'expandPlot'; id: number }
   | { type: 'plant'; id: number; variety: Variety }
-  | { type: 'ferment'; id: number; oak: boolean }
+  | {
+      type: 'ferment';
+      id: number;
+      oak: boolean;
+      techniques?: CellarTechnique[];
+    }
   | { type: 'age'; id: number }
   | { type: 'reserve'; id: number }
   | { type: 'tasteReserve'; id: number }
@@ -702,6 +730,8 @@ export function newGame(
     research: [],
     grapeLicenses: [...r.starters],
     researchProject: null,
+    researchSlots: 1,
+    additionalResearchProjects: [],
     hybrids: [],
     breedingProject: null,
     nextHybrid: 1,
@@ -899,7 +929,11 @@ export function researchBlocked(s: GameState, id: ResearchId): string | null {
   if (researchComplete(s, id)) return 'Completed';
   const missing = r.requires.find((p) => !s.research.includes(p));
   if (missing) return `Requires ${RESEARCH[missing].name}`;
-  if (s.researchProject) return 'Your study slot is occupied';
+  const studies = activeStudies(s);
+  if (studies.some((p) => p.id === id))
+    return 'This study is already in progress';
+  if (studies.length >= studySlotCount(s))
+    return 'All study slots are occupied';
   if (s.knowledge < r.knowledge)
     return `Need ${r.knowledge - s.knowledge} more knowledge`;
   if (s.cash < r.cost) return `Need ${money(r.cost - s.cash)} more`;
@@ -916,13 +950,15 @@ export function fermentationPlan(
   s: Pick<GameState, 'cellar' | 'batches'>,
   kg: number,
   oak = false,
+  techniques: readonly CellarTechnique[] = [],
 ) {
   const used = new Set(s.batches.flatMap((b) => b.tankIds));
   // Fill larger legacy tanks first to avoid unnecessary processing charges.
   const free = s.cellar.tanks
     .filter((t) => !used.has(t.id))
     .sort((a, b) => b.capacity - a.capacity || a.id - b.id);
-  let missing = grapeLiters(kg);
+  const totalLiters = grapeLiters(kg);
+  let missing = totalLiters;
   const fills: { tankId: number; liters: number }[] = [];
   for (const tank of free) {
     if (missing <= 0) break;
@@ -930,7 +966,24 @@ export function fermentationPlan(
     fills.push({ tankId: tank.id, liters });
     missing -= liters;
   }
-  return { fills, missing, cost: fills.length * (oak ? 320 : 140) };
+  const liters = totalLiters - missing;
+  // Convert the unprocessed yield back to whole kg so later batches retain
+  // exactly the original whole-liter yield, without rounding each split down.
+  const remainingKg = liters === 0 ? kg : Math.ceil((missing * 10) / 7);
+  return {
+    fills,
+    liters,
+    missing,
+    remainingKg,
+    cost:
+      fills.length *
+      ((oak ? 320 : 140) +
+        techniques.reduce(
+          (cost, id) => cost + CELLAR_TECHNIQUES[id].perTank,
+          0,
+        )),
+    weeks: vinificationWeeks(techniques),
+  };
 }
 export const upkeep = (s: GameState) =>
   85 +
@@ -1124,6 +1177,19 @@ export function act(current: GameState, action: Action): GameState {
     (current.version as number) < 6
       ? deserialize(serialize(current))
       : structuredClone(current);
+  s.researchSlots ??= 1;
+  s.additionalResearchProjects ??= [];
+  const setStudies = (projects: z.infer<typeof researchProjectSchema>[]) => {
+    s.researchProject = projects[0] ?? null;
+    s.additionalResearchProjects = projects.slice(1);
+  };
+  const getStudy = (id?: ResearchId) => {
+    const studies = activeStudies(s);
+    const project =
+      id === undefined ? studies[0] : studies.find((p) => p.id === id);
+    if (!project) throw new Error('This study is no longer in progress.');
+    return project;
+  };
   const getPlot = (id: number) => {
     const p = s.plots.find((p) => p.id === id);
     if (!p) throw new Error('Parcel not found.');
@@ -1215,24 +1281,25 @@ export function act(current: GameState, action: Action): GameState {
         );
       s.week++;
       s.knowledge = Math.min(1e9, s.knowledge + weeklyKnowledge(s));
-      if (
-        s.researchProject &&
-        !s.researchProject.paused &&
-        (s.researchProject.remaining -= upgradeActive(s, 'researchLab')
-          ? 2
-          : 1) <= 0
-      ) {
-        const id = s.researchProject.id;
-        s.research.push(id);
-        s.grapeLicenses = [
-          ...new Set([
-            ...s.grapeLicenses,
-            ...(s.researchProject.legacyGrapes ?? []),
-          ]),
-        ];
-        s.researchProject = null;
-        note(s, `${RESEARCH[id].name} completed. ${RESEARCH[id].text}`, 'good');
-      }
+      const studySpeed = upgradeActive(s, 'researchLab') ? 2 : 1;
+      setStudies(
+        activeStudies(s).filter((project) => {
+          if (project.paused) return true;
+          project.remaining -= studySpeed;
+          if (project.remaining > 0) return true;
+          const id = project.id;
+          s.research.push(id);
+          s.grapeLicenses = [
+            ...new Set([...s.grapeLicenses, ...(project.legacyGrapes ?? [])]),
+          ];
+          note(
+            s,
+            `${RESEARCH[id].name} completed. ${RESEARCH[id].text}`,
+            'good',
+          );
+          return false;
+        }),
+      );
       if (
         s.breedingProject &&
         (s.breedingProject.remaining -= upgradeActive(s, 'researchLab')
@@ -1320,13 +1387,19 @@ export function act(current: GameState, action: Action): GameState {
       });
       for (const b of s.batches) {
         if (b.stage === 'fermenting') {
+          const previousStage = vinificationStage(b);
           b.remaining--;
           if (b.remaining === 0) {
             b.stage = 'ready';
             note(
               s,
-              `${getVariety(s, b.variety).name} finished fermenting. Age it or bottle it.`,
+              `${getVariety(s, b.variety).name} finished ${b.techniques?.length ? 'its cellar plan' : 'fermenting'}. Age it or move it to reserves.`,
               'good',
+            );
+          } else if (vinificationStage(b) !== previousStage) {
+            note(
+              s,
+              `${getVariety(s, b.variety).name}: ${vinificationStage(b)} has begun. ${b.remaining} weeks until ready for reserves.`,
             );
           }
         } else if (b.stage === 'aging' && b.age < 8) {
@@ -1416,6 +1489,20 @@ export function act(current: GameState, action: Action): GameState {
       transaction(s, 'Weekly estate upkeep', -bill);
       break;
     }
+    case 'buyStudySlot': {
+      if (studySlotCount(s) >= STUDY_SLOTS.max)
+        throw new Error(
+          `Your estate already has the maximum of ${STUDY_SLOTS.max} study slots.`,
+        );
+      spend(s, 'Additional study slot', studySlotCost(s));
+      s.researchSlots++;
+      note(
+        s,
+        `Study slot added. Your estate can now run ${s.researchSlots} studies at once.`,
+        'good',
+      );
+      break;
+    }
     case 'research': {
       if (!RESEARCH_IDS.includes(action.id))
         throw new Error('Unknown research project.');
@@ -1424,31 +1511,34 @@ export function act(current: GameState, action: Action): GameState {
       const r = researchTerms(s, action.id);
       spend(s, r.name, r.cost);
       s.knowledge -= r.knowledge;
-      s.researchProject = {
-        id: action.id,
-        remaining: r.weeks,
-        duration: r.weeks,
-        paused: false,
-      };
+      setStudies([
+        ...activeStudies(s),
+        {
+          id: action.id,
+          remaining: r.weeks,
+          duration: r.weeks,
+          paused: false,
+        },
+      ]);
       note(s, `${r.name} started. Results in ${studyWeeks(s, r.weeks)} weeks.`);
       break;
     }
     case 'pauseResearch': {
-      if (!s.researchProject) throw new Error('No study is in progress.');
-      s.researchProject.paused = action.paused;
+      const project = getStudy(action.id);
+      project.paused = action.paused;
       note(
         s,
-        `${RESEARCH[s.researchProject.id].name} ${action.paused ? 'paused' : 'resumed'}.`,
+        `${RESEARCH[project.id].name} ${action.paused ? 'paused' : 'resumed'}.`,
       );
       break;
     }
     case 'abandonResearch': {
-      if (!s.researchProject) throw new Error('No study is in progress.');
+      const project = getStudy(action.id);
       note(
         s,
-        `${RESEARCH[s.researchProject.id].name} abandoned. Cash and knowledge are not refunded.`,
+        `${RESEARCH[project.id].name} abandoned. Cash and knowledge are not refunded.`,
       );
-      s.researchProject = null;
+      setStudies(activeStudies(s).filter((p) => p.id !== project.id));
       break;
     }
     case 'breed': {
@@ -1673,12 +1763,25 @@ export function act(current: GameState, action: Action): GameState {
     }
     case 'ferment': {
       const g = getGrapes(action.id);
+      const requested = cellarTechniquesSchema.safeParse(
+        action.techniques ?? [],
+      );
+      if (!requested.success)
+        throw new Error('Choose valid cellar techniques, once each.');
+      const techniques = CELLAR_TECHNIQUE_IDS.filter((id) =>
+        requested.data.includes(id),
+      );
+      for (const id of techniques)
+        if (!s.research.includes(id))
+          throw new Error(
+            `Research ${CELLAR_TECHNIQUES[id].name} before using it.`,
+          );
       if (grapeLiters(g.kg) < 1)
         throw new Error('There are not enough grapes to ferment.');
-      const plan = fermentationPlan(s, g.kg, action.oak);
-      if (plan.missing > 0)
+      const plan = fermentationPlan(s, g.kg, action.oak, techniques);
+      if (plan.liters === 0)
         throw new Error(
-          `Not enough empty tanks: ${plan.missing} L still needs space. Move finished wine to reserves or buy more tanks.`,
+          'No empty tanks available. Move finished wine to reserves or buy more tanks.',
         );
       spend(
         s,
@@ -1688,7 +1791,7 @@ export function act(current: GameState, action: Action): GameState {
       s.batches.push({
         id: s.nextId++,
         variety: g.variety,
-        liters: grapeLiters(g.kg),
+        liters: plan.liters,
         tankIds: plan.fills.map((f) => f.tankId),
         quality: Math.min(
           100,
@@ -1696,17 +1799,19 @@ export function act(current: GameState, action: Action): GameState {
             (upgradeActive(s, 'lab') ? CELLAR_QUALITY.temperatureControl : 0),
         ),
         stage: 'fermenting',
-        remaining: 2,
+        remaining: plan.weeks,
+        techniques,
         age: 0,
         oak: action.oak,
         year: calendar(g.picked).year,
         agingProfile: 'balanced',
         ...(g.estateId !== undefined ? { estateId: g.estateId } : {}),
       });
-      s.grapes = s.grapes.filter((x) => x.id !== g.id);
+      if (plan.remainingKg > 0) g.kg = plan.remainingKg;
+      else s.grapes = s.grapes.filter((x) => x.id !== g.id);
       note(
         s,
-        `${getVariety(s, g.variety).name} is fermenting across ${plan.fills.length} tank${plan.fills.length === 1 ? '' : 's'}. Ready in 2 weeks.`,
+        `${plan.liters} L of ${getVariety(s, g.variety).name} is fermenting across ${plan.fills.length} tank${plan.fills.length === 1 ? '' : 's'}. Ready in ${plan.weeks} weeks.${techniques.length ? ` Cellar plan: ${techniques.map((id) => CELLAR_TECHNIQUES[id].name).join(', ')}.` : ''}${plan.remainingKg > 0 ? ` ${plan.remainingKg} kg of grapes remain to process or sell before they spoil.` : ''}`,
         'good',
       );
       break;
@@ -1714,7 +1819,9 @@ export function act(current: GameState, action: Action): GameState {
     case 'age': {
       const b = getBatch(action.id);
       if (b.stage !== 'ready')
-        throw new Error('Only finished fermentations can begin aging.');
+        throw new Error(
+          'Only finished fermentations and cellar techniques can begin further aging.',
+        );
       b.stage = 'aging';
       note(
         s,
@@ -1725,7 +1832,9 @@ export function act(current: GameState, action: Action): GameState {
     case 'reserve': {
       const b = getBatch(action.id);
       if (b.stage === 'fermenting')
-        throw new Error('Let fermentation finish before storing wine.');
+        throw new Error(
+          'Let fermentation and any cellar techniques finish before storing wine.',
+        );
       if (s.reserves.length >= ESTATE_LIMITS.reserves)
         throw new Error(
           'Your 256 reserve spaces are full. Blend or bottle a lot to make room.',
@@ -1745,6 +1854,7 @@ export function act(current: GameState, action: Action): GameState {
             ml: b.liters * 1000,
             quality: quality(b),
             maturation: { vessel: b.oak ? 'oak' : 'steel', weeks: b.age },
+            ...(b.techniques ? { techniques: [...b.techniques] } : {}),
             ...(b.estateId !== undefined ? { estateId: b.estateId } : {}),
           },
         ],

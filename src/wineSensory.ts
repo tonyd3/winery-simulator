@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { CELLAR_TECHNIQUES, CELLAR_TECHNIQUE_IDS } from './cellarTechniques';
+import type { CellarTechnique } from './cellarTechniques';
 import { REGIONS } from './catalog';
 import type { RegionId } from './catalog';
 import type { GameState, Wine } from './game';
@@ -131,6 +133,7 @@ export const tastingNotesSchema = z
     palate: z.string().min(1).max(240),
     origins: z.array(z.string().min(1).max(140)).min(1).max(8),
     aging: z.array(z.string().min(1).max(140)).min(1).max(3),
+    techniques: z.array(z.string().min(1).max(140)).max(3).optional(),
   })
   .strict();
 export type TastingProfile = z.infer<typeof tastingNotesSchema>;
@@ -191,10 +194,26 @@ export function tastingProfile(
   let heat = 0;
   let oakAroma = 0;
   let oakAge = 0;
+  const techniques = new Map<CellarTechnique, number>();
   for (const part of parts) {
     if (part.ml <= 0) continue;
     const share = part.ml / total;
     addCharacter(result, resolve(part.variety), share);
+    for (const id of part.techniques ?? [])
+      techniques.set(id, (techniques.get(id) ?? 0) + part.ml);
+    if (part.techniques?.includes('skin_contact')) {
+      result.body += 0.35 * share;
+      result.tannin += 0.75 * share;
+    }
+    if (part.techniques?.includes('malolactic')) {
+      result.acidity -= share;
+      result.body += 0.25 * share;
+    }
+    if (part.techniques?.includes('lees_aging')) {
+      result.body += 0.5 * share;
+      result.aromas['Bread dough'] =
+        (result.aromas['Bread dough'] ?? 0) + 0.7 * share;
+    }
     // Old recipes without an estate ID came from the original estate, never the active view.
     const estate = state.estates.find((e) => e.id === (part.estateId ?? 1));
     if (!estate) throw new Error('The wine’s source estate is missing.');
@@ -272,7 +291,22 @@ export function tastingProfile(
     aging.push(
       `${percentage(unknown / total)} aging history unrecorded. Grape and region estimates only for this portion.`,
     );
-  return { aromas: aromas.slice(0, 5), palate, origins, aging };
+  return {
+    aromas: aromas.slice(0, 5),
+    palate,
+    origins,
+    aging,
+    ...(techniques.size
+      ? {
+          techniques: CELLAR_TECHNIQUE_IDS.filter((id) =>
+            techniques.has(id),
+          ).map(
+            (id) =>
+              `${CELLAR_TECHNIQUES[id].name} · ${percentage(techniques.get(id)! / total)} of this wine.`,
+          ),
+        }
+      : {}),
+  };
 }
 
 export function releaseTasting(wine: Wine, state: Context): TastingProfile {

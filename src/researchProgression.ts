@@ -9,6 +9,18 @@ import type { ResearchId } from './catalog';
 import type { GameState } from './game';
 import type { WineComponent } from './winemaking';
 
+export const STUDY_SLOTS = { max: 8, costStep: 5000 };
+export const studySlotCount = (s: Pick<GameState, 'researchSlots'>) =>
+  s.researchSlots ?? 1;
+export const studySlotCost = (s: Pick<GameState, 'researchSlots'>) =>
+  studySlotCount(s) * STUDY_SLOTS.costStep;
+export const activeStudies = (
+  s: Pick<GameState, 'researchProject' | 'additionalResearchProjects'>,
+) => [
+  ...(s.researchProject ? [s.researchProject] : []),
+  ...(s.additionalResearchProjects ?? []),
+];
+
 function legacyGrapeAccess(s: GameState, id: string) {
   const v = VARIETIES[id];
   return (

@@ -10,6 +10,7 @@ import {
   tankCount,
   occupiedTankCount,
   fermentationPlan,
+  grapeLiters,
   cellarExpansionCost,
 } from '../src/game.ts';
 import type { GameState, Action } from '../src/game.ts';
@@ -69,8 +70,11 @@ test('large harvests fill multiple tanks, charge per tank and conserve all wine 
       { tankId: 1, liters: 150 },
       { tankId: 2, liters: 102 },
     ],
+    liters: 252,
     missing: 0,
+    remainingKg: 0,
     cost: 280,
+    weeks: 2,
   });
   const cash = s.cash;
   s = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
@@ -96,12 +100,8 @@ test('large harvests fill multiple tanks, charge per tank and conserve all wine 
   valid(s);
 });
 
-test('a three-tank harvest requires enough whole empty tanks and locks their unused capacity', () => {
+test('a harvest that fits uses three whole empty tanks and locks their unused capacity', () => {
   let s = grapes(600);
-  const snapshot = structuredClone(s);
-  assert.equal(fermentationPlan(s, 600).missing, 120);
-  assert.throws(() => act(s, { type: 'ferment', id: 1, oak: true }), /120 L/);
-  assert.deepEqual(s, snapshot);
   s = act(s, { type: 'buyTank' });
   const cash = s.cash;
   s = act(s, { type: 'ferment', id: 1, oak: true });
@@ -119,6 +119,144 @@ test('a three-tank harvest requires enough whole empty tanks and locks their unu
     () => act(s, { type: 'ferment', id: s.grapes[0].id, oak: false }),
     /empty tanks/,
   );
+});
+
+test('oversized harvests start in available tanks and keep the remainder for later processing', () => {
+  for (const oak of [false, true]) {
+    let s = grapes(600);
+    s.week += 1;
+    const original = structuredClone(s.grapes[0]);
+    const before = structuredClone(s);
+    s = act(s, { type: 'ferment', id: original.id, oak });
+    assert.equal(s.cash, before.cash - (oak ? 640 : 280));
+    assert.equal(s.week, before.week);
+    assert.equal(s.seed, before.seed);
+    assert.equal(s.nextId, before.nextId + 1);
+    assert.equal(s.batches[0].liters, 300);
+    assert.deepEqual(s.batches[0].tankIds, [1, 2]);
+    assert.equal(s.batches[0].quality, original.quality);
+    assert.equal(s.batches[0].estateId, original.estateId);
+    assert.deepEqual(s.grapes, [{ ...original, kg: 172 }]);
+    valid(s);
+    s = deserialize(serialize(s));
+    const blocked = structuredClone(s);
+    assert.throws(
+      () => act(s, { type: 'ferment', id: original.id, oak }),
+      /empty tanks/,
+    );
+    assert.deepEqual(s, blocked);
+
+    s = act(s, { type: 'buyTank' });
+    s = act(s, { type: 'ferment', id: original.id, oak });
+    assert.equal(s.grapes.length, 0);
+    assert.deepEqual(
+      s.batches.map((b) => b.liters),
+      [300, 120],
+    );
+    assert.deepEqual(
+      s.batches.map((b) => b.tankIds),
+      [[1, 2], [3]],
+    );
+    assert.equal(s.cash, before.cash - 1200 - (oak ? 960 : 420));
+    for (const batch of s.batches) {
+      assert.equal(batch.quality, original.quality);
+      assert.equal(batch.estateId, original.estateId);
+      assert.equal(batch.year, 1);
+      assert.equal(batch.oak, oak);
+    }
+    s = tick(s);
+    for (const batch of [...s.batches])
+      s = act(s, { type: 'reserve', id: batch.id });
+    assert.equal(
+      s.reserves.reduce((sum, r) => sum + volume(r.components), 0),
+      420000,
+    );
+    assert.equal(occupiedTankCount(s), 0);
+    valid(s);
+  }
+});
+
+test('the screenshot harvest fills the free tanks without disturbing occupied wine', () => {
+  let s = grapes(276);
+  s = act(s, { type: 'buyTank', count: 2 });
+  s = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
+  const occupied = structuredClone(s.batches[0]);
+  s = grapes(538, s);
+  const cash = s.cash;
+  s = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
+  assert.deepEqual(s.batches[0], occupied);
+  assert.equal(s.batches[1].liters, 300);
+  assert.deepEqual(s.batches[1].tankIds, [3, 4]);
+  assert.equal(s.grapes[0].kg, 109);
+  assert.equal(grapeLiters(s.grapes[0].kg), 76);
+  assert.equal(s.cash, cash - 280);
+  valid(s);
+});
+
+test('partial harvest leftovers retain their original spoilage deadline and resale value', () => {
+  let s = grapes(600);
+  s = tick(s, 1);
+  s = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
+  const remainder = s.grapes[0];
+  const sold = act(s, { type: 'sellGrapes', id: remainder.id });
+  assert.equal(sold.cash, s.cash + 172 * 3);
+  assert.equal(sold.grapes.length, 0);
+  assert.deepEqual(sold.batches, s.batches);
+  assert.equal(tick(s, 1).grapes.length, 1);
+  const expired = tick(s, 2);
+  assert.equal(expired.grapes.length, 0);
+  assert.equal(expired.batches[0].liters, 300);
+  assert.ok(
+    expired.log.some((l) => l.text.includes('172 kg of Merlot spoiled')),
+  );
+  valid(sold);
+  valid(expired);
+});
+
+test('unaffordable partial fermentation leaves grapes, tanks, cash and IDs unchanged', () => {
+  const s = grapes(600);
+  s.cash = 639;
+  const before = structuredClone(s);
+  assert.throws(
+    () => act(s, { type: 'ferment', id: s.grapes[0].id, oak: true }),
+    /need.*more/i,
+  );
+  assert.deepEqual(s, before);
+  const steel = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
+  assert.equal(steel.batches[0].liters, 300);
+  assert.equal(steel.cash, 359);
+  valid(steel);
+});
+
+test('repeated partial batches conserve every valid harvest yield with new and legacy tanks', () => {
+  for (const capacities of [[150], [400], [400, 150]]) {
+    const s = newGame();
+    s.cellar.tanks = capacities.map((capacity, i) => ({ id: i + 1, capacity }));
+    for (let kg = 2; kg <= 1800; kg++) {
+      let remainingKg = kg;
+      let produced = 0;
+      while (remainingKg > 0) {
+        const plan = fermentationPlan(s, remainingKg);
+        assert.ok(plan.liters > 0);
+        assert.ok(
+          Number.isInteger(plan.remainingKg) && plan.remainingKg < remainingKg,
+        );
+        assert.equal(
+          plan.liters + grapeLiters(plan.remainingKg),
+          grapeLiters(remainingKg),
+        );
+        for (const fill of plan.fills) {
+          assert.ok(
+            fill.liters > 0 &&
+              fill.liters <= s.cellar.tanks[fill.tankId - 1].capacity,
+          );
+        }
+        produced += plan.liters;
+        remainingKg = plan.remainingKg;
+      }
+      assert.equal(produced, grapeLiters(kg));
+    }
+  }
 });
 
 test('small harvests occupy one tank and freed tank IDs are reused without disturbing another batch', () => {

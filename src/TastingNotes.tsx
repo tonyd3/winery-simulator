@@ -26,6 +26,16 @@ export function TastingNotes({ profile }: { profile: TastingProfile }) {
             ))}
           </dd>
         </div>
+        {profile.techniques && profile.techniques.length > 0 && (
+          <div>
+            <dt>Cellar</dt>
+            <dd>
+              {profile.techniques.map((technique) => (
+                <p key={technique}>{technique}</p>
+              ))}
+            </dd>
+          </div>
+        )}
       </dl>
       <p className="tasting-caption">
         A style forecast from your grapes, regions, and cellar choices.

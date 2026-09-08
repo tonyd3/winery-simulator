@@ -1153,6 +1153,92 @@
   text-align: right;
   max-width: 270px;
 }
+.grape-lot {
+  border: 1px solid #e6e2cf;
+  background: #f8f6e9;
+  border-radius: 7px;
+  margin-bottom: 12px;
+}
+.grape-lot .arrival {
+  border: 0;
+  margin: 0;
+  background: none;
+}
+.cellar-recipe {
+  margin: 0 18px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+.cellar-recipe summary {
+  padding: 14px 0;
+  cursor: pointer;
+  color: var(--wine);
+}
+.cellar-recipe summary span {
+  color: var(--muted);
+  margin-left: 12px;
+}
+.cellar-recipe-intro,
+.cellar-recipe-total {
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+.cellar-technique {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 15px 0;
+  border-top: 1px solid var(--line);
+}
+.cellar-technique label {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex: 1;
+}
+.cellar-technique input {
+  flex-shrink: 0;
+  margin-top: 3px;
+  accent-color: var(--wine);
+}
+.cellar-technique label span span {
+  display: block;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 5px;
+}
+.cellar-technique-terms {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  color: var(--muted);
+}
+.cellar-recipe-total {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.tank-techniques {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: -12px 0 20px;
+}
+@media (max-width: 700px) {
+  .cellar-recipe summary span {
+    display: block;
+    margin: 6px 0 0 16px;
+  }
+  .cellar-technique {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cellar-technique-terms {
+    justify-items: start;
+    margin-left: 25px;
+  }
+}
 .fermentation-order small {
   color: #805b48;
   line-height: 1.5;

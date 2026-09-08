@@ -963,7 +963,7 @@ export default function App() {
                 'barrel',
                 '02',
                 'Ferment & age',
-                'Ferment fresh grapes within 3 weeks, or 5 with operating refrigerated storage, before they spoil. A harvest fills as many empty tanks as it needs; new tanks hold 150 L. Buy tanks and cellar floor space separately under Cellar → Space & tanks. Processing costs $140 per steel tank or $320 for oak. Fermentation takes 2 weeks. New batches gain up to 6 points from oak aging or 3 in steel over 8 weeks, with smaller gains as they mature. Temperature control adds 3 points. Store finished wine in reserves to free the tank.',
+                'Ferment fresh grapes within 3 weeks, or 5 with operating refrigerated storage, before they spoil. Start with as much as fits in your empty tanks; new tanks hold 150 L. Remaining grapes can be processed later or sold, but keep their original spoilage deadline. Buy tanks and cellar floor space separately under Cellar → Space & tanks. Processing costs $140 per steel tank used or $320 for oak. Fermentation takes 2 weeks. New batches gain up to 6 points from oak aging or 3 in steel over 8 weeks, with smaller gains as they mature. Temperature control adds 3 points. Store finished wine in reserves to free the tank.',
               ],
               [
                 'glass',

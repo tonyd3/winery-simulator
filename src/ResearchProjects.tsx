@@ -6,6 +6,7 @@ import {
   Search,
   Pause,
   Play,
+  Plus,
 } from 'lucide-react';
 import { Modal, Progress } from './components';
 import { money, researchBlocked } from './game';
@@ -17,6 +18,10 @@ import {
   researchComplete,
   researchTerms,
   researchDuration,
+  activeStudies,
+  studySlotCount,
+  studySlotCost,
+  STUDY_SLOTS,
 } from './researchProgression';
 import { studyWeeks } from './investments';
 import './research.css';
@@ -33,7 +38,7 @@ export function StudyAction({
 }) {
   const r = researchTerms(state, id);
   const done = researchComplete(state, id);
-  const running = state.researchProject?.id === id;
+  const running = activeStudies(state).find((p) => p.id === id);
   const reason = researchBlocked(state, id);
   return (
     <div className="study-purchase">
@@ -60,7 +65,7 @@ export function StudyAction({
             <Check size={15} /> Completed
           </>
         ) : running ? (
-          state.researchProject?.paused ? (
+          running.paused ? (
             'Paused'
           ) : (
             'In progress'
@@ -76,28 +81,81 @@ export function StudyAction({
   );
 }
 
-export function CurrentStudy({
+export function CurrentStudies({
   state,
   dispatch,
 }: {
   state: GameState;
   dispatch: Dispatch;
 }) {
+  const studies = activeStudies(state);
+  const slots = studySlotCount(state);
+  const cost = studySlotCost(state);
+  const atLimit = slots >= STUDY_SLOTS.max;
+  return (
+    <section className="current-research" aria-label="Current research">
+      <div className="study-capacity">
+        <div>
+          <h3>
+            {studies.length} / {slots} study slots occupied
+          </h3>
+          <p>
+            Studies run in parallel. Cash and knowledge are paid upfront. Paused
+            studies keep their slots; nursery trials run separately.
+          </p>
+        </div>
+        <div className="study-slot-purchase">
+          <button
+            className="button secondary"
+            disabled={atLimit || state.cash < cost}
+            onClick={() => dispatch({ type: 'buyStudySlot' })}
+          >
+            <Plus size={15} />
+            {atLimit
+              ? 'All study slots added'
+              : `Add study slot · ${money(cost)}`}
+          </button>
+          <small>
+            {atLimit
+              ? `Maximum of ${STUDY_SLOTS.max} study slots`
+              : state.cash < cost
+                ? `Need ${money(cost - state.cash)} more · No weekly upkeep`
+                : `One-time cost · No weekly upkeep · Up to ${STUDY_SLOTS.max} slots`}
+          </small>
+        </div>
+      </div>
+      {studies.length > 0 && (
+        <div className="study-list">
+          {studies.map((active) => (
+            <ActiveStudy
+              key={active.id}
+              state={state}
+              dispatch={dispatch}
+              active={active}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ActiveStudy({
+  state,
+  dispatch,
+  active,
+}: {
+  state: GameState;
+  dispatch: Dispatch;
+  active: NonNullable<GameState['researchProject']>;
+}) {
   const [abandon, setAbandon] = useState(false);
-  const active = state.researchProject;
-  if (!active)
-    return (
-      <p className="study-slot">
-        <FlaskConical size={17} /> One study slot available. Cash and knowledge
-        are paid upfront. Field trials run separately.
-      </p>
-    );
   const weeks = studyWeeks(state, active.remaining);
   return (
     <>
       <section
         className="active-study current-study"
-        aria-label="Current research"
+        aria-label={`${RESEARCH[active.id].name} study`}
       >
         <FlaskConical size={26} />
         <div>
@@ -127,14 +185,23 @@ export function CurrentStudy({
         <div className="study-controls">
           <button
             className="button secondary"
+            aria-label={`${active.paused ? 'Resume' : 'Pause'} ${RESEARCH[active.id].name}`}
             onClick={() =>
-              dispatch({ type: 'pauseResearch', paused: !active.paused })
+              dispatch({
+                type: 'pauseResearch',
+                id: active.id,
+                paused: !active.paused,
+              })
             }
           >
             {active.paused ? <Play size={14} /> : <Pause size={14} />}{' '}
             {active.paused ? 'Resume study' : 'Pause study'}
           </button>
-          <button className="text-button" onClick={() => setAbandon(true)}>
+          <button
+            className="text-button"
+            aria-label={`Abandon ${RESEARCH[active.id].name}`}
+            onClick={() => setAbandon(true)}
+          >
             Abandon study
           </button>
         </div>
@@ -156,7 +223,8 @@ export function CurrentStudy({
             <button
               className="button primary"
               onClick={() => {
-                if (dispatch({ type: 'abandonResearch' })) setAbandon(false);
+                if (dispatch({ type: 'abandonResearch', id: active.id }))
+                  setAbandon(false);
               }}
             >
               Abandon without refund

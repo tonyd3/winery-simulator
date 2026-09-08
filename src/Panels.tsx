@@ -1,6 +1,11 @@
 import type { ResearchId } from './catalog';
 import { Investments } from './EstateInvestments';
-import { grapeStorageWeeks } from './investments';
+import { GrapeArrival } from './GrapeArrival';
+import {
+  CELLAR_TECHNIQUES,
+  vinificationStage,
+  vinificationWeeks,
+} from './cellarTechniques';
 import { PlotExpansion } from './PlotExpansion';
 import { CellarEquipment } from './CellarEquipment';
 import { ESTATE_LIMITS } from './estates';
@@ -12,14 +17,7 @@ import { TastingNotes } from './TastingNotes';
 import { releaseTasting } from './wineSensory';
 import { vintage } from './winemaking';
 import WinePromotion from './WinePromotion';
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Check,
-  Clock3,
-  Pencil,
-  Plus,
-} from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Check, Pencil, Plus } from 'lucide-react';
 import { Icon, Progress, Empty } from './components';
 import {
   availableVarieties,
@@ -38,13 +36,11 @@ import {
   BOTTLE_PRICE,
   CELLAR_QUALITY,
   wholesalePrice,
-  grapeLiters,
   money,
   quality,
   readyToHarvest,
   tankCount,
   occupiedTankCount,
-  fermentationPlan,
   upkeep,
 } from './game';
 import type { GameState, Action, Variety, Wine } from './game';
@@ -482,64 +478,22 @@ function Fermentation({
               <span className="subtle">/ steel · $140 per tank</span>
             </label>
           </div>
-          {state.grapes.map((g) => {
-            const plan = fermentationPlan(state, g.kg, oak);
-            return (
-              <div className="arrival" key={g.id}>
-                <div className="arrival-icon">
-                  <Icon name="grape" size={27} />
-                </div>
-                <div className="arrival-description">
-                  <h4>{getVariety(state, g.variety).name}</h4>
-                  {state.estates.length > 1 && (
-                    <small>{getEstate(state, g.estateId ?? 1).name}</small>
-                  )}
-                  <p>
-                    {g.kg} kg · {g.quality}/100 quality · makes{' '}
-                    {grapeLiters(g.kg)} L
-                  </p>
-                  <span className="warning-text">
-                    <Clock3 size={12} />{' '}
-                    {state.week - g.picked >= grapeStorageWeeks(state)
-                      ? 'Process now — refrigeration stopped'
-                      : `Process within ${grapeStorageWeeks(state) - (state.week - g.picked)} weeks`}
-                  </span>
-                </div>
-                <button
-                  className="text-button"
-                  onClick={() => dispatch({ type: 'sellGrapes', id: g.id })}
-                >
-                  Sell grapes · {money(g.kg * 3)}
-                </button>
-                <div className="fermentation-order">
-                  <button
-                    className="button primary"
-                    disabled={plan.missing > 0 || state.cash < plan.cost}
-                    onClick={() => dispatch({ type: 'ferment', id: g.id, oak })}
-                  >
-                    {plan.missing > 0
-                      ? 'More tanks needed'
-                      : `Ferment · ${money(plan.cost)}`}
-                    <ArrowRight size={16} />
-                  </button>
-                  <small>
-                    {plan.missing > 0
-                      ? `Need ${plan.missing} L more empty tank capacity`
-                      : `${plan.fills.length} tank${plan.fills.length === 1 ? '' : 's'} · ${plan.fills.map((f) => `${f.liters} L`).join(' + ')}`}
-                  </small>
-                  {plan.missing === 0 && state.cash < plan.cost && (
-                    <small>Need {money(plan.cost - state.cash)} more</small>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {state.grapes.map((grapes) => (
+            <GrapeArrival
+              key={grapes.id}
+              state={state}
+              grapes={grapes}
+              oak={oak}
+              dispatch={dispatch}
+              navigate={navigate}
+            />
+          ))}
         </section>
       )}
       <div className="section-line">
         <h3>The cellar floor</h3>
         <span className="subtle">
-          Each harvest stays together through fermentation & aging
+          Each batch stays together through fermentation & aging
         </span>
       </div>
       <div className="tank-grid">
@@ -565,7 +519,7 @@ function Fermentation({
                 >
                   {b
                     ? b.stage === 'fermenting'
-                      ? 'Fermenting'
+                      ? vinificationStage(b)
                       : b.stage === 'aging'
                         ? 'Aging'
                         : 'Ready for reserves'
@@ -668,12 +622,13 @@ function Fermentation({
                           strokeWidth="4"
                           fill="none"
                         />
-                        {b?.stage === 'fermenting' && (
-                          <g className="ferment-bubbles" fill="#b5bf9e">
-                            <circle cx="81" cy="2" r="3" />
-                            <circle cx="99" cy="-4" r="2" />
-                          </g>
-                        )}
+                        {b?.stage === 'fermenting' &&
+                          vinificationStage(b) === 'Fermenting' && (
+                            <g className="ferment-bubbles" fill="#b5bf9e">
+                              <circle cx="81" cy="2" r="3" />
+                              <circle cx="99" cy="-4" r="2" />
+                            </g>
+                          )}
                       </svg>
                       {b && (
                         <small>
@@ -691,13 +646,20 @@ function Fermentation({
                     Year {b.year} · {b.liters} / {capacity} L ·{' '}
                     {b.oak ? 'French oak' : 'Stainless steel'}
                   </p>
+                  {Boolean(b.techniques?.length) && (
+                    <p className="tank-techniques">
+                      {b
+                        .techniques!.map((id) => CELLAR_TECHNIQUES[id].name)
+                        .join(' · ')}
+                    </p>
+                  )}
                   <div className="tank-measure">
                     <span>
                       {b.stage === 'fermenting'
-                        ? `${b.remaining} weeks remaining`
+                        ? `${b.remaining} ${b.remaining === 1 ? 'week' : 'weeks'} until ready for reserves`
                         : b.stage === 'aging'
                           ? `${b.age} / 8 weeks aged`
-                          : 'Fermentation complete'}
+                          : 'Cellar plan complete'}
                     </span>
                     <b>
                       {quality(b)}
@@ -707,7 +669,12 @@ function Fermentation({
                   <Progress
                     value={
                       b.stage === 'fermenting'
-                        ? (2 - b.remaining) * 50
+                        ? Math.max(
+                            0,
+                            (1 -
+                              b.remaining / vinificationWeeks(b.techniques)) *
+                              100,
+                          )
                         : b.stage === 'aging'
                           ? (b.age / 8) * 100
                           : 100
@@ -735,7 +702,7 @@ function Fermentation({
                       }}
                     >
                       {b.stage === 'fermenting'
-                        ? 'Fermenting…'
+                        ? `${vinificationStage(b)}…`
                         : ids.length > 1
                           ? `Move ${ids.length} tanks to reserves`
                           : 'Move to reserves'}
