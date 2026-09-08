@@ -22,7 +22,7 @@ import { researchComplete, researchTerms } from '../src/researchProgression.ts';
 import { matchesSearch } from '../src/search.ts';
 import { allGrapes, bottleBatch, learn } from './helpers.ts';
 
-const additions = [
+const previousAdditions = [
   'gamay',
   'carmenere',
   'graciano',
@@ -33,6 +33,27 @@ const additions = [
   'gruner_veltliner',
   'marsanne',
   'roussanne',
+];
+const additions = [
+  ...previousAdditions,
+  'aglianico',
+  'sagrantino',
+  'corvina',
+  'montepulciano',
+  'nero_davola',
+  'dolcetto',
+  'fiano',
+  'verdicchio',
+  'garganega',
+  'arneis',
+  'tannat',
+  'carignan',
+  'cinsault',
+  'pinot_meunier',
+  'savagnin',
+  'melon',
+  'clairette',
+  'grenache_blanc',
 ];
 const tick = (s: GameState, weeks = 1) => {
   for (let i = 0; i < weeks; i++) s = act(s, { type: 'advance' });
@@ -88,7 +109,7 @@ test('each new grape requires a paid individual study, persists mid-study, and c
   }
 });
 
-test('all ten varieties can become breeding parents and produce persistent, plantable offspring', () => {
+test('every added variety can become a breeding parent and produce persistent, plantable offspring', () => {
   for (const variety of additions) {
     let s = learn(
       allGrapes({ ...newGame(), cash: 1000000, knowledge: 10000 }),
@@ -113,6 +134,11 @@ test('all ten varieties can become breeding parents and produce persistent, plan
 
 test('expanded licenses round-trip while existing saves keep their original access', () => {
   reload(allGrapes(newGame()));
+  const previousCatalog = newGame();
+  previousCatalog.grapeLicenses = [...LEGACY_VARIETY_IDS, ...previousAdditions];
+  assert.equal(availableVarieties(reload(previousCatalog)).length, 34);
+  for (const id of additions.slice(previousAdditions.length))
+    assert.equal(researchComplete(previousCatalog, grapeResearchId(id)), false);
   for (const region of REGION_IDS) {
     const current = newGame(region);
     current.grapeLicenses = [...LEGACY_VARIETY_IDS];
@@ -172,6 +198,11 @@ test('grape and research search accepts accents, ASCII spelling, alternate names
     ['gruner_veltliner', 'gruner'],
     ['pinot_gris', 'pinot grigio'],
     ['petite_sirah', 'durif'],
+    ['nero_davola', " NERO D'AVOLA "],
+    ['nero_davola', 'nero d’avola'],
+    ['cinsault', 'cinsaut'],
+    ['pinot_meunier', 'meunier'],
+    ['melon', 'melon de bourgogne'],
   ]) {
     assert.ok(matchesSearch(VARIETIES[id].name, query));
     assert.ok(matchesSearch(RESEARCH[grapeResearchId(id)].name, query));
