@@ -79,6 +79,74 @@ export function blendResearchMissing(
 }
 export const breedingWeeks = (s: GameState) =>
   s.research.includes('selection') ? BREEDING.selectedWeeks : BREEDING.weeks;
+export const INTRO_BREEDING = { cost: 1800, knowledge: 40, weeks: 8 };
+export function introductoryCrossAvailable(s: GameState) {
+  return !s.introCrossId && !s.hybrids.length && !s.breedingProject;
+}
+export function introductoryCrossPermission(
+  s: GameState,
+  parents: string[],
+  trait: string,
+) {
+  if (!introductoryCrossAvailable(s))
+    return 'Your introductory cross has already been used.';
+  if (!s.research.includes('ampelography'))
+    return 'Research Vine science first.';
+  if (
+    parents.length !== 2 ||
+    new Set(parents).size !== 2 ||
+    parents.some((id) => !REGIONS[s.region].starters.includes(id))
+  )
+    return 'The introductory cross uses your two founding grapes.';
+  if (trait !== 'climate' && trait !== 'resilience')
+    return 'Choose regional adaptation or hardier vines for the introductory cross.';
+  return null;
+}
+
+// This is also the player-facing preview. Only the inherited parent's color and
+// soil are random, and those are rolled together when the trial is purchased.
+export function breedingPreview(
+  s: GameState,
+  parents: string[],
+  trait: string,
+) {
+  const [a, b] = parents.map(
+    (id) => VARIETIES[id] ?? s.hybrids.find((h) => h.id === id)!,
+  );
+  const meanHeat = (a.heat + b.heat) / 2;
+  const clamp = (n: number, low: number, high: number) =>
+    Math.max(low, Math.min(high, n));
+  return {
+    heat:
+      trait === 'climate'
+        ? meanHeat +
+          Math.sign(REGIONS[s.region].heat - meanHeat) *
+            Math.min(1, Math.abs(REGIONS[s.region].heat - meanHeat))
+        : meanHeat,
+    resilience: clamp(
+      Math.round((a.resilience + b.resilience) / 2) +
+        (trait === 'resilience' ? 2 : trait === 'finesse' ? -1 : 0),
+      0,
+      7,
+    ),
+    finesse: clamp(
+      Math.round((a.finesse + b.finesse) / 2) +
+        (trait === 'finesse' ? 3 : trait === 'resilience' ? -1 : 0),
+      -2,
+      8,
+    ),
+    yieldFactor: clamp(
+      Math.round(
+        ((a.yieldFactor + b.yieldFactor) / 2 -
+          (trait === 'finesse' ? 0.08 : trait === 'climate' ? 0.03 : 0)) *
+          100,
+      ) / 100,
+      0.75,
+      1.1,
+    ),
+    planting: Math.min(1400, Math.round((a.planting + b.planting) / 2) + 150),
+  };
+}
 export function breedingPermission(
   s: GameState,
   parents: string[],

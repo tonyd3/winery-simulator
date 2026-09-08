@@ -33,6 +33,12 @@ For market value, Prestige influence equals the score through 100 and `100 + 25 
 
 The current catalog has 85 projects: 33 techniques and 52 individual grape field studies. See `src/catalog.ts` for the full cost/prerequisite table. The research ledger shows all costs, remaining time, prerequisites, and unlock descriptions. Each region starts with only its two founding grapes; technique nodes never grant an entire grape collection. All studied grapes can be planted across all owned regions, with region-specific climate and planting costs.
 
+**Plan toward an outcome** traces the prerequisites for a first cross, tasting room, vintage blending, fermentation quality, rare-grape studies, or quality-selected hybrid. Totals include unpaid studies, unowned prerequisite facilities, and any required nursery trial. Already paid projects retain their actual remaining time. The planner shows both one-at-a-time research time and the longest prerequisite path with enough free slots, at current lab speed; neither includes resource gathering, unrelated work, pauses, future labs, or optional bonuses. Facility upkeep is shown separately. The rare-grape outcome opens the rare-study catalog; individual varieties still require their own studies.
+
+Linked prerequisites open the exact study. **Study next** saves up to five studies, supports reordering and removal, and persists across reloads. It never starts or purchases work automatically. Completion notices persist independently of the activity log until dismissed, including simultaneous discoveries. Their actions lead to the relevant investment, cellar task, further study, or parcel choice. A grape destination preselects that grape only after the player chooses a parcel; planting remains a separate purchase.
+
+The grape library filters by name, color, preferred soil, climate fit, and availability, and sorts by name, study cost, duration, climate fit, finesse, or yield. Rows show resilience, finesse, relative yield, climate effects, and planting cost before research. Climate and planting comparisons use the selected owned region; study discounts always use the home region.
+
 | Branch | Progression and actual unlocks |
 | --- | --- |
 | Vineyard science | Vine science (+2 weekly knowledge) → Nursery propagation → Climate adaptation, Cross-pollination → Field selection (+2 resilience, shorter trials) → Generational crosses → Aroma & finesse selection. Soil & water mapping unlocks irrigation; Precision viticulture unlocks vineyard staff. |
@@ -51,7 +57,7 @@ Knowledge comes from weekly observation (6 base), harvests (+12), and bottling (
 
 Existing saves default to one study slot while preserving the paid project's duration, progress, pause state, and promised legacy grape unlocks. Version-six saves add `researchSlots` and `additionalResearchProjects`; the original `researchProject` field retains the first active study. Completed or abandoned projects are removed while the other studies retain their IDs and progress. Import validation rejects over-capacity and duplicate studies, completed projects, invalid durations, and unmet prerequisites.
 
-Basic harvest, fermentation, aging, reserve storage, analysis, single-lot bottling, marketing, judging, land, and tank purchases stay available. Every purchase in the 14-item capital investment catalog has a research prerequisite. Existing owned facilities can operate and resume without retroactive research charges.
+Basic harvest, fermentation, aging, reserve storage, analysis, single-lot bottling, marketing, judging, land, and tank purchases stay available. Every purchase in the 18-item capital investment catalog has a research prerequisite. Existing owned facilities can operate and resume without retroactive research charges.
 
 Basic blending arrives after Cellar foundations alone: 6 study weeks, $1,500 and 35 knowledge, rather than the former two-study path of 20 weeks, $9,000 and 135 knowledge. It permits up to two grape varieties from the same vintage, estate and wine color. Advanced blending (the existing `assemblage` save ID) opens three-or-more-grape recipes for another 14 weeks, $7,500 and 100 knowledge. Perpetual reserves, Regional cuvées and Red & white experiments remain later specialties behind Advanced blending.
 
@@ -61,17 +67,35 @@ Skin contact, Malolactic fermentation, and Lees aging each require Cellar founda
 
 ## Breeding
 
-Cross-pollination requires Vine science and Nursery propagation, then costs $38,000 and 320 knowledge and takes 36 study weeks. Its full prerequisite path takes 52 study weeks without a lab, placing nursery access well after basic blending. Previously paid 24-week Cross-pollination studies keep their contracted duration and remaining time; completed research, custom grapes, and active field trials are unchanged.
+After **Vine science**, an estate with no existing hybrids can run one introductory cross of its two founding grapes for **40 knowledge, $1,800, and 8 study weeks**. Choose Regional adaptation or Hardier vines. Including Vine science, this path costs $3,000 and 80 knowledge and takes 14 base weeks, excluding resource gathering. The introductory hybrid is fully plantable and usable in wine. Starting the trial consumes the one-time opportunity; existing estates that already bred a grape do not receive another introductory trial.
 
-A trial costs 160 knowledge and $7,500, and lasts 24 weeks (18 after Field selection). Two distinct unlocked parents are required. Previously bred parents require Generational crosses; the Wine quality trait requires Aroma & finesse selection. Choose a unique name up to 28 characters. An estate can retain 60 custom grapes; the cap is shown when reached.
+Cross-pollination requires Vine science and Nursery propagation, then costs $38,000 and 320 knowledge and takes 36 study weeks. Its full prerequisite path takes 52 study weeks without a lab, placing repeated nursery trials well after basic blending. Previously paid 24-week Cross-pollination studies keep their contracted duration and remaining time; completed research, custom grapes, and active field trials are unchanged.
+
+Further trials require **Cross-pollination**, cost 160 knowledge and $7,500, and last 24 weeks (18 after Field selection). Two distinct unlocked parents are required. Previously bred parents, including an introductory hybrid, require Generational crosses; the Wine quality trait requires Aroma & finesse selection. Choose a unique name up to 28 characters. An estate can retain 60 custom grapes; the cap is shown when reached.
 
 The offspring inherits a randomly selected parent's color and preferred soil. Other traits begin from parent averages. Regional adaptation shifts warmth up to one point toward the estate climate and reduces yield by three percentage points. Hardiness adds two resilience and removes one finesse. Quality selection adds three finesse, removes one resilience, and reduces yield by eight percentage points. Trait bounds prevent endless improvement through repeated crossing. Breeding is an accelerated fictional model, not a prediction of actual grape genetics.
 
-Inheritance is rolled when the trial starts and included in the save, preventing reloads from rerolling the result. After the trial, the grape becomes available to the vineyard and the complete production chain. Parent IDs remain attached through later generations.
+The offspring preview shows exact warmth, resilience, finesse, yield, and base planting price before purchase, with both possible color/soil outcomes. Color and soil are inherited together from one parent with equal probability. That choice is rolled when the trial starts and included in the save, preventing reloads from rerolling the result. After the trial, the grape becomes available to the vineyard and the complete production chain. Parent IDs remain attached through later generations.
+
+## Optional research experiments
+
+Studies still finish through ordinary weekly progress. Three studies also offer an optional, one-time reduction in their remaining study weeks:
+
+| Study | Player action and conditions | Maximum bonus |
+| --- | --- | --- |
+| Soil & water mapping | Select an owned planted parcel on matching soil with at least 70% health; observe three qualifying growing-season weeks while the study runs. | 3 study weeks |
+| Climate adaptation | The same observation, using a grape whose effective climate mismatch exceeds 0.5 in that parcel's region. | 4 study weeks |
+| Sensory science | Compare two distinct single-component reserves with recorded maturation and cellar techniques: one oak, one steel, with the same grape, vintage, estate, aging weeks, and techniques. Each must contain at least 750 mL. | 3 study weeks |
+
+Field observations retain their selected grape and progress across saves. Winter, pausing the study, changing the grape, or losing soil/health/climate eligibility prevents new observations. Normal unpaused study progress continues, and an unfinished experiment ends with its study. Abandoning loses its observations; once a bonus has been earned, abandoning and restarting cannot earn it again. Field experiments add no charge, but care and planting retain their normal costs.
+
+The cellar comparison consumes exactly **750 mL from each reserve (1.5 L total)** and changes no wine scores. It charges no cash or knowledge. Incompatible or duplicate selections consume nothing. Bonuses are capped at the remaining study time and never grant extra knowledge, money, or another reward; an immediate completion frees the slot and creates the normal discovery notice. An operating lab still changes how study weeks translate to game weeks.
 
 ## Persistence
 
 Version six retains the original storage key and migrates versions one through five. Estates keep their land, inventory, prices, scores, facilities, funds, and calendar. A separate grape-license list preserves founding grapes and every grape an old save could plant. New grape discoveries are individually recorded in the completed-research list.
+
+The research-flow additions remain in version six. Missing `researchGoal`, `researchShortlist`, `unseenDiscoveries`, `experimentCredits`, and `introCrossId` fields default to empty values without altering existing projects. Field observations are stored on their study. Validation checks unique shortlist entries, real completed discoveries, eligible experiment IDs and references, and the single founding-grape exception for introductory breeding. See [research-flow tests](../tests/research-flow.test.ts).
 
 Legacy collection studies retain original remaining time and grant the exact promised heritage or world collection when they finish. Other old in-flight research and breeding trials keep their remaining time. Completed legacy techniques gain the prerequisites required by the new tree; malformed old progression is rejected before migration. A future study uses the new price and duration.
 

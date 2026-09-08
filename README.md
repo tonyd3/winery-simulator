@@ -48,6 +48,8 @@ Choose Bordeaux, Burgundy, Napa Valley, Mosel, Tuscany, Rioja, Mendoza, or Baros
 
 **Research** contains **85 studies**: 33 techniques across vineyard science, cellar techniques, tourism/hospitality, and commerce/discovery, plus 52 individual grape studies. Search by technique, grape, or unlock; follow clickable prerequisites; filter by availability. Studies range from **6–72 weeks** and **$1,200–$180,000**. A game year has 12 weeks. Research costs are separate from buildings, teams, and planting.
 
+Use **Plan toward an outcome** to trace prerequisites, remaining cash and knowledge, study time, follow-on purchases, and facility upkeep. Save and reorder up to five studies with **Study next**; each still requires an explicit Start study action. Discoveries stay visible until dismissed and link to the relevant next task. The grape library filters by color, soil, climate fit, and availability, and compares growing traits, planting prices, and study terms.
+
 The 52-grape library now includes ten more Italian varieties—Aglianico, Sagrantino, Corvina, Montepulciano, Nero d’Avola, Dolcetto, Fiano, Verdicchio, Garganega, and Arneis—and eight French selections: Tannat, Carignan, Cinsault / Cinsaut, Pinot Meunier, Savagnin, Melon de Bourgogne, Clairette, and Grenache Blanc. Each has its own field study, growing traits, tasting profile, and blending affinities. Search accepts names without accents and either apostrophe style. See the [grape expansion guide](docs/grape-library.md) for costs and recipe ideas.
 
 Knowledge comes from weekly observation (+6; +2 after Vine science; +4 after Field notebooks), harvesting (+12), and bottling (+1 per 40 bottles). Start with one study slot and buy up to eight under **Research → Add study slot**. The second slot costs $5,000, the third $10,000, and each later slot costs $5,000 more; slots are permanent and add no weekly upkeep. Every study pays its own cash and knowledge costs upfront and progresses in parallel, with individual pause/resume and abandon controls. Paused studies keep their slots; abandoning refunds nothing. One breeding trial can run separately. An operating research lab doubles all running study and trial progress and adds 10 knowledge each week.
@@ -56,7 +58,11 @@ Knowledge comes from weekly observation (+6; +2 after Vine science; +4 after Fie
 
 For example: **Wine tourism → Visitor services → Hosted tastings** unlocks a tasting terrace, visitor center, and tasting room for separate purchase. The tasting room also needs an operating visitor center. Sommelier training additionally requires Sensory science; Wine & gastronomy and Destination stays open later hospitality options.
 
-Complete **Vine science → Nursery propagation → Cross-pollination** to breed. Cross-pollination is a later investment: **36 study weeks, $38,000 and 320 knowledge**, bringing the full prerequisite path to 52 study weeks without a lab. Trials separately cost **$7,500 and 160 knowledge**, and take **24 weeks** (18 after Field selection). Generational crosses unlocks hybrid parents; Aroma & finesse selection unlocks the Wine quality trait. Finished offspring can be planted, bottled, and sold. An estate can keep 60 custom varieties. Previously paid studies retain their original durations, and existing Varietal assemblage research counts as Advanced blending.
+After **Vine science**, run one introductory cross of your two founding grapes for **$1,800, 40 knowledge, and 8 study weeks**, selecting climate adaptation or hardiness. The nursery previews offspring traits and planting price before purchase.
+
+Further trials require **Nursery propagation → Cross-pollination**. Cross-pollination remains a later investment: **36 study weeks, $38,000 and 320 knowledge**, bringing the full prerequisite path to 52 study weeks without a lab. Trials separately cost **$7,500 and 160 knowledge**, and take **24 weeks** (18 after Field selection). Generational crosses unlocks hybrid parents, including the introductory grape; Aroma & finesse selection unlocks the Wine quality trait. Finished offspring can be planted, bottled, and sold. An estate can keep 60 custom varieties. Previously paid studies retain their original durations, and existing Varietal assemblage research counts as Advanced blending.
+
+Optional experiments connect three active studies to practical work: observe healthy, suitably planted vines for **Soil & water mapping** or **Climate adaptation**, or consume 1.5 L from matching oak/steel reserves for **Sensory science**. These give bounded, one-time time savings; normal study progress remains available. See [experiment rules](docs/regions-and-research.md#optional-research-experiments).
 
 Use **Replace grape variety** on a planted parcel to remove its vines for $120 at original plot size, then buy replacement vines. Removal and planting costs scale with expanded acreage. Removing vines loses any unpicked crop and never grants a second harvest in the same year.
 
@@ -213,9 +219,13 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `src/catalog.ts`: 52 grape definitions, eight regions, and 85 research projects.
 - `src/Regions.tsx`: new-estate region selection.
 - `src/RegionLandscape.tsx`: distinct SVG postcards for all eight regions.
-- `src/Research.tsx` and `src/ResearchProjects.tsx`: research ledger, grape library, active studies, and breeding nursery.
+- `src/Research.tsx` and `src/ResearchProjects.tsx`: research departments, exact prerequisite navigation, active studies, and the study ledger.
+- `src/researchPlanning.ts` and `src/ResearchDecisions.tsx`: outcome paths and economics, study payoffs, and the manual shortlist.
+- `src/GrapeLibrary.tsx` and `src/BreedingNursery.tsx`: grape comparisons, introductory/full trials, and offspring previews.
+- `src/ResearchExperiments.tsx` and `src/ResearchNotices.tsx`: optional experiments, persistent discoveries, and parcel-choice handoffs.
 - `src/researchProgression.ts` and `src/research.css`: shared research terms, capability checks, and responsive ledger styles.
 - `tests/research-progression.test.ts`: individual studies, unlock gates, long projects, and legacy migration.
+- `tests/research-flow.test.ts`: outcome economics, shortlist persistence, introductory crosses, experiments, and save compatibility.
 - `src/expansion.css`: region and research layouts, including responsive behavior.
 - `tests/expansion.test.ts`: region, research, breeding, migration, and custom-wine tests.
 - `src/components.tsx`: shared controls and accessible modal behavior.
