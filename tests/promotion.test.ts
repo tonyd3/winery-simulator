@@ -175,10 +175,10 @@ test('judging resolves after two weeks with one saved result and an independent 
   valid(s);
 });
 
-test('an unsuccessful judging entry remains in sold-out history without inflating sales or quality', () => {
+test('a previously paid low-quality judging entry still completes in sold-out history', () => {
   let s = bottled(60);
   const id = s.wines[0].id;
-  s = act(s, { type: 'judgeWine', id });
+  s.wines[0].judging = { remaining: 2, score: 62 };
   s = act(s, { type: 'wholesale', id });
   s = tick(tick(s));
   assert.equal(s.wines.length, 1);
@@ -281,4 +281,19 @@ test('older saves retain prices, cash and sales while malformed outreach state i
     change(bad);
     assert.equal(stateSchema.safeParse(bad).success, false);
   }
+});
+
+test('judging cannot charge for an impossible medal, while the boundary remains eligible', () => {
+  const s = bottled(74);
+  const before = structuredClone(s);
+  assert.throws(
+    () => act(s, { type: 'judgeWine', id: s.wines[0].id }),
+    /cannot reach/,
+  );
+  assert.deepEqual(s, before);
+  const eligible = bottled(75);
+  assert.ok(
+    act(eligible, { type: 'judgeWine', id: eligible.wines[0].id }).wines[0]
+      .judging,
+  );
 });

@@ -452,10 +452,7 @@ test('paid version-six breeding and assemblage studies retain their terms and co
     ['breeding', 24],
     ['assemblage', 14],
   ] as const) {
-    let s = learn(
-      reserves(),
-      id === 'breeding' ? 'heritage' : 'oenology',
-    );
+    let s = learn(reserves(), id === 'breeding' ? 'heritage' : 'oenology');
     s.researchProject = { id, duration, remaining: 2, paused: true };
     const loaded = deserialize(serialize(s));
     assert.deepEqual(loaded, s);

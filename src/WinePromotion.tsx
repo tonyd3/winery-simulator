@@ -1,8 +1,20 @@
+import type { DemandContext } from './game';
 import { Clock3, Megaphone, Trophy } from 'lucide-react';
-import { judgingBlocked, marketingBlocked, money } from './game';
+import {
+  judgingBlocked,
+  marketingBlocked,
+  money,
+  demandForecast,
+} from './game';
 import type { GameState, Wine } from './game';
 import type { Dispatch } from './Panels';
-import { AWARDS, JUDGING, MARKETING, wineAward } from './promotion';
+import {
+  AWARDS,
+  JUDGING,
+  MARKETING,
+  wineAward,
+  judgingOutlook,
+} from './promotion';
 
 export function JudgingStatus({ wine }: { wine: Wine }) {
   const judging = wine.judging;
@@ -22,13 +34,28 @@ export default function WinePromotion({
   wine,
   state,
   dispatch,
+  demandGroups,
 }: {
   wine: Wine;
   state: GameState;
   dispatch: Dispatch;
+  demandGroups: DemandContext;
 }) {
   const marketingReason = marketingBlocked(state, wine);
   const judgingReason = judgingBlocked(state, wine);
+  const baseline = demandForecast(
+    { ...wine, marketingWeeks: 0 },
+    state,
+    demandGroups,
+  );
+  const promoted = demandForecast(
+    { ...wine, marketingWeeks: MARKETING.weeks },
+    state,
+    demandGroups,
+  );
+  const extraLow = Math.max(0, promoted.low - baseline.high);
+  const extraHigh = Math.max(0, promoted.high - baseline.low);
+  const judging = judgingOutlook(wine.quality);
   const active = (wine.marketingWeeks ?? 0) > 0;
   const award = wineAward(wine);
   return (
@@ -45,6 +72,16 @@ export default function WinePromotion({
           {Math.round(MARKETING.demandBonus * 100)}% demand and +
           {money(MARKETING.priceBonus)} suggested shop price for this release.
         </p>
+        {!active && wine.bottles > 0 && wine.listed && (
+          <p>
+            {baseline.low >= wine.bottles
+              ? 'This stock is already forecast to sell out next week without a campaign. '
+              : `Next week at your current price: ${extraLow}–${extraHigh} additional bottles forecast. `}
+            The fee needs {Math.ceil(MARKETING.cost / wine.price)} additional
+            sales over {MARKETING.weeks} weeks to recover at this price.
+            Estimates exclude judging changes and later price changes.
+          </p>
+        )}
         <button
           className="button secondary wide"
           disabled={Boolean(marketingReason)}
@@ -82,6 +119,12 @@ export default function WinePromotion({
             <p>
               Results in {JUDGING.weeks} weeks. Medals bring lasting price and
               demand bonuses. One entry per release; a medal isn’t guaranteed.
+            </p>
+            <p>
+              Possible panel score: {judging.low}–{judging.high}/100.{' '}
+              {judging.medalPossible
+                ? 'Bronze requires 80 points; higher scores unlock silver and gold.'
+                : 'No medal is possible for this wine. Improve a future release before entering.'}
             </p>
             <button
               className="button secondary wide"

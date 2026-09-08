@@ -1,5 +1,17 @@
 import {
+  centsSchema,
+  financeSchema,
+  releaseAccountsSchema,
+  startFinance,
+  recordCash,
+  newAccounts,
+  recordWineSale,
+  archiveAccounts,
+} from './finance';
+import { productionCost, addProductionCost } from './winemaking';
+import {
   researchComplete,
+  studyDurationLimit,
   researchTerms,
   blendResearchMissing,
   breedingWeeks,
@@ -47,6 +59,7 @@ import {
   JUDGING,
   MARKETING,
   judgingSchema,
+  judgingOutlook,
   wineAward,
   wineBenefits,
 } from './promotion';
@@ -68,6 +81,7 @@ import {
 } from './winemaking';
 import type { LabelDesign, Reserve } from './winemaking';
 import {
+  customerGroup,
   MARKET_SEED,
   WEEKLY_DEMAND,
   marketConditions,
@@ -75,7 +89,7 @@ import {
   weeklyDemandMultiplier,
 } from './market';
 
-import { PRESTIGE_EARNINGS, prestigeInfluence } from './prestige';
+import { qualityResponse, signedPrestige, prestigeInfluence } from './prestige';
 import { tastingProfile, tastingNotesSchema } from './wineSensory';
 import { harvestCharacterSchema } from './winemaking';
 
@@ -244,13 +258,19 @@ const researchProjectSchema = z
       .max(24)
       .optional(),
   })
-  .strict();
+  .strict()
+  .transform((project) =>
+    project.duration === undefined
+      ? { ...project, duration: studyDurationLimit(project.id) }
+      : project,
+  );
 const grapeSchema = z
   .object({
     id: integer(),
     variety: varietySchema,
     kg: integer(1800),
     quality: bounded(100),
+    directCostCents: centsSchema.optional(),
     picked: integer(100000),
     harvest: harvestCharacterSchema.optional(),
     estateId: z.number().int().min(1).max(8).optional(),
@@ -263,6 +283,7 @@ const batchSchema = z
     liters: integer(1260).min(1),
     tankIds: z.array(z.number().int().min(1).max(256)).min(1).max(9),
     quality: bounded(100),
+    directCostCents: centsSchema.optional(),
     stage: z.enum(['fermenting', 'ready', 'aging']),
     remaining: integer(8),
     techniques: cellarTechniquesSchema.optional(),
@@ -288,8 +309,9 @@ const legacyWineSchema = z
   })
   .strict();
 const wineSchema = legacyWineSchema.extend({
+  accounts: releaseAccountsSchema.optional(),
   lineId: integer(),
-  release: integer(1000).min(1),
+  release: integer().min(1),
   produced: integer(1000000).nullable(),
   // Older releases lack production totals; count their sales from this update on.
   salesSinceTracking: integer(1000000).default(0),
@@ -302,6 +324,13 @@ const wineSchema = legacyWineSchema.extend({
   estate: z.string().trim().min(1).max(32),
   founded: integer(10000),
 });
+const eventSchema = z
+  .object({
+    week: integer(100000),
+    text: z.string().max(240),
+    type: z.enum(['good', 'info', 'warning']),
+  })
+  .strict();
 export const stateSchema = z
   .object({
     version: z.literal(6),
@@ -370,6 +399,8 @@ export const stateSchema = z
     name: z.string().trim().min(1).max(32),
     week: z.number().int().min(1).max(100000),
     cash: bounded(),
+    finance: financeSchema.nullable().default(null),
+    kitCostCents: centsSchema.nullable().default(null),
     bankruptcy: z
       .object({ week: integer(100000), bill: bounded(), unpaid: bounded() })
       .strict()
@@ -391,9 +422,17 @@ export const stateSchema = z
       .default([]),
     deliveries: z
       .array(
-        z.object({ kits: integer(1000000), arrival: integer(100000) }).strict(),
+        z
+          .object({
+            kits: integer(1000000),
+            arrival: integer(100000),
+            costCents: centsSchema.optional(),
+          })
+          .strict(),
       )
       .max(100),
+    events: z.array(eventSchema).max(200).default([]),
+    pendingEvents: integer(200).default(0),
     log: z
       .array(
         z
@@ -424,6 +463,8 @@ export const stateSchema = z
         sold: integer(),
         revenue: bounded(),
         best: bounded(100),
+        qualitySold: integer().default(0),
+        qualityPoints: bounded(1e11).default(0),
       })
       .strict(),
     // Legacy save metadata only; no gameplay reads or writes achievements.
@@ -478,8 +519,8 @@ export const stateSchema = z
       studies.some(
         (p) =>
           researchComplete(s, p.id) ||
-          p.remaining > (p.duration ?? RESEARCH[p.id].weeks) ||
-          (p.duration ?? 0) > RESEARCH[p.id].weeks ||
+          p.remaining > (p.duration ?? studyDurationLimit(p.id)) ||
+          (p.duration ?? 0) > studyDurationLimit(p.id) ||
           RESEARCH[p.id].requires.some((r) => !s.research.includes(r)),
       )
     )
@@ -608,7 +649,12 @@ export const stateSchema = z
         .filter((w) => w.lineId === line.id)
         .map((w) => w.release)
         .sort((a, b) => a - b);
-      if (numbers.some((n, i) => n !== i + 1))
+      const archived = line.archive?.releases ?? 0;
+      const total = archived + numbers.length;
+      if (
+        Math.max(0, line.archive?.lastRelease ?? 0, ...numbers) !== total ||
+        numbers.some((n) => n > total)
+      )
         fail('Invalid release sequence.');
     }
     if (s.batches.some((b) => b.year > calendar(s.week).year))
@@ -657,6 +703,41 @@ export function wineSales(wines: readonly Wine[]) {
     complete: wines.every((wine) => wine.produced !== null),
   };
 }
+export const releaseCount = (s: GameState) =>
+  s.wines.length +
+  s.lines.reduce((n, line) => n + (line.archive?.releases ?? 0), 0);
+
+function compactWineHistory(s: GameState) {
+  if (s.wines.length < 900) return;
+  const archived = new Set<number>();
+  for (const wine of s.wines) {
+    if (s.wines.length - archived.size < 750) break;
+    if (wine.bottles > 0 || (wine.judging?.remaining ?? 0) > 0) continue;
+    const line = s.lines.find((l) => l.id === wine.lineId)!;
+    const summary = (line.archive ??= {
+      releases: 0,
+      lastRelease: 0,
+      sold: 0,
+      produced: 0,
+      complete: true,
+      best: 0,
+    });
+    summary.accounts = archiveAccounts(
+      wine,
+      summary.accounts,
+      summary.releases,
+    );
+    summary.releases++;
+    summary.lastRelease = Math.max(summary.lastRelease, wine.release);
+    summary.sold += wineSales([wine]).count;
+    summary.produced += wine.produced ?? 0;
+    summary.complete &&= wine.produced !== null;
+    summary.best = Math.max(summary.best, wine.quality);
+    archived.add(wine.id);
+  }
+  s.wines = s.wines.filter((w) => !archived.has(w.id));
+}
+
 export type Action =
   | { type: 'expandCellar' }
   | { type: 'buyTank'; count?: number }
@@ -664,6 +745,7 @@ export type Action =
   | { type: 'expandEstate'; id: number }
   | { type: 'visitEstate'; id: number }
   | { type: 'advance' }
+  | { type: 'acknowledgeEvents' }
   | { type: 'research'; id: ResearchId }
   | { type: 'buyStudySlot' }
   | { type: 'pauseResearch'; id?: ResearchId; paused: boolean }
@@ -769,9 +851,13 @@ export function newGame(
     reserves: [],
     lines: [],
     kits: 600,
+    kitCostCents: 0,
+    finance: startFinance(6, 12500),
     upgrades: [],
     suspendedUpgrades: [],
     deliveries: [],
+    events: [],
+    pendingEvents: 0,
     log: [
       {
         week: 6,
@@ -780,7 +866,15 @@ export function newGame(
       },
     ],
     ledger: [{ week: 6, label: 'Your starting capital', amount: 12500 }],
-    stats: { harvested: 0, bottled: 0, sold: 0, revenue: 0, best: 0 },
+    stats: {
+      harvested: 0,
+      bottled: 0,
+      sold: 0,
+      revenue: 0,
+      best: 0,
+      qualitySold: 0,
+      qualityPoints: 0,
+    },
     nextId: 1,
     seed: 2026,
     marketSeed: MARKET_SEED,
@@ -1054,6 +1148,8 @@ export function marketingBlocked(s: GameState, wine: Wine) {
 export function judgingBlocked(s: GameState, wine: Wine) {
   if (wine.judging) return 'Each release can enter judging only once';
   if (!wine.bottles) return 'This release is sold out';
+  if (!judgingOutlook(wine.quality).medalPossible)
+    return 'This rating cannot reach the 80-point medal threshold';
   if (s.cash < JUDGING.cost) return `Need ${money(JUDGING.cost - s.cash)} more`;
   return null;
 }
@@ -1076,18 +1172,73 @@ function demandOutlook(wine: Wine, s: GameState) {
 const demandCount = (wine: Wine, rate: number) =>
   Math.min(wine.bottles, Math.max(0, Math.floor(rate)));
 
-export function demandForecast(wine: Wine, s: GameState) {
-  const { rate, market } = demandOutlook(wine, s);
+// Build once per render or weekly sale; no mutable-state cache is retained.
+export function demandContext(s: GameState) {
+  const groups = new Map<string, { stock: number; wines: Wine[] }>();
+  const byId = new Map<number, Wine>();
+  for (const wine of s.wines) {
+    byId.set(wine.id, wine);
+    if (!wine.listed || !wine.bottles) continue;
+    const key = customerGroup(wine);
+    const group = groups.get(key) ?? { stock: 0, wines: [] };
+    group.stock += wine.bottles;
+    group.wines.push(wine);
+    groups.set(key, group);
+  }
+  return { groups, byId };
+}
+export type DemandContext = ReturnType<typeof demandContext>;
+
+export function demandForecast(
+  wine: Wine,
+  s: GameState,
+  context = demandContext(s),
+) {
+  const outlook = demandOutlook(wine, s);
+  const key = customerGroup(wine);
+  const existing = context.byId.get(wine.id);
+  const previousStock =
+    existing?.listed && customerGroup(existing) === key ? existing.bottles : 0;
+  const stock =
+    (context.groups.get(key)?.stock ?? 0) - previousStock + wine.bottles;
+  const rate = stock ? (outlook.rate * wine.bottles) / stock : 0;
   return {
     low: demandCount(wine, rate * WEEKLY_DEMAND.min),
-    high: demandCount(wine, rate * WEEKLY_DEMAND.max),
-    outlook: market.outlook,
+    high: Math.min(wine.bottles, Math.ceil(rate * WEEKLY_DEMAND.max)),
+    outlook: outlook.market.outlook,
   };
 }
 
+export function weeklySales(s: GameState) {
+  const sales = new Map<number, number>();
+  for (const group of demandContext(s).groups.values()) {
+    let preceding = 0;
+    const roll = weeklyDemandMultiplier(group.wines[0], s);
+    for (const wine of group.wines.sort((a, b) => a.id - b.id)) {
+      const rate = (demandOutlook(wine, s).rate * wine.bottles) / group.stock;
+      // Cumulative rounding preserves the group's total for one-bottle releases.
+      sales.set(
+        wine.id,
+        Math.min(
+          wine.bottles,
+          Math.max(
+            0,
+            Math.floor((preceding + rate) * roll + 1e-9) -
+              Math.floor(preceding * roll + 1e-9),
+          ),
+        ),
+      );
+      preceding += rate;
+    }
+  }
+  return sales;
+}
 export function demand(wine: Wine, s: GameState) {
-  const { rate } = demandOutlook(wine, s);
-  return demandCount(wine, rate * weeklyDemandMultiplier(wine, s));
+  if (!wine.listed || !wine.bottles) return 0;
+  // Public single-release queries support a counterfactual wine without changing s.
+  const wines = s.wines.filter((w) => w.id !== wine.id);
+  wines.push(wine);
+  return weeklySales({ ...s, wines }).get(wine.id) ?? 0;
 }
 export const quality = (b: Batch) => {
   const gain =
@@ -1123,25 +1274,63 @@ export const readyToHarvest = (p: Plot, week: number) =>
   p.growth >= 80 &&
   p.harvestedYear !== calendar(week).year &&
   calendar(week).season !== 'Winter';
+export function harvestAdvice(plot: Plot, week: number) {
+  if (readyToHarvest(plot, week)) {
+    if (calendar(week).week === 9)
+      return 'Last chance to harvest. Winter arrives next week and all unpicked fruit will be lost.';
+    if (plot.growth >= 100)
+      return 'These grapes are fully ripe. Waiting cannot add ripeness, and declining vine health can reduce quality. Harvest when your cellar has room.';
+    return 'Ready to pick. More ripeness can improve quality, but watch vine health and harvest before winter.';
+  }
+  if (plot.harvestedYear === calendar(week).year)
+    return 'A well-earned rest. These vines will grow again next spring.';
+  if (calendar(week).season === 'Winter')
+    return 'The vineyard is resting. Bud break begins in spring.';
+  return 'Tend your vines to improve the quality of your next harvest.';
+}
+
 function note(
   s: GameState,
   text: string,
   type: 'good' | 'info' | 'warning' = 'info',
+  important = type === 'warning',
 ) {
   s.log.unshift({ week: s.week, text, type });
   s.log = s.log.slice(0, 40);
+  if (important) {
+    s.events = [{ week: s.week, text, type }, ...(s.events ?? [])].slice(
+      0,
+      200,
+    );
+    s.pendingEvents = Math.min(200, (s.pendingEvents ?? 0) + 1);
+  }
 }
-function transaction(s: GameState, label: string, amount: number) {
+function trackQualitySales(s: GameState, wine: Wine, count: number) {
+  s.stats.qualitySold = (s.stats.qualitySold ?? 0) + count;
+  s.stats.qualityPoints = (s.stats.qualityPoints ?? 0) + count * wine.quality;
+}
+function transaction(
+  s: GameState,
+  label: string,
+  amount: number,
+  investment = false,
+) {
+  recordCash(s, amount, investment);
   s.cash += amount;
   s.ledger.unshift({ week: s.week, label, amount });
   s.ledger = s.ledger.slice(0, 80);
 }
-function spend(s: GameState, label: string, amount: number) {
+function debit(
+  s: GameState,
+  label: string,
+  amount: number,
+  investment: boolean,
+) {
   if (s.cash < amount)
     throw new Error(
       `You need ${money(amount - s.cash)} more for ${label.toLowerCase()}.`,
     );
-  transaction(s, label, -amount);
+  transaction(s, label, -amount, investment);
 }
 function random(s: GameState) {
   s.seed = (Math.imul(s.seed, 1664525) + 1013904223) >>> 0;
@@ -1259,6 +1448,21 @@ export function act(current: GameState, action: Action): GameState {
     if (!w) throw new Error('Vintage not found.');
     return w;
   };
+  const investment = [
+    'research',
+    'breed',
+    'plant',
+    'buyPlot',
+    'expandPlot',
+    'acquireEstate',
+    'expandEstate',
+    'expandCellar',
+    'buyTank',
+    'buyStudySlot',
+    'upgrade',
+  ].includes(action.type);
+  const spend = (state: GameState, label: string, amount: number) =>
+    debit(state, label, amount, investment);
   switch (action.type) {
     case 'visitEstate': {
       getEstate(s, action.id);
@@ -1323,6 +1527,9 @@ export function act(current: GameState, action: Action): GameState {
       );
       break;
     }
+    case 'acknowledgeEvents':
+      s.pendingEvents = 0;
+      break;
     case 'advance': {
       if (s.week >= 100000)
         throw new Error(
@@ -1345,6 +1552,7 @@ export function act(current: GameState, action: Action): GameState {
             s,
             `${RESEARCH[id].name} completed. ${RESEARCH[id].text}`,
             'good',
+            true,
           );
           return false;
         }),
@@ -1363,6 +1571,7 @@ export function act(current: GameState, action: Action): GameState {
           s,
           `${h.name} passed its nursery trial. Your new estate grape is ready to plant.`,
           'good',
+          true,
         );
       }
       const date = calendar(s.week);
@@ -1424,6 +1633,15 @@ export function act(current: GameState, action: Action): GameState {
             );
         }
       }
+      if (date.week === 9) {
+        const remaining = s.plots.filter((p) => readyToHarvest(p, s.week));
+        if (remaining.length)
+          note(
+            s,
+            `Last harvest week: ${remaining.length} ripe parcel${remaining.length === 1 ? '' : 's'} will lose unpicked fruit when winter arrives next week.`,
+            'warning',
+          );
+      }
       s.grapes = s.grapes.filter((g) => {
         if (s.week - g.picked >= grapeStorageWeeks(s)) {
           note(
@@ -1440,11 +1658,12 @@ export function act(current: GameState, action: Action): GameState {
           const previousStage = vinificationStage(b);
           b.remaining--;
           if (b.remaining === 0) {
-            b.stage = 'ready';
+            b.stage = 'aging';
             note(
               s,
-              `${getVariety(s, b.variety).name} finished ${b.techniques?.length ? 'its cellar plan' : 'fermenting'}. Age it or move it to reserves.`,
+              `${getVariety(s, b.variety).name} finished ${b.techniques?.length ? 'its cellar plan' : 'fermenting'}. Maturation has begun automatically; store it whenever you are ready.`,
               'good',
+              true,
             );
           } else if (vinificationStage(b) !== previousStage) {
             note(
@@ -1452,23 +1671,30 @@ export function act(current: GameState, action: Action): GameState {
               `${getVariety(s, b.variety).name}: ${vinificationStage(b)} has begun. ${b.remaining} weeks until ready for reserves.`,
             );
           }
-        } else if (b.stage === 'aging' && b.age < 8) {
+        } else if (b.age < 8) {
+          b.stage = 'aging';
           b.age++;
           if (b.age === 8)
             note(
               s,
               `${getVariety(s, b.variety).name} has reached peak maturity. Ready for bottling.`,
               'good',
+              true,
             );
         }
       }
       for (const d of s.deliveries.filter((d) => d.arrival <= s.week)) {
+        s.kitCostCents =
+          d.costCents !== undefined && (s.kits === 0 || s.kitCostCents != null)
+            ? (s.kits === 0 ? 0 : s.kitCostCents!) + d.costCents
+            : null;
         s.kits += d.kits;
         note(s, `${d.kits} bottling kits arrived at the cellar.`, 'good');
       }
       s.deliveries = s.deliveries.filter((d) => d.arrival > s.week);
       let sales = 0;
       let bottles = 0;
+      let prestige = 0;
       for (const w of s.wines) {
         if (
           w.judging &&
@@ -1482,14 +1708,21 @@ export function act(current: GameState, action: Action): GameState {
             award ? 'good' : 'info',
           );
         }
+      }
+      const sellingState = { ...current, wines: structuredClone(s.wines) };
+      const saleCounts = weeklySales(sellingState);
+      for (const w of s.wines) {
         // Use the forecast's starting week for the same market and shopper roll.
         // Newly resolved judging still applies to this sale as before.
-        const count = demand(w, current);
+        const count = saleCounts.get(w.id) ?? 0;
         if (w.produced === null)
           w.salesSinceTracking = (w.salesSinceTracking ?? 0) + count;
+        recordWineSale(w, count, count * w.price);
         w.bottles -= count;
         sales += count * w.price;
         bottles += count;
+        prestige += count * qualityResponse(w.quality).retail;
+        trackQualitySales(s, w, count);
         if ((w.marketingWeeks ?? 0) > 0 && --w.marketingWeeks === 0)
           note(
             s,
@@ -1500,12 +1733,14 @@ export function act(current: GameState, action: Action): GameState {
         transaction(s, 'Wine shop sales', sales);
         s.stats.sold += bottles;
         s.stats.revenue += sales;
-        s.reputation = Number(
-          (s.reputation + bottles * PRESTIGE_EARNINGS.retail).toFixed(2),
+        const previousPrestige = s.reputation;
+        s.reputation = Math.max(
+          0,
+          Number((s.reputation + prestige).toFixed(2)),
         );
         note(
           s,
-          `${bottles} bottles found a home. ${money(sales)} in wine sales.`,
+          `${bottles} bottles found a home. ${money(sales)} in wine sales. ${signedPrestige(s.reputation - previousPrestige)} Prestige from their quality.`,
           'good',
         );
       }
@@ -1728,6 +1963,7 @@ export function act(current: GameState, action: Action): GameState {
         variety: p.variety!,
         kg,
         quality: q,
+        directCostCents: plotHarvestCost(p) * 100,
         picked: s.week,
         harvest: {
           ripeness: p.growth,
@@ -1837,6 +2073,10 @@ export function act(current: GameState, action: Action): GameState {
         action.oak ? 'French oak vinification' : 'Stainless steel vinification',
         plan.cost,
       );
+      const harvestCost =
+        g.directCostCents === undefined
+          ? undefined
+          : Math.round((g.directCostCents * (g.kg - plan.remainingKg)) / g.kg);
       s.batches.push({
         id: s.nextId++,
         variety: g.variety,
@@ -1847,6 +2087,9 @@ export function act(current: GameState, action: Action): GameState {
           g.quality +
             (upgradeActive(s, 'lab') ? CELLAR_QUALITY.temperatureControl : 0),
         ),
+        ...(harvestCost !== undefined
+          ? { directCostCents: harvestCost + plan.cost * 100 }
+          : {}),
         stage: 'fermenting',
         remaining: plan.weeks,
         techniques,
@@ -1857,8 +2100,10 @@ export function act(current: GameState, action: Action): GameState {
         agingProfile: 'balanced',
         ...(g.estateId !== undefined ? { estateId: g.estateId } : {}),
       });
-      if (plan.remainingKg > 0) g.kg = plan.remainingKg;
-      else s.grapes = s.grapes.filter((x) => x.id !== g.id);
+      if (plan.remainingKg > 0) {
+        g.kg = plan.remainingKg;
+        if (harvestCost !== undefined) g.directCostCents! -= harvestCost;
+      } else s.grapes = s.grapes.filter((x) => x.id !== g.id);
       note(
         s,
         `${plan.liters} L of ${getVariety(s, g.variety).name} is fermenting across ${plan.fills.length} tank${plan.fills.length === 1 ? '' : 's'}. Ready in ${plan.weeks} weeks.${techniques.length ? ` Cellar plan: ${techniques.map((id) => CELLAR_TECHNIQUES[id].name).join(', ')}.` : ''}${plan.remainingKg > 0 ? ` ${plan.remainingKg} kg of grapes remain to process or sell before they spoil.` : ''}`,
@@ -1868,7 +2113,7 @@ export function act(current: GameState, action: Action): GameState {
     }
     case 'age': {
       const b = getBatch(action.id);
-      if (b.stage !== 'ready')
+      if (b.stage === 'fermenting')
         throw new Error(
           'Only finished fermentations and cellar techniques can begin further aging.',
         );
@@ -1904,6 +2149,9 @@ export function act(current: GameState, action: Action): GameState {
             ml: b.liters * 1000,
             quality: quality(b),
             ...(b.harvest ? { harvest: { ...b.harvest } } : {}),
+            ...(b.directCostCents !== undefined
+              ? { directCostCents: b.directCostCents }
+              : {}),
             maturation: { vessel: b.oak ? 'oak' : 'steel', weeks: b.age },
             ...(b.techniques ? { techniques: [...b.techniques] } : {}),
             ...(b.estateId !== undefined ? { estateId: b.estateId } : {}),
@@ -2008,6 +2256,7 @@ export function act(current: GameState, action: Action): GameState {
       if (reserve.score !== null)
         throw new Error('This lot already has a final tasting score.');
       spend(s, `${reserve.name} cellar tasting`, CELLAR_TASTING.cost);
+      addProductionCost(reserve.components, CELLAR_TASTING.cost * 100);
       const score = scoreReserve(s, reserve);
       note(
         s,
@@ -2032,9 +2281,10 @@ export function act(current: GameState, action: Action): GameState {
         throw new Error(
           `You need ${count - s.kits} more bottling kits. Order supplies in the cellar.`,
         );
+      compactWineHistory(s);
       if (s.wines.length >= 1000)
         throw new Error(
-          'Your estate archive has reached 1,000 releases. Export your estate to preserve its history.',
+          'There are 1,000 active releases. Sell some stock or wait for pending judging before bottling again.',
         );
       let line;
       if ('id' in action.line) {
@@ -2042,6 +2292,10 @@ export function act(current: GameState, action: Action): GameState {
         line = s.lines.find((l) => l.id === lineId);
         if (!line) throw new Error('Wine line not found.');
       } else {
+        if (s.lines.length >= 1000)
+          throw new Error(
+            'Your estate has 1,000 wine lines. Select an existing line for this release.',
+          );
         const name = action.line.name.trim();
         if (!name || name.length > 40)
           throw new Error('Name your wine line using 1–40 characters.');
@@ -2067,14 +2321,30 @@ export function act(current: GameState, action: Action): GameState {
       // Assess once per stored lot; partial bottlings and reloads keep that score.
       const q = scoreReserve(s, r);
       const components = combine(take(r, count * 750));
-      const release = s.wines.filter((w) => w.lineId === line.id).length + 1;
+      const release =
+        Math.max(
+          line.archive?.lastRelease ?? 0,
+          ...s.wines.filter((w) => w.lineId === line.id).map((w) => w.release),
+          0,
+        ) + 1;
+      const kitCost =
+        s.kitCostCents != null
+          ? Math.round((s.kitCostCents * count) / s.kits)
+          : null;
+      const liquidCost = productionCost(components);
+      const accounts = newAccounts(
+        kitCost !== null && liquidCost !== null ? kitCost + liquidCost : null,
+      );
+      s.kitCostCents = kitCost !== null ? s.kitCostCents! - kitCost : null;
       s.kits -= count;
+      if (!s.kits) s.kitCostCents = 0;
       s.wines.push({
         id: s.nextId++,
         variety: blendProfile(components, s.hybrids).dominant!.variety,
         quality: q,
         bottles: count,
         produced: count,
+        accounts,
         salesSinceTracking: 0,
         marketingWeeks: 0,
         judging: null,
@@ -2126,7 +2396,7 @@ export function act(current: GameState, action: Action): GameState {
       )
         throw new Error('Your supply storage is full.');
       spend(s, '600 bottling kits', 480);
-      s.deliveries.push({ kits: 600, arrival: s.week + 1 });
+      s.deliveries.push({ kits: 600, arrival: s.week + 1, costCents: 48000 });
       note(s, '600 bottles, corks, and labels ordered. Delivery next week.');
       break;
     }
@@ -2250,6 +2520,7 @@ export function act(current: GameState, action: Action): GameState {
       const blocked = marketingBlocked(s, w);
       if (blocked) throw new Error(blocked);
       spend(s, `${w.label} marketing`, MARKETING.cost);
+      (w.accounts ??= newAccounts()).promotionCents += MARKETING.cost * 100;
       w.marketingWeeks = MARKETING.weeks;
       note(
         s,
@@ -2263,6 +2534,7 @@ export function act(current: GameState, action: Action): GameState {
       const blocked = judgingBlocked(s, w);
       if (blocked) throw new Error(blocked);
       spend(s, `${w.label} judging entry`, JUDGING.cost);
+      (w.accounts ??= newAccounts()).promotionCents += JUDGING.cost * 100;
       w.judging = {
         remaining: JUDGING.weeks,
         score: Math.max(
@@ -2286,11 +2558,16 @@ export function act(current: GameState, action: Action): GameState {
       if (!w.bottles) throw new Error('This vintage is sold out.');
       const revenue = w.bottles * wholesalePrice(w, s.reputation, s);
       transaction(s, `${w.label} wholesale`, revenue);
+      recordWineSale(w, w.bottles, revenue);
       s.stats.sold += w.bottles;
       s.stats.revenue += revenue;
       s.reputation = Number(
-        (s.reputation + w.bottles * PRESTIGE_EARNINGS.wholesale).toFixed(2),
+        (
+          s.reputation +
+          w.bottles * qualityResponse(w.quality).wholesale
+        ).toFixed(2),
       );
+      trackQualitySales(s, w, w.bottles);
       if (w.produced === null)
         w.salesSinceTracking = (w.salesSinceTracking ?? 0) + w.bottles;
       w.bottles = 0;
@@ -2327,11 +2604,13 @@ export function act(current: GameState, action: Action): GameState {
 }
 
 export function serialize(s: GameState) {
-  return JSON.stringify(
-    { game: 'terroir', savedAt: new Date().toISOString(), state: s },
-    null,
-    2,
-  );
+  const envelope = {
+    game: 'terroir',
+    savedAt: new Date().toISOString(),
+    state: s,
+  };
+  const readable = JSON.stringify(envelope, null, 2);
+  return readable.length <= 2_000_000 ? readable : JSON.stringify(envelope);
 }
 export function deserialize(raw: string): GameState {
   if (raw.length > 2_000_000) throw new Error('Save file is too large.');
@@ -2632,6 +2911,10 @@ export function deserialize(raw: string): GameState {
   if (!result.success)
     throw new Error(
       'This is not a compatible Terroir save. Your current estate is safe.',
+    );
+  if (serialize(result.data.state).length > 2_000_000)
+    throw new Error(
+      'This save cannot fit after migration. Your current estate is safe; keep the original export.',
     );
   return result.data.state;
 }

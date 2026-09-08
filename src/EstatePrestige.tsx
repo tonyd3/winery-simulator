@@ -2,7 +2,8 @@ import { ChevronRight } from 'lucide-react';
 import { Icon, Modal } from './components';
 import {
   formatPrestige,
-  PRESTIGE_EARNINGS,
+  QUALITY_RESPONSES,
+  signedPrestige,
   PRESTIGE_TIERS,
   prestigeStanding,
 } from './prestige';
@@ -60,10 +61,29 @@ export function PrestigeDetails({
         </p>
       </div>
       <p className="modal-intro">
-        Every bottle sold builds your name: +{PRESTIGE_EARNINGS.retail} Prestige
-        in the shop, or +{PRESTIGE_EARNINGS.wholesale} through a distributor.
-        Emergency vineyard work costs up to 2 Prestige.
+        Wine quality determines the Prestige earned per bottle. Outstanding
+        releases build your name faster; shop sales below 60 points reduce
+        confidence. Prestige never falls below zero.
       </p>
+      <table className="quality-prestige-table">
+        <caption>Prestige per bottle sold</caption>
+        <thead>
+          <tr>
+            <th scope="col">Quality</th>
+            <th scope="col">Shop</th>
+            <th scope="col">Wholesale</th>
+          </tr>
+        </thead>
+        <tbody>
+          {QUALITY_RESPONSES.map((band) => (
+            <tr key={band.minimum}>
+              <th scope="row">{band.range}</th>
+              <td>{signedPrestige(band.retail)}</td>
+              <td>{signedPrestige(band.wholesale)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
       <p className="prestige-explainer">
         Prestige improves suggested prices, shopper interest, and visitor
         attendance, with smaller gains as your fame grows. Wine quality is still

@@ -40,3 +40,13 @@ export function wineBenefits(
     demand: (award?.demandBonus ?? 0) + (marketing ? MARKETING.demandBonus : 0),
   };
 }
+
+export function judgingOutlook(quality: number) {
+  const low = Math.max(0, Math.round(quality) - JUDGING.variation);
+  const high = Math.min(100, Math.round(quality) + JUDGING.variation);
+  return {
+    low,
+    high,
+    medalPossible: AWARDS.some((award) => high >= award.minimum),
+  };
+}

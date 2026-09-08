@@ -1,3 +1,7 @@
+import { demandContext, type DemandContext } from './game';
+import { FinanceReport } from './FinanceReport';
+import { qualityResponse, signedPrestige } from './prestige';
+import { releaseCount, harvestAdvice } from './game';
 import type { ResearchId } from './catalog';
 import { Investments } from './EstateInvestments';
 import { HarvestForecast } from './HarvestForecast';
@@ -60,7 +64,8 @@ export function PlotInspector({
   dispatch,
   selected,
   navigate,
-}: Props & { selected: number }) {
+  initialVariety,
+}: Props & { selected: number; initialVariety?: Variety }) {
   const plot = state.plots.find((p) => p.id === selected)!;
   const land = getLand(state, selected);
   const [clearing, setClearing] = useState(false);
@@ -69,7 +74,11 @@ export function PlotInspector({
       Number(REGIONS[land.region].signature.includes(b)) -
       Number(REGIONS[land.region].signature.includes(a)),
   );
-  const [variety, setVariety] = useState<Variety>(choices[0][0]);
+  const [variety, setVariety] = useState<Variety>(
+    choices.some(([id]) => id === initialVariety)
+      ? initialVariety!
+      : choices[0][0],
+  );
   const ready = readyToHarvest(plot, state.week);
   const harvested = plot.harvestedYear === calendar(state.week).year;
   const winter = calendar(state.week).season === 'Winter';
@@ -214,15 +223,7 @@ export function PlotInspector({
           )}
           <div className="parcel-tip">
             <Icon name={ready ? 'sun' : 'sprout'} size={19} />
-            <p>
-              {ready
-                ? 'A promising harvest. Pick now, or leave the grapes a little longer for more ripeness.'
-                : harvested
-                  ? 'A well-earned rest. These vines will grow again next spring.'
-                  : winter
-                    ? 'The vineyard is resting. Bud break begins in spring.'
-                    : 'A little care goes a long way. Tend your vines to improve the quality of your next harvest.'}
-            </p>
+            <p>{harvestAdvice(plot, state.week)}</p>
           </div>
           <button
             className="button primary wide"
@@ -550,14 +551,14 @@ function Fermentation({
                     : `TANK${ids.length > 1 ? 'S' : ''} ${ids.map((id) => String(id).padStart(2, '0')).join(' + ')}`}
                 </span>
                 <span
-                  className={`status-tag ${b?.stage === 'ready' ? 'ripe' : ''}`}
+                  className={`status-tag ${b && b.stage !== 'fermenting' && b.age === 8 ? 'ripe' : ''}`}
                 >
                   {b
                     ? b.stage === 'fermenting'
                       ? vinificationStage(b)
-                      : b.stage === 'aging'
-                        ? 'Aging'
-                        : 'Ready for reserves'
+                      : b.age === 8
+                        ? 'Peak maturity'
+                        : 'Aging automatically'
                     : 'Available'}
                 </span>
               </div>
@@ -692,9 +693,7 @@ function Fermentation({
                     <span>
                       {b.stage === 'fermenting'
                         ? `${b.remaining} ${b.remaining === 1 ? 'week' : 'weeks'} until ready for reserves`
-                        : b.stage === 'aging'
-                          ? `${b.age} / 8 weeks aged`
-                          : 'Cellar plan complete'}
+                        : `${b.age} / 8 weeks aged`}
                     </span>
                     <b>
                       {quality(b)}
@@ -710,22 +709,10 @@ function Fermentation({
                               b.remaining / vinificationWeeks(b.techniques)) *
                               100,
                           )
-                        : b.stage === 'aging'
-                          ? (b.age / 8) * 100
-                          : 100
+                        : (b.age / 8) * 100
                     }
                   />
                   <div className="tank-actions">
-                    {b.stage === 'ready' && (
-                      <button
-                        className="button secondary"
-                        onClick={() => dispatch({ type: 'age', id: b.id })}
-                      >
-                        {ids.length > 1
-                          ? `Age all ${ids.length} tanks`
-                          : 'Let it age'}
-                      </button>
-                    )}
                     <button
                       className="button primary"
                       disabled={
@@ -770,7 +757,8 @@ function Fermentation({
           Great wine starts with healthy, fully ripe grapes suited to their
           site. New batches gain up to {CELLAR_QUALITY.oakMaturity} points from
           oak aging or {CELLAR_QUALITY.steelMaturity} in steel over 8 weeks.
-          Move finished wine to reserves to free all of its tanks.
+          Maturation begins automatically after fermentation. Move wine to
+          reserves to stop maturation and free all of its tanks.
         </p>
       </div>
     </div>
@@ -781,15 +769,17 @@ function WineCard({
   wine: w,
   state,
   dispatch,
+  demandGroups,
 }: {
   wine: Wine;
   state: GameState;
   dispatch: Dispatch;
+  demandGroups: DemandContext;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(w.label);
   const [priceDraft, setPriceDraft] = useState<string | null>(null);
-  const forecast = demandForecast({ ...w, listed: true }, state);
+  const forecast = demandForecast({ ...w, listed: true }, state, demandGroups);
   return (
     <article className="wine-card">
       <div className="wine-card-main">
@@ -858,6 +848,13 @@ function WineCard({
           </p>
           <p className="wine-sales">
             <SalesCount wines={[w]} /> sold
+          </p>
+          <p className="fine-print">
+            <strong>{qualityResponse(w.quality).name}.</strong>{' '}
+            {qualityResponse(w.quality).text}{' '}
+            {signedPrestige(qualityResponse(w.quality).retail)} Prestige per
+            shop sale · {signedPrestige(qualityResponse(w.quality).wholesale)}{' '}
+            wholesale.
           </p>
           <details className="wine-recipe">
             <summary>Tasting notes & provenance</summary>
@@ -985,7 +982,12 @@ function WineCard({
         </div>
       </div>
       {w.bottles > 0 && (
-        <WinePromotion wine={w} state={state} dispatch={dispatch} />
+        <WinePromotion
+          wine={w}
+          state={state}
+          dispatch={dispatch}
+          demandGroups={demandGroups}
+        />
       )}
     </article>
   );
@@ -993,6 +995,7 @@ function WineCard({
 export function Market({ state, dispatch, navigate }: Props) {
   const [tab, setTab] = useState<'stock' | 'history'>('stock');
   const stock = state.wines.filter((w) => w.bottles > 0);
+  const demandGroups = demandContext(state);
   return (
     <div className="market-workspace">
       <nav className="cellar-tabs" aria-label="Wine shop views">
@@ -1008,7 +1011,7 @@ export function Market({ state, dispatch, navigate }: Props) {
           aria-current={tab === 'history' ? 'page' : undefined}
           onClick={() => setTab('history')}
         >
-          Wine history <span>{state.wines.length}</span>
+          Wine history <span>{releaseCount(state)}</span>
         </button>
       </nav>
       {tab === 'history' ? (
@@ -1032,6 +1035,7 @@ export function Market({ state, dispatch, navigate }: Props) {
                 <WineCard
                   key={w.id}
                   wine={w}
+                  demandGroups={demandGroups}
                   state={state}
                   dispatch={dispatch}
                 />
@@ -1163,6 +1167,35 @@ export function Journal({ state }: Props) {
           </strong>
         </div>
       </div>
+      <p className="quality-record">
+        Average wine sold:{' '}
+        <strong>
+          {state.stats.qualitySold
+            ? (state.stats.qualityPoints / state.stats.qualitySold).toFixed(1)
+            : '—'}
+          /100
+        </strong>{' '}
+        · {(state.stats.qualitySold ?? 0).toLocaleString()} bottles since
+        quality tracking began. Older sales are not reconstructed.
+      </p>
+      <FinanceReport state={state} />
+      <section className="event-history" aria-label="Estate event history">
+        <div className="section-line">
+          <h3>Estate events</h3>
+          <span className="subtle">Latest 200 important events</span>
+        </div>
+        {!state.events?.length && (
+          <p>Important estate events will be recorded here.</p>
+        )}
+        {state.events?.map((event, i) => (
+          <div className="event-row" key={i}>
+            <span>
+              Y{calendar(event.week).year} · W{calendar(event.week).week}
+            </span>
+            <p>{event.text}</p>
+          </div>
+        ))}
+      </section>
       <section>
         <div className="section-line">
           <h3>The estate ledger</h3>

@@ -78,3 +78,5 @@ Legacy collection studies retain original remaining time and grant the exact pro
 The saved project stores its contracted duration, remaining study weeks, and pause state. Save validation checks the project against its catalog maximum, completed prerequisites, duplicate licenses, known grapes, custom lineage, and inventory references. New-game studies and field trials persist across reloads without refunds or rerolls. See `tests/research-progression.test.ts` and `tests/expansion.test.ts`.
 
 The expanded [52-grape library](grape-library.md) includes the earlier ten world-grape additions and 18 more Italian and French selections, each with an individual study and new blending options. Legacy collection rewards are frozen to their original 24-grape catalog; all 28 additions need individual studies in older estates too. Current saves retain their licenses, completed studies, and active projects.
+
+Previously paid studies and trials retain their saved durations and remaining weeks when catalog pacing changes.
