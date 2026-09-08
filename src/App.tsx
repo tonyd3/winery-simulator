@@ -1,6 +1,6 @@
 import type { ResearchId } from './catalog';
 import { EstateToolbar } from './Holdings';
-import { plotId, estateIdForPlot, districtForPlot, DISTRICTS } from './estates';
+import { plotId, estateIdForPlot } from './estates';
 import './holdings.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -26,6 +26,10 @@ import {
 import EstateMap from './EstateMap';
 import RegionSetup from './Regions';
 import Research from './Research';
+import type { ResearchTab } from './Research';
+import { ResearchNotices, DiscoveryParcelChoice } from './ResearchNotices';
+import type { ResearchDestination } from './researchPlanning';
+import type { Upgrade } from './investments';
 import { ReleaseReveal } from './WinePresentation';
 import { liters, volume } from './winemaking';
 import { Cellar, Improvements, Journal, Market, PlotInspector } from './Panels';
@@ -35,9 +39,6 @@ import { PrestigeDetails, PrestigeResource } from './EstatePrestige';
 import {
   act,
   getEstate,
-  getLand,
-  getVariety,
-  plotPlantingCost,
   REGIONS,
   BACKUP_KEY,
   calendar,
@@ -119,26 +120,28 @@ export default function App() {
   const current = useRef(state);
   const [view, setView] = useState<View>('estate');
   const [researchFocus, setResearchFocus] = useState<ResearchId | undefined>();
+  const [researchTab, setResearchTab] = useState<ResearchTab>('projects');
+  const [navigationRevision, setNavigationRevision] = useState(0);
+  const [cellarTab, setCellarTab] = useState<'reserves' | 'fermentation'>(
+    'fermentation',
+  );
+  const [investmentFocus, setInvestmentFocus] = useState<Upgrade | undefined>();
+  const [grapeDestination, setGrapeDestination] = useState<string | null>(null);
   const [selection, setSelected] = useState(1);
   const selected = state.plots.some(
     (p) => p.id === selection && estateIdForPlot(p.id) === state.activeEstate,
   )
     ? selection
     : plotId(state.activeEstate);
-  const [plantingVariety, setPlantingVariety] = useState<string | null>(null);
-  const [plantingPlot, setPlantingPlot] = useState(0);
   const [plantingTarget, setPlantingTarget] = useState<{
     plot: number;
     variety: string;
   } | null>(null);
-  const plantingPlots = state.plots.filter((p) => p.owned && !p.variety);
-  const plantingChoice =
-    plantingPlots.find((p) => p.id === plantingPlot) ?? plantingPlots[0];
   const [buildLand, setBuildLand] = useState(false);
   const [speed, setSpeed] = useState(0);
-  const [modal, setModal] = useState<
-    'help' | 'settings' | 'prestige' | 'planting' | null
-  >(null);
+  const [modal, setModal] = useState<'help' | 'settings' | 'prestige' | null>(
+    null,
+  );
   const prestigeTrigger = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     // Opening makes the resource bar inert before the modal can capture focus.
@@ -211,12 +214,7 @@ export default function App() {
           setReveal(next.wines.at(-1)!);
         }
         if (action.type === 'advance') setToast(null);
-        if (next.bankruptcy) setSpeed(0);
-        if (
-          next.bankruptcy ||
-          (action.type === 'advance' && next.pendingEvents > 0)
-        )
-          setSpeed(0);
+        if (next.bankruptcy || next.pendingEvents > 0) setSpeed(0);
         if (
           action.type !== 'acknowledgeEvents' &&
           action.type !== 'bottle' &&
@@ -224,7 +222,13 @@ export default function App() {
           action.type !== 'price' &&
           action.type !== 'rename' &&
           action.type !== 'label' &&
-          action.type !== 'visitEstate'
+          action.type !== 'visitEstate' &&
+          ![
+            'planResearch',
+            'shortlistResearch',
+            'moveShortlist',
+            'dismissDiscovery',
+          ].includes(action.type)
         )
           notify(next.log[0].text);
         return true;
@@ -247,9 +251,35 @@ export default function App() {
   const navigate = useCallback((next: View, study?: ResearchId) => {
     setResearchFocus(study);
     setPlantingTarget(null);
+    setResearchTab('projects');
+    setCellarTab('fermentation');
+    setInvestmentFocus(undefined);
+    setNavigationRevision((n) => n + 1);
     setView(next);
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
+  const openResearchDestination = (destination: ResearchDestination) => {
+    if (destination.grape) {
+      setSpeed(0);
+      setGrapeDestination(destination.grape);
+      return;
+    }
+    navigate(destination.view, destination.study);
+    if (destination.nursery) setResearchTab('nursery');
+    if (destination.library) setResearchTab('library');
+    if (destination.reserves) setCellarTab('reserves');
+    if (destination.investment) {
+      setBuildLand(false);
+      setInvestmentFocus(destination.investment);
+    }
+  };
+  useEffect(() => {
+    if (view === 'improvements' && investmentFocus) {
+      const row = document.getElementById(`investment-${investmentFocus}`);
+      row?.scrollIntoView({ block: 'center', behavior: 'instant' });
+      row?.focus({ preventScroll: true });
+    }
+  }, [view, investmentFocus, navigationRevision]);
   useEffect(() => {
     if (!initial.warning && initial.hasSave) persist(current.current);
   }, [initial, persist]);
@@ -260,12 +290,28 @@ export default function App() {
     }
   }, [toast]);
   useEffect(() => {
-    if (!speed || modal || setup || reveal || state.bankruptcy) return;
+    if (
+      !speed ||
+      modal ||
+      setup ||
+      reveal ||
+      grapeDestination ||
+      state.bankruptcy
+    )
+      return;
     const timer = setInterval(() => {
       if (!dispatch({ type: 'advance' })) setSpeed(0);
     }, 6000 / speed);
     return () => clearInterval(timer);
-  }, [speed, dispatch, modal, setup, reveal, state.bankruptcy]);
+  }, [
+    speed,
+    dispatch,
+    modal,
+    setup,
+    reveal,
+    grapeDestination,
+    state.bankruptcy,
+  ]);
   useEffect(() => {
     const visibility = () => {
       if (document.hidden) setSpeed(0);
@@ -280,6 +326,7 @@ export default function App() {
         setReveal(null);
         setModal(null);
         setPlantingTarget(null);
+        setGrapeDestination(null);
         setSetup(null);
         setSaved(true);
         notify('Loaded the latest estate changes from your other tab.');
@@ -592,7 +639,7 @@ export default function App() {
             </div>
           </div>
         </div>
-        <main>
+        <main className={view === 'research' ? 'research-main' : undefined}>
           <div className="page-title-row">
             <div>
               <div className="breadcrumb">
@@ -730,6 +777,11 @@ export default function App() {
             </section>
           )}
           <div key={view} className="view-content">
+            <ResearchNotices
+              state={state}
+              dispatch={dispatch}
+              onDestination={openResearchDestination}
+            />
             {view === 'estate' ? (
               <>
                 <EstateToolbar
@@ -808,11 +860,19 @@ export default function App() {
                 </div>
               </>
             ) : view === 'cellar' ? (
-              <Cellar state={state} dispatch={dispatch} navigate={navigate} />
+              <Cellar
+                key={navigationRevision}
+                state={state}
+                dispatch={dispatch}
+                navigate={navigate}
+                initialTab={cellarTab}
+              />
             ) : view === 'market' ? (
               <Market state={state} dispatch={dispatch} navigate={navigate} />
             ) : view === 'improvements' ? (
               <Improvements
+                key={navigationRevision}
+                focusUpgrade={investmentFocus}
                 landOpen={buildLand}
                 onTabChange={setBuildLand}
                 state={state}
@@ -821,16 +881,12 @@ export default function App() {
               />
             ) : view === 'research' ? (
               <Research
+                key={navigationRevision}
                 state={state}
                 dispatch={dispatch}
-                navigate={navigate}
+                onDestination={openResearchDestination}
                 focusId={researchFocus}
-                onPlant={(variety) => {
-                  setSpeed(0);
-                  setPlantingVariety(variety);
-                  setPlantingPlot(plantingPlots[0]?.id ?? 0);
-                  setModal('planting');
-                }}
+                initialTab={researchTab}
               />
             ) : (
               <Journal state={state} dispatch={dispatch} navigate={navigate} />
@@ -857,6 +913,25 @@ export default function App() {
           </footer>
         </main>
       </div>
+      {grapeDestination && (
+        <DiscoveryParcelChoice
+          state={state}
+          grape={grapeDestination}
+          onClose={() => setGrapeDestination(null)}
+          onChoose={(id) => {
+            const regionEstate = estateIdForPlot(id);
+            if (
+              state.activeEstate !== regionEstate &&
+              !dispatch({ type: 'visitEstate', id: regionEstate })
+            )
+              return;
+            setGrapeDestination(null);
+            navigate('estate');
+            setSelected(id);
+            setPlantingTarget({ plot: id, variety: grapeDestination });
+          }}
+        />
+      )}
       {toast && (
         <div
           className={`toast ${toast.error ? 'error' : ''}`}
@@ -1046,75 +1121,6 @@ export default function App() {
               Start a new game
             </button>
           </div>
-        </Modal>
-      )}
-      {modal === 'planting' && plantingVariety && (
-        <Modal
-          title={`Plant ${getVariety(state, plantingVariety).name}`}
-          onClose={closeModal}
-        >
-          {plantingChoice ? (
-            <>
-              <p>
-                Choose an empty parcel. Review its climate fit and planting cost
-                before spending.
-              </p>
-              <label className="planting-destination">
-                Planting parcel
-                <select
-                  value={plantingChoice.id}
-                  onChange={(e) => setPlantingPlot(Number(e.target.value))}
-                >
-                  {plantingPlots.map((p) => (
-                    <option value={p.id} key={p.id}>
-                      {getEstate(state, estateIdForPlot(p.id)).name} ·{' '}
-                      {DISTRICTS[districtForPlot(p.id)]} ·{' '}
-                      {getLand(state, p.id).name} ·{' '}
-                      {money(plotPlantingCost(state, p, plantingVariety))}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                className="button primary"
-                onClick={() => {
-                  if (
-                    !dispatch({
-                      type: 'visitEstate',
-                      id: estateIdForPlot(plantingChoice.id),
-                    })
-                  )
-                    return;
-                  navigate('estate');
-                  setSelected(plantingChoice.id);
-                  setPlantingTarget({
-                    plot: plantingChoice.id,
-                    variety: plantingVariety,
-                  });
-                  closeModal();
-                }}
-              >
-                Review planting <ArrowRight size={16} />
-              </button>
-            </>
-          ) : (
-            <>
-              <p>
-                All owned parcels are planted. Buy another parcel or clear vines
-                before planting this variety.
-              </p>
-              <button
-                className="button secondary"
-                onClick={() => {
-                  closeModal();
-                  setBuildLand(true);
-                  navigate('improvements');
-                }}
-              >
-                View available land
-              </button>
-            </>
-          )}
         </Modal>
       )}
       {modal === 'prestige' && (

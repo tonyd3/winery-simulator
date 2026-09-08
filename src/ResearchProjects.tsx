@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   Check,
@@ -23,19 +23,25 @@ import {
   studySlotCost,
   STUDY_SLOTS,
 } from './researchProgression';
-import { studyWeeks } from './investments';
+import { studyWeeks, upgradeActive } from './investments';
 import './research.css';
 import { matchesSearch } from './search';
+import { ShortlistButton, StudyPayoff } from './ResearchDecisions';
+import type { ResearchNavigation } from './ResearchDecisions';
+import { discoveryDestination } from './researchPlanning';
+import { ResearchExperiment } from './ResearchExperiments';
 
 export function StudyAction({
   state,
   dispatch,
   id,
+  onFocus,
+  onDestination,
 }: {
   state: GameState;
   dispatch: Dispatch;
   id: ResearchId;
-}) {
+} & Partial<ResearchNavigation>) {
   const r = researchTerms(state, id);
   const done = researchComplete(state, id);
   const running = activeStudies(state).find((p) => p.id === id);
@@ -43,6 +49,7 @@ export function StudyAction({
   return (
     <div className="study-purchase">
       <strong>{done ? 'Learned' : money(r.cost)}</strong>
+      {running && <small>Paid upfront</small>}
       {!done && (
         <>
           <span>
@@ -56,13 +63,17 @@ export function StudyAction({
       )}
       <button
         className={`button ${done ? 'secondary' : 'primary'}`}
-        disabled={Boolean(reason)}
-        aria-label={`${done ? 'Completed' : running ? 'Studying' : 'Research'} ${r.name}`}
-        onClick={() => dispatch({ type: 'research', id })}
+        disabled={done ? !onDestination : Boolean(reason)}
+        aria-label={`${done ? 'Use discovery from' : running ? 'Studying' : 'Research'} ${r.name}`}
+        onClick={() =>
+          done
+            ? onDestination?.(discoveryDestination(id))
+            : dispatch({ type: 'research', id })
+        }
       >
         {done ? (
           <>
-            <Check size={15} /> Completed
+            <Check size={15} /> Use discovery
           </>
         ) : running ? (
           running.paused ? (
@@ -76,7 +87,23 @@ export function StudyAction({
           </>
         )}
       </button>
-      {!done && !running && reason && <small>{reason}</small>}
+      {!done && !running && reason && (
+        <small>
+          {reason.startsWith('Requires ') && onFocus ? (
+            <button
+              className="text-button"
+              onClick={() =>
+                onFocus(r.requires.find((p) => !researchComplete(state, p))!)
+              }
+            >
+              {reason} <ArrowRight size={12} />
+            </button>
+          ) : (
+            reason
+          )}
+        </small>
+      )}
+      <ShortlistButton state={state} dispatch={dispatch} id={id} />
     </div>
   );
 }
@@ -99,10 +126,14 @@ export function CurrentStudies({
           <h3>
             {studies.length} / {slots} study slots occupied
           </h3>
-          <p>
-            Studies run in parallel. Cash and knowledge are paid upfront. Paused
-            studies keep their slots; nursery trials run separately.
-          </p>
+          <details className="study-help">
+            <summary>How studies work</summary>
+            <p>
+              Cash and knowledge are paid upfront. Studies run in parallel;
+              paused studies keep their slots. Nursery trials run separately.
+              Abandoning loses progress with no refund.
+            </p>
+          </details>
         </div>
         <div className="study-slot-purchase">
           <button
@@ -120,7 +151,7 @@ export function CurrentStudies({
               ? `Maximum of ${STUDY_SLOTS.max} study slots`
               : state.cash < cost
                 ? `Need ${money(cost - state.cash)} more · No weekly upkeep`
-                : `One-time cost · No weekly upkeep · Up to ${STUDY_SLOTS.max} slots`}
+                : `No weekly upkeep · Up to ${STUDY_SLOTS.max} slots`}
           </small>
         </div>
       </div>
@@ -163,9 +194,7 @@ function ActiveStudy({
           <span>
             {active.paused ? 'Paused · ' : ''}
             {researchDuration(weeks)} remaining
-            {state.upgrades.includes('researchLab')
-              ? ' at current lab speed'
-              : ''}
+            {upgradeActive(state, 'researchLab') ? ' at current lab speed' : ''}
           </span>
           <Progress
             value={
@@ -181,6 +210,11 @@ function ActiveStudy({
               preserved.
             </small>
           ) : null}
+          <ResearchExperiment
+            state={state}
+            dispatch={dispatch}
+            id={active.id}
+          />
         </div>
         <div className="study-controls">
           <button
@@ -240,31 +274,38 @@ export function ResearchProjects({
   state,
   dispatch,
   focusId,
+  onFocus,
+  onDestination,
 }: {
   state: GameState;
   dispatch: Dispatch;
   focusId?: ResearchId;
-}) {
+} & ResearchNavigation) {
+  const [selectedId, setSelectedId] = useState(focusId);
+  const focusedRow = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (selectedId) focusedRow.current?.focus({ preventScroll: true });
+  }, [selectedId]);
   const [department, setDepartment] = useState<ResearchDepartment>(
     focusId ? RESEARCH[focusId].department : 'vineyard',
   );
-  const [query, setQuery] = useState(focusId ? RESEARCH[focusId].name : '');
+  const [query, setQuery] = useState('');
   const [status, setStatus] = useState('all');
-  const completed = RESEARCH_IDS.filter((id) =>
-    researchComplete(state, id),
-  ).length;
   const rows = RESEARCH_IDS.filter((id) => {
     const r = RESEARCH[id],
       done = researchComplete(state, id);
-    const matches = query.trim()
-      ? matchesSearch(
-          `${r.name} ${r.text} ${r.requires.map((p) => RESEARCH[p].name).join(' ')}`,
-          query,
-        )
-      : r.department === department;
+    const matches = selectedId
+      ? id === selectedId
+      : query.trim()
+        ? matchesSearch(
+            `${r.name} ${r.text} ${r.requires.map((p) => RESEARCH[p].name).join(' ')}`,
+            query,
+          )
+        : r.department === department;
     return (
       matches &&
-      (status === 'all' ||
+      (selectedId ||
+        status === 'all' ||
         (status === 'learned'
           ? done
           : status === 'ready'
@@ -274,22 +315,6 @@ export function ResearchProjects({
   });
   return (
     <section aria-label="Research projects">
-      <div className="research-section-heading">
-        <div>
-          <span className="eyebrow">
-            THE WINEMAKER’S NOTEBOOK · {RESEARCH_IDS.length} DISCOVERIES
-          </span>
-          <h2>Build your body of knowledge.</h2>
-        </div>
-        <span>
-          {completed} / {RESEARCH_IDS.length} learned, including known grapes
-        </span>
-      </div>
-      <p className="research-principles">
-        A discovery unlocks the right to invest; buildings, staff and planting
-        are paid separately. A game year lasts 12 weeks. Choose a direction your
-        estate can afford to pursue.
-      </p>
       <nav className="research-branches" aria-label="Research branches">
         {Object.entries(RESEARCH_DEPARTMENTS).map(([id, label]) => {
           const ids = RESEARCH_IDS.filter((r) => RESEARCH[r].department === id);
@@ -301,6 +326,7 @@ export function ResearchProjects({
               onClick={() => {
                 setDepartment(id as ResearchDepartment);
                 setQuery('');
+                setSelectedId(undefined);
               }}
             >
               {label}
@@ -318,7 +344,10 @@ export function ResearchProjects({
           <input
             aria-label="Search all research"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelectedId(undefined);
+            }}
             placeholder="Find a technique, grape or unlock…"
           />
         </label>
@@ -327,15 +356,33 @@ export function ResearchProjects({
           <select
             aria-label="Research availability"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setSelectedId(undefined);
+            }}
           >
             <option value="all">All studies</option>
-            <option value="ready">Affordable now</option>
+            <option value="ready">Can start now</option>
             <option value="unlearned">Not learned</option>
             <option value="learned">Learned</option>
           </select>
         </label>
       </div>
+      {selectedId && (
+        <div className="research-focus">
+          <span>Viewing one study</span>
+          <button
+            className="text-button"
+            onClick={() => {
+              setSelectedId(undefined);
+              setQuery('');
+              setStatus('all');
+            }}
+          >
+            Back to {RESEARCH_DEPARTMENTS[department]}
+          </button>
+        </div>
+      )}
       <div className="research-ledger">
         {rows.map((id) => {
           const r = RESEARCH[id],
@@ -345,6 +392,8 @@ export function ResearchProjects({
               className={`research-row ${done ? 'learned' : ''}`}
               key={id}
               aria-label={r.name}
+              ref={id === selectedId ? focusedRow : undefined}
+              tabIndex={id === selectedId ? -1 : undefined}
             >
               <div className="study-description">
                 <span className="eyebrow">
@@ -361,8 +410,7 @@ export function ResearchProjects({
                           className={`text-button ${researchComplete(state, p) ? 'learned' : ''}`}
                           key={p}
                           onClick={() => {
-                            setQuery(RESEARCH[p].name);
-                            setStatus('all');
+                            onFocus(p);
                           }}
                         >
                           {researchComplete(state, p) && <Check size={12} />}{' '}
@@ -374,8 +422,25 @@ export function ResearchProjects({
                     <span>Foundation · no prior study</span>
                   )}
                 </div>
+                <StudyPayoff
+                  state={state}
+                  id={id}
+                  onDestination={onDestination}
+                />
+                {!activeStudies(state).some((p) => p.id === id) && !done && (
+                  <ResearchExperiment
+                    state={state}
+                    dispatch={dispatch}
+                    id={id}
+                  />
+                )}
               </div>
-              <StudyAction state={state} dispatch={dispatch} id={id} />
+              <StudyAction
+                state={state}
+                dispatch={dispatch}
+                id={id}
+                onDestination={onDestination}
+              />
             </article>
           );
         })}

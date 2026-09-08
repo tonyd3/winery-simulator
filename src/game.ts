@@ -20,7 +20,17 @@ import {
   studySlotCount,
   studySlotCost,
   activeStudies,
+  INTRO_BREEDING,
+  introductoryCrossPermission,
+  breedingPreview,
 } from './researchProgression';
+import {
+  EXPERIMENT_IDS,
+  FIELD_EXPERIMENT_IDS,
+  RESEARCH_EXPERIMENTS,
+  RESEARCH_GOAL_IDS,
+} from './catalog';
+import type { ResearchExperimentId, ResearchGoalId } from './catalog';
 import {
   UPGRADES,
   UPGRADE_IDS,
@@ -53,6 +63,7 @@ import {
   cellarTechniquesSchema,
   vinificationWeeks,
   vinificationStage,
+  techniqueKey,
 } from './cellarTechniques';
 import type { CellarTechnique } from './cellarTechniques';
 import {
@@ -253,6 +264,15 @@ const researchProjectSchema = z
     remaining: z.number().int().min(1).max(96),
     duration: z.number().int().min(1).max(96).optional(),
     paused: z.boolean().default(false),
+    experiment: z
+      .object({
+        plotId: z.number().int().min(1).max(192),
+        variety: z.string(),
+        observed: z.number().int().min(0).max(2),
+        started: z.number().int().min(1).max(100000),
+      })
+      .strict()
+      .optional(),
     legacyGrapes: z
       .array(z.string().refine((id) => Object.hasOwn(VARIETIES, id)))
       .max(24)
@@ -386,6 +406,21 @@ export const stateSchema = z
       .array(researchProjectSchema)
       .max(STUDY_SLOTS.max - 1)
       .default([]),
+    researchGoal: z.enum(RESEARCH_GOAL_IDS).nullable().default(null),
+    researchShortlist: z.array(z.enum(RESEARCH_IDS)).max(5).default([]),
+    unseenDiscoveries: z
+      .array(z.string().max(60))
+      .max(RESEARCH_IDS.length + 60)
+      .default([]),
+    experimentCredits: z
+      .array(z.enum(EXPERIMENT_IDS))
+      .max(EXPERIMENT_IDS.length)
+      .default([]),
+    introCrossId: z
+      .string()
+      .regex(/^cross-[1-9]\d*$/)
+      .nullable()
+      .default(null),
     hybrids: z.array(hybridSchema).max(60),
     breedingProject: z
       .object({
@@ -514,6 +549,27 @@ export const stateSchema = z
       fail('Invalid research progression.');
     const studies = activeStudies(s);
     if (
+      new Set(s.researchShortlist).size !== s.researchShortlist.length ||
+      s.researchShortlist.some(
+        (id) => researchComplete(s, id) || studies.some((p) => p.id === id),
+      )
+    )
+      fail('Invalid research shortlist.');
+    if (
+      new Set(s.unseenDiscoveries).size !== s.unseenDiscoveries.length ||
+      s.unseenDiscoveries.some(
+        (id) => !s.research.includes(id as ResearchId) && !hybridIds.has(id),
+      )
+    )
+      fail('Invalid discovery notices.');
+    if (
+      new Set(s.experimentCredits).size !== s.experimentCredits.length ||
+      s.experimentCredits.some((id) =>
+        RESEARCH[id].requires.some((p) => !s.research.includes(p)),
+      )
+    )
+      fail('Invalid research experiments.');
+    if (
       studies.length > s.researchSlots ||
       new Set(studies.map((p) => p.id)).size !== studies.length ||
       studies.some(
@@ -525,13 +581,42 @@ export const stateSchema = z
       )
     )
       fail('Invalid research project.');
-    if (s.hybrids.length && !s.research.includes('breeding'))
+    for (const project of studies) {
+      const e = project.experiment;
+      if (
+        e &&
+        (!(FIELD_EXPERIMENT_IDS as readonly string[]).includes(project.id) ||
+          s.experimentCredits.includes(project.id as ResearchExperimentId) ||
+          !s.plots.some((p) => p.id === e.plotId && p.owned) ||
+          !known.has(e.variety) ||
+          e.started > s.week ||
+          e.observed > s.week - e.started)
+      )
+        fail('Invalid field experiment.');
+    }
+    const intro =
+      s.hybrids.find((h) => h.id === s.introCrossId) ??
+      (s.breedingProject?.result.id === s.introCrossId
+        ? s.breedingProject.result
+        : null);
+    if (
+      s.introCrossId &&
+      (!intro ||
+        !s.research.includes('ampelography') ||
+        intro.trait === 'finesse' ||
+        intro.parents.some((p) => !REGIONS[s.region].starters.includes(p)))
+    )
+      fail('Invalid introductory cross.');
+    if (
+      s.hybrids.some((h) => h.id !== s.introCrossId) &&
+      !s.research.includes('breeding')
+    )
       fail('The nursery has not been researched.');
     if (s.breedingProject) {
       const b = s.breedingProject,
         h = b.result;
       if (
-        !s.research.includes('breeding') ||
+        (!s.research.includes('breeding') && h.id !== s.introCrossId) ||
         known.has(h.id) ||
         Number(h.id.slice(6)) >= s.nextHybrid ||
         h.parents[0] === h.parents[1] ||
@@ -739,6 +824,16 @@ function compactWineHistory(s: GameState) {
 }
 
 export type Action =
+  | { type: 'planResearch'; goal: ResearchGoalId | null }
+  | { type: 'shortlistResearch'; id: ResearchId; add: boolean }
+  | { type: 'moveShortlist'; id: ResearchId; direction: -1 | 1 }
+  | { type: 'dismissDiscovery'; id: string }
+  | {
+      type: 'fieldExperiment';
+      id: (typeof FIELD_EXPERIMENT_IDS)[number];
+      plotId: number;
+    }
+  | { type: 'cellarExperiment'; reserveIds: [number, number] }
   | { type: 'expandCellar' }
   | { type: 'buyTank'; count?: number }
   | { type: 'acquireEstate'; region: RegionId; name: string }
@@ -755,6 +850,7 @@ export type Action =
       parents: [Variety, Variety];
       trait: BreedingTrait;
       name: string;
+      introductory?: boolean;
     }
   | { type: 'uproot'; id: number }
   | { type: 'tend'; id: number }
@@ -826,6 +922,11 @@ export function newGame(
     researchProject: null,
     researchSlots: 1,
     additionalResearchProjects: [],
+    researchGoal: null,
+    researchShortlist: [],
+    unseenDiscoveries: [],
+    experimentCredits: [],
+    introCrossId: null,
     hybrids: [],
     breedingProject: null,
     nextHybrid: 1,
@@ -1046,6 +1147,48 @@ export function researchBlocked(s: GameState, id: ResearchId): string | null {
     return `Need ${r.knowledge - s.knowledge} more knowledge`;
   if (s.cash < r.cost) return `Need ${money(r.cost - s.cash)} more`;
   return null;
+}
+
+export function fieldExperimentEligible(
+  s: GameState,
+  id: string,
+  plotId: number,
+  variety?: string,
+) {
+  const p = s.plots.find((p) => p.id === plotId);
+  if (
+    !p?.owned ||
+    !p.variety ||
+    (variety && p.variety !== variety) ||
+    p.health < 70
+  )
+    return false;
+  const land = getLand(s, p.id);
+  const fit = suitability(s, p.variety, land.soil, land.region);
+  return fit.soilMatch && (id !== 'adaptation' || fit.mismatch > 0.5);
+}
+export function cellarExperimentEligible(s: GameState, ids: number[]) {
+  if (ids.length !== 2 || new Set(ids).size !== 2) return false;
+  const lots = ids.map((id) => s.reserves.find((r) => r.id === id));
+  if (
+    lots.some(
+      (r) => !r || r.components.length !== 1 || volume(r.components) < 750,
+    )
+  )
+    return false;
+  const [a, b] = lots.map((r) => r!.components[0]);
+  return Boolean(
+    a.maturation &&
+    b.maturation &&
+    a.techniques &&
+    b.techniques &&
+    a.variety === b.variety &&
+    a.year === b.year &&
+    (a.estateId ?? 1) === (b.estateId ?? 1) &&
+    a.maturation.vessel !== b.maturation.vessel &&
+    a.maturation.weeks === b.maturation.weeks &&
+    techniqueKey(a.techniques) === techniqueKey(b.techniques),
+  );
 }
 export const tankCount = (s: Pick<GameState, 'cellar'>) =>
   s.cellar.tanks.length;
@@ -1417,6 +1560,11 @@ export function act(current: GameState, action: Action): GameState {
       : structuredClone(current);
   s.researchSlots ??= 1;
   s.additionalResearchProjects ??= [];
+  s.researchGoal ??= null;
+  s.researchShortlist ??= [];
+  s.unseenDiscoveries ??= [];
+  s.experimentCredits ??= [];
+  s.introCrossId ??= null;
   const setStudies = (projects: z.infer<typeof researchProjectSchema>[]) => {
     s.researchProject = projects[0] ?? null;
     s.additionalResearchProjects = projects.slice(1);
@@ -1427,6 +1575,37 @@ export function act(current: GameState, action: Action): GameState {
       id === undefined ? studies[0] : studies.find((p) => p.id === id);
     if (!project) throw new Error('This study is no longer in progress.');
     return project;
+  };
+  const completeStudy = (project: z.infer<typeof researchProjectSchema>) => {
+    const id = project.id;
+    s.research.push(id);
+    s.unseenDiscoveries.push(id);
+    s.grapeLicenses = [
+      ...new Set([...s.grapeLicenses, ...(project.legacyGrapes ?? [])]),
+    ];
+    s.researchShortlist = s.researchShortlist.filter(
+      (planned) => !researchComplete(s, planned),
+    );
+    note(
+      s,
+      `${RESEARCH[id].name} completed. ${RESEARCH[id].text}`,
+      'good',
+      true,
+    );
+  };
+  const creditExperiment = (
+    project: z.infer<typeof researchProjectSchema>,
+    id: ResearchExperimentId,
+  ) => {
+    s.experimentCredits.push(id);
+    const saved = Math.min(project.remaining, RESEARCH_EXPERIMENTS[id].bonus);
+    project.remaining -= saved;
+    delete project.experiment;
+    note(
+      s,
+      `${RESEARCH_EXPERIMENTS[id].name} finished. ${saved} study weeks saved on ${RESEARCH[id].name}.`,
+      'good',
+    );
   };
   const getPlot = (id: number) => {
     const p = s.plots.find((p) => p.id === id);
@@ -1542,18 +1721,18 @@ export function act(current: GameState, action: Action): GameState {
         activeStudies(s).filter((project) => {
           if (project.paused) return true;
           project.remaining -= studySpeed;
+          if (project.experiment && project.remaining > 0) {
+            const e = project.experiment;
+            if (
+              calendar(s.week).season !== 'Winter' &&
+              fieldExperimentEligible(s, project.id, e.plotId, e.variety)
+            )
+              e.observed++;
+            if (e.observed >= 3)
+              creditExperiment(project, project.id as ResearchExperimentId);
+          }
           if (project.remaining > 0) return true;
-          const id = project.id;
-          s.research.push(id);
-          s.grapeLicenses = [
-            ...new Set([...s.grapeLicenses, ...(project.legacyGrapes ?? [])]),
-          ];
-          note(
-            s,
-            `${RESEARCH[id].name} completed. ${RESEARCH[id].text}`,
-            'good',
-            true,
-          );
+          completeStudy(project);
           return false;
         }),
       );
@@ -1566,6 +1745,7 @@ export function act(current: GameState, action: Action): GameState {
         const h = s.breedingProject.result;
         h.created = s.week;
         s.hybrids.push(h);
+        s.unseenDiscoveries.push(h.id);
         s.breedingProject = null;
         note(
           s,
@@ -1763,6 +1943,105 @@ export function act(current: GameState, action: Action): GameState {
       transaction(s, 'Weekly estate upkeep', -bill);
       break;
     }
+    case 'planResearch': {
+      if (action.goal !== null && !RESEARCH_GOAL_IDS.includes(action.goal))
+        throw new Error('Choose a research outcome.');
+      s.researchGoal = action.goal;
+      break;
+    }
+    case 'shortlistResearch': {
+      if (!RESEARCH_IDS.includes(action.id)) throw new Error('Unknown study.');
+      if (!action.add)
+        s.researchShortlist = s.researchShortlist.filter(
+          (id) => id !== action.id,
+        );
+      else {
+        if (
+          researchComplete(s, action.id) ||
+          activeStudies(s).some((p) => p.id === action.id)
+        )
+          throw new Error('This study is already learned or underway.');
+        if (s.researchShortlist.includes(action.id))
+          throw new Error('This study is already on your shortlist.');
+        if (s.researchShortlist.length >= 5)
+          throw new Error('Your shortlist holds up to five studies.');
+        s.researchShortlist.push(action.id);
+      }
+      break;
+    }
+    case 'moveShortlist': {
+      const from = s.researchShortlist.indexOf(action.id),
+        to = from + action.direction;
+      if (
+        from < 0 ||
+        ![-1, 1].includes(action.direction) ||
+        to < 0 ||
+        to >= s.researchShortlist.length
+      )
+        throw new Error('This study cannot move further.');
+      [s.researchShortlist[from], s.researchShortlist[to]] = [
+        s.researchShortlist[to],
+        s.researchShortlist[from],
+      ];
+      break;
+    }
+    case 'dismissDiscovery': {
+      s.unseenDiscoveries = s.unseenDiscoveries.filter(
+        (id) => id !== action.id,
+      );
+      break;
+    }
+    case 'fieldExperiment': {
+      if (!FIELD_EXPERIMENT_IDS.includes(action.id))
+        throw new Error('Choose a field experiment.');
+      const project = getStudy(action.id);
+      if (
+        project.paused ||
+        project.experiment ||
+        s.experimentCredits.includes(action.id)
+      )
+        throw new Error(
+          'Resume the study, or finish its existing experiment first. Each bonus is available once.',
+        );
+      if (!fieldExperimentEligible(s, action.id, action.plotId))
+        throw new Error(
+          'Choose a healthy parcel on matching soil for this experiment.',
+        );
+      project.experiment = {
+        plotId: action.plotId,
+        variety: getPlot(action.plotId).variety!,
+        observed: 0,
+        started: s.week,
+      };
+      note(
+        s,
+        `${RESEARCH_EXPERIMENTS[action.id].name} started. Observe three growing-season weeks while the study runs.`,
+      );
+      break;
+    }
+    case 'cellarExperiment': {
+      const project = getStudy('sensory_science');
+      if (project.paused || s.experimentCredits.includes('sensory_science'))
+        throw new Error(
+          'Resume Sensory science; its comparison bonus is available once.',
+        );
+      if (!cellarExperimentEligible(s, action.reserveIds))
+        throw new Error(
+          'Choose matching oak and steel reserves with at least 750 mL each.',
+        );
+      for (const id of action.reserveIds)
+        take(
+          s.reserves.find((r) => r.id === id)!,
+          750,
+        );
+      s.reserves = s.reserves.filter((r) => volume(r.components) > 0);
+      creditExperiment(project, 'sensory_science');
+      if (project.remaining <= 0) {
+        completeStudy(project);
+        setStudies(activeStudies(s).filter((p) => p.id !== project.id));
+      }
+      break;
+    }
     case 'buyStudySlot': {
       if (studySlotCount(s) >= STUDY_SLOTS.max)
         throw new Error(
@@ -1785,6 +2064,9 @@ export function act(current: GameState, action: Action): GameState {
       const r = researchTerms(s, action.id);
       spend(s, r.name, r.cost);
       s.knowledge -= r.knowledge;
+      s.researchShortlist = s.researchShortlist.filter(
+        (id) => id !== action.id,
+      );
       setStudies([
         ...activeStudies(s),
         {
@@ -1816,7 +2098,7 @@ export function act(current: GameState, action: Action): GameState {
       break;
     }
     case 'breed': {
-      if (!s.research.includes('breeding'))
+      if (!action.introductory && !s.research.includes('breeding'))
         throw new Error('Research Cross-pollination first.');
       if (s.breedingProject)
         throw new Error('Your nursery already has a trial in progress.');
@@ -1840,24 +2122,24 @@ export function act(current: GameState, action: Action): GameState {
         throw new Error('Choose two different, unlocked parent varieties.');
       if (!Object.hasOwn(TRAITS, action.trait))
         throw new Error('Choose a breeding trait.');
-      const permission = breedingPermission(s, action.parents, action.trait);
+      const permission = action.introductory
+        ? introductoryCrossPermission(s, action.parents, action.trait)
+        : breedingPermission(s, action.parents, action.trait);
       if (permission) throw new Error(permission);
-      if (s.knowledge < BREEDING.knowledge)
-        throw new Error(
-          `A breeding trial needs ${BREEDING.knowledge} knowledge.`,
-        );
-      spend(s, 'Breeding trial', BREEDING.cost);
-      s.knowledge -= BREEDING.knowledge;
+      const terms = action.introductory ? INTRO_BREEDING : BREEDING;
+      if (s.knowledge < terms.knowledge)
+        throw new Error(`A breeding trial needs ${terms.knowledge} knowledge.`);
+      spend(
+        s,
+        action.introductory ? 'Introductory breeding trial' : 'Breeding trial',
+        terms.cost,
+      );
+      s.knowledge -= terms.knowledge;
       const [a, b] = action.parents.map((p) => getVariety(s, p));
       const trait = action.trait;
-      const meanHeat = (a.heat + b.heat) / 2;
-      const heat =
-        trait === 'climate'
-          ? meanHeat +
-            Math.sign(REGIONS[s.region].heat - meanHeat) *
-              Math.min(1, Math.abs(REGIONS[s.region].heat - meanHeat))
-          : meanHeat;
-      const duration = breedingWeeks(s);
+      const duration = action.introductory
+        ? INTRO_BREEDING.weeks
+        : breedingWeeks(s);
       // Draw inheritance now and persist the result so reloads cannot reroll a trial.
       const inherited = random(s) < 0.5 ? a : b;
       const result = {
@@ -1865,46 +2147,16 @@ export function act(current: GameState, action: Action): GameState {
         name,
         color: inherited.color,
         wineType: inherited.wineType,
-        planting: Math.min(
-          1400,
-          Math.round((a.planting + b.planting) / 2) + 150,
-        ),
         preferred: inherited.preferred,
         note: `An estate crossing selected for ${TRAITS[trait].name.toLowerCase()}.`,
-        heat,
-        resilience: Math.max(
-          0,
-          Math.min(
-            7,
-            Math.round((a.resilience + b.resilience) / 2) +
-              (trait === 'resilience' ? 2 : trait === 'finesse' ? -1 : 0),
-          ),
-        ),
-        finesse: Math.max(
-          -2,
-          Math.min(
-            8,
-            Math.round((a.finesse + b.finesse) / 2) +
-              (trait === 'finesse' ? 3 : trait === 'resilience' ? -1 : 0),
-          ),
-        ),
-        yieldFactor: Math.max(
-          0.75,
-          Math.min(
-            1.1,
-            Math.round(
-              ((a.yieldFactor + b.yieldFactor) / 2 -
-                (trait === 'finesse' ? 0.08 : trait === 'climate' ? 0.03 : 0)) *
-                100,
-            ) / 100,
-          ),
-        ),
+        ...breedingPreview(s, action.parents, trait),
         collection: 'discovery' as const,
         parents: action.parents,
         trait,
         created: s.week,
       };
       s.breedingProject = { result, remaining: duration, duration };
+      if (action.introductory) s.introCrossId = result.id;
       note(
         s,
         `${name}: ${a.name} × ${b.name} trial started. Ready in ${studyWeeks(s, duration)} weeks.`,

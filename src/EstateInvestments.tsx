@@ -43,15 +43,17 @@ export function Investments({
   dispatch,
   onLand,
   onResearch,
+  focusUpgrade,
 }: {
   state: GameState;
   dispatch: Dispatch;
   onLand: () => void;
   onResearch: (id?: ResearchId) => void;
+  focusUpgrade?: Upgrade;
 }) {
   const [department, setDepartment] = useState<
     InvestmentDepartment | 'all' | 'equipment'
-  >('all');
+  >(focusUpgrade ? UPGRADES[focusUpgrade].category : 'all');
   const visitors = hospitalityForecast(state);
   const annual = annualHospitalityForecast(state);
   const running = state.upgrades.filter(
@@ -223,6 +225,8 @@ function InvestmentRow({
     <article
       className={`investment-row ${owned ? 'owned' : ''}`}
       aria-label={u.name}
+      id={`investment-${id}`}
+      tabIndex={-1}
     >
       <div className="investment-symbol">
         <Icon size={25} strokeWidth={1.5} />

@@ -917,7 +917,7 @@ export const TECHNIQUES = {
     1200,
     6,
     [],
-    'Gain 2 knowledge each week. Unlocks the compost program for purchase, individual studies of classic grapes, and nursery propagation.',
+    'Gain 2 knowledge each week. Unlocks the compost program for purchase, classic grape studies, nursery propagation, and a one-time introductory cross of your founding grapes.',
   ),
   heritage: study(
     'vineyard',
@@ -1246,6 +1246,41 @@ export const BREEDING = {
   weeks: 24,
   selectedWeeks: 18,
 };
+export const RESEARCH_GOAL_IDS = [
+  'first_cross',
+  'tasting_room',
+  'vintages',
+  'fermentation',
+  'rare_grapes',
+  'fine_grapes',
+] as const;
+export type ResearchGoalId = (typeof RESEARCH_GOAL_IDS)[number];
+export const FIELD_EXPERIMENT_IDS = ['soil_mapping', 'adaptation'] as const;
+export const EXPERIMENT_IDS = [
+  ...FIELD_EXPERIMENT_IDS,
+  'sensory_science',
+] as const;
+export type ResearchExperimentId = (typeof EXPERIMENT_IDS)[number];
+export const RESEARCH_EXPERIMENTS = {
+  soil_mapping: {
+    name: 'Soil observation',
+    weeks: 3,
+    bonus: 3,
+    text: 'Observe a soil-matched parcel with at least 70% vine health for 3 growing-season weeks during this study.',
+  },
+  adaptation: {
+    name: 'Climate field trial',
+    weeks: 3,
+    bonus: 4,
+    text: 'Observe a grape outside its ideal climate on matching soil, with at least 70% vine health, for 3 growing-season weeks during this study.',
+  },
+  sensory_science: {
+    name: 'Oak & steel comparison',
+    weeks: 0,
+    bonus: 3,
+    text: 'Taste 750 mL from each of two single-component reserves: one oak, one steel, with the same grape, vintage, estate, aging weeks, and cellar techniques.',
+  },
+} as const;
 export const TRAITS = {
   climate: {
     name: 'Regional adaptation',

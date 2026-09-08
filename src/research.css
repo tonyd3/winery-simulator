@@ -83,6 +83,7 @@
   display: block;
   font-size: 11px;
   margin-top: 7px;
+  white-space: nowrap;
 }
 .research-tools {
   display: flex;
@@ -134,14 +135,23 @@
   color: var(--green);
 }
 .study-purchase {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 9px;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+  gap: 9px 14px;
+  width: 100%;
   min-width: 0;
 }
 .study-purchase > strong {
-  font: 500 25px var(--serif);
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  font: 500 23px var(--serif);
+}
+.study-purchase > span,
+.study-purchase > small,
+.study-purchase > .text-button {
+  grid-column: 1 / -1;
 }
 .study-purchase > span,
 .study-purchase small {
@@ -149,8 +159,12 @@
   line-height: 1.7;
 }
 .study-purchase .button {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
   min-height: 38px;
-  margin-top: 3px;
+  margin: 0;
+  white-space: normal;
 }
 .research-row.learned .study-purchase {
   color: var(--green);
@@ -280,4 +294,491 @@
   .research-page .library-availability {
     grid-column: 2;
   }
+}
+
+/* Research is a working notebook: keep decisions close to the calendar. */
+.research-main .page-title-row {
+  margin-bottom: 14px;
+}
+.research-main .breadcrumb {
+  display: none;
+}
+.research-main .page-title-row > div > p {
+  margin-top: 6px;
+}
+.research-main .research-page {
+  padding-top: 12px;
+}
+.research-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding-bottom: 8px;
+  font-size: 12px;
+}
+.research-summary > strong,
+.research-summary > svg {
+  color: var(--wine);
+}
+.research-summary > span {
+  color: #616957;
+}
+.research-summary > span:last-child {
+  margin-left: auto;
+}
+.research-page .research-tabs {
+  margin: 0;
+  gap: 26px;
+}
+.research-page .research-tabs button {
+  padding: 12px 0;
+  min-height: 40px;
+  color: var(--ink);
+}
+.research-tabs button.active {
+  border-bottom-color: var(--wine);
+  color: var(--wine);
+}
+.research-page .current-research {
+  margin: 12px 0;
+}
+.research-page .study-capacity {
+  padding-bottom: 0;
+  gap: 12px 20px;
+}
+.research-page .study-capacity h3 {
+  margin-bottom: 2px;
+  font-size: 12px;
+}
+.study-help {
+  font-size: 11px;
+}
+.study-help > summary {
+  cursor: pointer;
+  padding: 5px 0;
+}
+.study-help p {
+  margin: 6px 0;
+  max-width: 580px;
+}
+.study-slot-purchase {
+  gap: 3px;
+}
+.study-slot-purchase .button {
+  padding: 8px 14px;
+  min-height: 36px;
+}
+.study-list {
+  margin-top: 14px;
+}
+.research-page .research-section-heading {
+  margin: 14px 0 6px;
+}
+.research-page .research-section-heading h2 {
+  font-size: 23px;
+  margin: 0;
+}
+.research-branches {
+  gap: 4px 20px;
+}
+.research-branches button {
+  padding: 12px 0;
+  min-height: 40px;
+}
+.research-branches small {
+  display: inline;
+  margin-left: 7px;
+  font-size: 10px;
+}
+.research-tools {
+  padding: 10px 0;
+}
+.research-row {
+  padding: 22px 0;
+  gap: 28px;
+}
+.research-row:focus {
+  outline: 2px solid var(--wine);
+  outline-offset: 6px;
+}
+.research-focus {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 8px 0;
+  color: #616957;
+  font-size: 12px;
+}
+.research-planner,
+.research-shortlist {
+  border-block: 1px solid var(--line);
+  font-size: 12px;
+  margin: 10px 0;
+}
+.research-planner > summary,
+.research-shortlist > summary {
+  cursor: pointer;
+  padding: 12px 0;
+  color: var(--ink);
+}
+.research-planner > summary span {
+  color: var(--wine);
+}
+.research-plan-body {
+  background: #f1eee5;
+  padding: 20px;
+  margin-bottom: 14px;
+}
+.research-page label:not(.grape-search):not(.trait-options label) > select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+}
+.research-page select {
+  min-height: 38px;
+  max-width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 8px;
+}
+.research-plan-body > label {
+  display: block;
+  max-width: 420px;
+}
+.research-plan-totals {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.3fr;
+  gap: 20px;
+  margin: 24px 0 8px;
+}
+.research-plan-totals dt {
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+.research-plan-totals dd {
+  font: 500 25px var(--serif);
+  margin: 0 0 8px;
+}
+.research-plan-totals small {
+  display: block;
+  line-height: 1.6;
+}
+.research-path {
+  padding-left: 22px;
+  margin: 16px 0;
+}
+.research-path li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.research-path li span {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+}
+.research-shortlist > p {
+  margin: 0 0 12px;
+  line-height: 1.6;
+}
+.research-shortlist ol {
+  padding-left: 20px;
+  margin: 0 0 12px;
+}
+.research-shortlist li {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.research-shortlist li > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.research-shortlist small {
+  display: block;
+  line-height: 1.7;
+}
+.shortlist-actions {
+  margin-top: 8px;
+}
+.shortlist-actions .icon-button {
+  width: 36px;
+  height: 36px;
+}
+.study-description .study-payoff {
+  border-left: 2px solid var(--line);
+  padding-left: 14px;
+  margin: 14px 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.study-payoff strong {
+  font-weight: 500;
+}
+.study-description .study-payoff p {
+  margin: 4px 0;
+  line-height: 1.65;
+}
+.study-payoff small,
+.study-payoff button {
+  display: block;
+  margin-top: 6px;
+}
+.study-effect {
+  display: block;
+  color: #616957;
+  margin-top: 12px;
+  line-height: 1.6;
+}
+.research-experiment {
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  font-size: 12px;
+}
+.research-experiment summary {
+  cursor: pointer;
+  min-height: 34px;
+  padding-top: 10px;
+}
+.research-experiment p,
+.current-study .research-experiment p {
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 8px 0;
+}
+.research-experiment small {
+  display: block;
+  margin: 8px 0;
+}
+.research-experiment label {
+  display: block;
+  min-width: 0;
+}
+.experiment-selects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.library-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px 0 6px;
+  align-items: end;
+}
+.library-filters .grape-search {
+  grid-column: span 2;
+  max-width: none;
+  width: auto;
+  min-width: 0;
+  align-self: end;
+}
+.library-filters label {
+  font-size: 11px;
+  min-width: 0;
+}
+.library-filters > button {
+  align-self: center;
+  justify-self: start;
+}
+.research-page .library-grape {
+  grid-template-columns: 34px minmax(180px, 1fr) 145px 250px;
+  gap: 18px;
+}
+.grape-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  margin: 12px 0;
+}
+.grape-traits > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.grape-traits dt {
+  font-size: 11px;
+  color: #616957;
+}
+.grape-traits dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink);
+}
+.introductory-cross,
+.breeding-preview {
+  padding: 18px 0;
+  border-block: 1px solid var(--line);
+  margin-bottom: 18px;
+}
+.introductory-cross p,
+.breeding-preview p {
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 8px 0;
+}
+.breeding-preview h3 {
+  font: 500 21px var(--serif);
+  margin: 0;
+}
+.discovery-notices {
+  border-left: 3px solid var(--green);
+  background: #eaece0;
+  margin: 16px 0;
+  padding: 0 16px;
+}
+.discovery-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 0;
+  font-size: 12px;
+}
+.discovery-notice > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.discovery-notice > div {
+  flex: 1;
+  min-width: 0;
+}
+.discovery-notice p {
+  line-height: 1.7;
+  margin: 5px 0;
+}
+.discovery-notices > details {
+  border-top: 1px solid var(--line);
+}
+.discovery-notices summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-size: 12px;
+}
+.discovery-parcels {
+  display: grid;
+  margin-top: 18px;
+}
+.discovery-parcel {
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  padding: 16px 0;
+  cursor: pointer;
+  display: grid;
+  gap: 7px;
+}
+.discovery-parcel span {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.discovery-parcel span:last-child {
+  color: var(--wine);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.research-page summary:focus-visible,
+.discovery-notices summary:focus-visible,
+.discovery-parcel:focus-visible {
+  outline: 2px solid var(--wine);
+  outline-offset: 3px;
+}
+@media (max-width: 900px) {
+  .research-page .library-grape {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 12px 16px;
+  }
+  .library-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .research-plan-totals {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+@media (max-width: 700px) {
+  .research-summary > span:last-child {
+    margin-left: 0;
+  }
+  .research-page .study-capacity {
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .research-page .study-capacity > div:first-child {
+    flex: 1 1 140px;
+  }
+  .research-page .study-slot-purchase {
+    flex: 0 1 auto;
+    max-width: 100%;
+  }
+  .research-page .research-tabs {
+    gap: 20px;
+  }
+  .research-page .research-tabs button {
+    font-size: 12px;
+  }
+  .research-branches button {
+    flex: 1 1 130px;
+  }
+  .research-tools {
+    gap: 8px;
+  }
+  .research-tools > label:last-child {
+    justify-content: space-between;
+  }
+  .research-tools > label:last-child select {
+    width: auto;
+    margin: 0;
+  }
+  .research-page .research-section-heading > span {
+    max-width: none;
+  }
+  .research-plan-body {
+    padding: 14px;
+  }
+  .research-focus {
+    flex-wrap: wrap;
+  }
+  .research-row {
+    gap: 14px;
+  }
+  .experiment-selects {
+    grid-template-columns: 1fr;
+  }
+  .current-study > div:not(.study-controls) {
+    flex: 1 1 200px;
+  }
+  .discovery-notices {
+    padding: 0 12px;
+  }
+  .discovery-notice > svg {
+    display: none;
+  }
+  .grape-traits {
+    gap: 14px 20px;
+  }
+}
+.research-main .page-title-row > div > p {
+  display: none;
+}
+.research-planner > summary {
+  padding: 9px 0;
+}
+#research-browse {
+  scroll-margin-top: 20px;
+}
+.research-page .fine-print {
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.7;
+  text-align: left;
+}
+.research-page .library-grape-name > .grape-planting-price {
+  display: block;
 }

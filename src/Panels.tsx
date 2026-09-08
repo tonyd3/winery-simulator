@@ -380,11 +380,13 @@ export function PlotInspector({
   );
 }
 
-export function Cellar(props: Props) {
+export function Cellar(
+  props: Props & { initialTab?: 'reserves' | 'fermentation' },
+) {
   const { state, dispatch } = props;
   const [tab, setTab] = useState<
     'fermentation' | 'reserves' | 'lines' | 'equipment'
-  >('fermentation');
+  >(props.initialTab ?? 'fermentation');
   return (
     <div className="cellar-workspace">
       <nav className="cellar-tabs" aria-label="Cellar departments">
@@ -1104,7 +1106,12 @@ export function Improvements({
   navigate,
   landOpen,
   onTabChange,
-}: Props & { landOpen: boolean; onTabChange: (open: boolean) => void }) {
+  focusUpgrade,
+}: Props & {
+  landOpen: boolean;
+  onTabChange: (open: boolean) => void;
+  focusUpgrade?: import('./investments').Upgrade;
+}) {
   return (
     <>
       <nav className="cellar-tabs" aria-label="Build departments">
@@ -1131,6 +1138,7 @@ export function Improvements({
           dispatch={dispatch}
           onLand={() => onTabChange(true)}
           onResearch={(id) => navigate('research', id)}
+          focusUpgrade={focusUpgrade}
         />
       )}
     </>
