@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   act,
+  BOTTLE_PRICE,
   demand,
   deserialize,
   fairPrice,
@@ -148,18 +149,22 @@ test('large Prestige retains pricing, shop stock and hospitality capacity limits
     s.reputation = score;
     const value = fairPrice(s.wines[0], score),
       sales = demand(s.wines[0], s);
-    assert.ok(value >= lastValue && value <= 1000);
+    assert.ok(value >= lastValue && value <= BOTTLE_PRICE.max);
     assert.ok(sales >= lastDemand && sales <= s.wines[0].bottles);
     const hospitality = hospitalityForecast(s);
     assert.ok(hospitality.visitors <= hospitality.capacity);
     assert.ok(hospitality.rooms <= 24);
     assert.ok(Number.isFinite(hospitality.revenue));
-    assert.ok(fairPrice({ quality: 100 }, score) <= 1000);
-    if (score >= 1000) assert.equal(fairPrice({ quality: 100 }, score), 1000);
+    assert.ok(fairPrice({ quality: 100 }, score) <= BOTTLE_PRICE.max);
+    if (score >= 1000) assert.ok(fairPrice({ quality: 100 }, score) > 1000);
     lastValue = value;
     lastDemand = sales;
     assert.deepEqual(deserialize(serialize(s)), s);
   }
+  assert.equal(
+    fairPrice({ quality: 100 }, Number.MAX_VALUE),
+    BOTTLE_PRICE.max,
+  );
   const invalidWine = structuredClone(s);
   invalidWine.wines[0].quality = 101;
   assert.equal(stateSchema.safeParse(invalidWine).success, false);

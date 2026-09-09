@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   act,
+  BOTTLE_PRICE,
   newGame,
   REGION_IDS,
   VARIETIES,
@@ -172,7 +173,7 @@ test('value accelerates above 90 and reputation strengthens only the exceptional
     fairPrice({ quality: 95 }, 90) - fairPrice({ quality: 95 }, 10) >
       fairPrice({ quality: 85 }, 90) - fairPrice({ quality: 85 }, 10),
   );
-  for (const reputation of [0, 50, 100]) {
+  for (const reputation of [0, 50, 100, 4000, 65_000]) {
     for (let score = 0; score <= 100; score++) {
       const price = fairPrice(
         {
@@ -182,7 +183,11 @@ test('value accelerates above 90 and reputation strengthens only the exceptional
         },
         reputation,
       );
-      assert.ok(Number.isInteger(price) && price >= 1 && price <= 1000);
+      assert.ok(
+        Number.isInteger(price) &&
+          price >= BOTTLE_PRICE.min &&
+          price <= BOTTLE_PRICE.max,
+      );
     }
   }
 });
