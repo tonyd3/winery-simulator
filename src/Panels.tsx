@@ -1,6 +1,10 @@
 import { parcelLabel } from './parcelProvenance';
 import { demandContext, type DemandContext } from './game';
 import { FinanceReport } from './FinanceReport';
+import { VintageBook } from './VintageBook';
+import { PrivateCollectionControls } from './PrivateCollectionControls';
+import { WineCollection } from './WineCollection';
+import { CellarFloor, tankGroupKey } from './CellarFloor';
 import { qualityResponse, signedPrestige } from './prestige';
 import { releaseCount, harvestAdvice } from './game';
 import type { ResearchId } from './catalog';
@@ -18,19 +22,19 @@ import { PlotExpansion } from './PlotExpansion';
 import { CellarEquipment } from './CellarEquipment';
 import { BottleStoragePanel } from './BottleStoragePanel';
 import { ShelfAllocation } from './ShelfAllocation';
-import { shelfStock } from './bottleStorage';
+import { privateStock, saleStock, shelfStock } from './bottleStorage';
 import { ESTATE_LIMITS } from './estates';
 import { Holdings } from './Holdings';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import Reserves from './Reserves';
 import { WineLines } from './WineLines';
-import { WineBottle, Composition, SalesCount } from './WinePresentation';
+import { BottleView, Composition, SalesCount } from './WinePresentation';
 import { TastingNotes } from './TastingNotes';
 import { releaseTasting } from './wineSensory';
 import { vintage } from './winemaking';
-import WinePromotion from './WinePromotion';
+import WinePromotion, { JudgingStatus } from './WinePromotion';
 import { ArrowRight, ArrowUpRight, Check, Pencil, Plus } from 'lucide-react';
-import { Icon, Progress, Empty } from './components';
+import { Icon, Progress, Empty, Modal } from './components';
 import {
   availableVarieties,
   getVariety,
@@ -482,6 +486,8 @@ function Fermentation({
   onStored,
   onEquipment,
 }: Props & { onStored: () => void; onEquipment: () => void }) {
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const closeGroup = useCallback(() => setSelectedGroup(null), []);
   const used = new Set(state.batches.flatMap((b) => b.tankIds));
   const groups = [
     ...state.batches.map((batch) => ({ batch, ids: batch.tankIds })),
@@ -498,11 +504,7 @@ function Fermentation({
       <div className="section-intro">
         <div>
           <span className="eyebrow">FROM GRAPE TO GLASS</span>
-          <h2>Good wine takes its time.</h2>
-          <p>
-            Make room for the next harvest. Give this one room to become
-            something.
-          </p>
+          <h2>At work in the cellar.</h2>
         </div>
         <span className="capacity-chip">
           <Icon name="barrel" />
@@ -543,269 +545,291 @@ function Fermentation({
           Cellar capacity stays reserved until transfer
         </span>
       </div>
-      <div className="tank-grid">
-        {groups.map(({ batch: b, ids }) => {
-          const modern = b?.agingProfile === 'varietal-v1';
-          const vessel =
-            b?.maturationPlan?.vessel ?? (b?.oak ? 'oak' : 'steel');
-          const wooden = vessel !== 'steel';
-          const outlook =
-            b?.maturationProfile && b.maturationPlan
-              ? maturationOutlook(b.maturationProfile, vessel, b.age, b.oak)
-              : undefined;
-          const capacity = ids.reduce(
-            (n, id) =>
-              n + state.cellar.tanks.find((t) => t.id === id)!.capacity,
-            0,
-          );
-          return (
-            <div
-              className={`tank-card ${b ? 'occupied' : ''}`}
-              key={b ? `batch-${b.id}` : ids.join('-')}
-            >
-              <div className="tank-top">
-                <span className="eyebrow">
-                  {modern && b?.maturationPlan && wooden
-                    ? `CELLAR SLOT${ids.length > 1 ? 'S' : ''} ${ids.join(' + ')}`
-                    : ids.length > 3
-                      ? `${ids.length} TANKS`
-                      : `TANK${ids.length > 1 ? 'S' : ''} ${ids.map((id) => String(id).padStart(2, '0')).join(' + ')}`}
-                </span>
-                <span
-                  className={`status-tag ${modern ? (b?.stage === 'ready' || outlook?.readiness === 'Ready to release' ? 'ripe' : '') : b && b.stage !== 'fermenting' && b.age === 8 ? 'ripe' : ''}`}
-                >
-                  {b
-                    ? b.stage === 'fermenting'
-                      ? vinificationStage(b)
-                      : modern
-                        ? b.stage === 'aging'
-                          ? (outlook?.readiness ?? 'Aging')
-                          : 'Ready for reserves'
-                        : b.age === 8
-                          ? 'Peak maturity'
-                          : 'Aging automatically'
-                    : 'Available'}
-                </span>
-              </div>
-              <div
-                className={`tank-illustration tank-vessels ${ids.length > 3 ? 'many-tanks' : ''}`}
-              >
-                {ids.map((id, index) => {
-                  const tank = state.cellar.tanks.find((t) => t.id === id)!;
-                  const earlierCapacity = ids
-                    .slice(0, index)
-                    .reduce(
-                      (n, earlier) =>
-                        n +
-                        state.cellar.tanks.find((t) => t.id === earlier)!
-                          .capacity,
-                      0,
-                    );
-                  const filled = b
-                    ? Math.min(
-                        tank.capacity,
-                        Math.max(0, b.liters - earlierCapacity),
+      <CellarFloor state={state} groups={groups} onSelect={setSelectedGroup} />
+      {groups.some((group) => tankGroupKey(group) === selectedGroup) && (
+        <Modal title="Vessel & wine" onClose={closeGroup}>
+          <div className="cellar-vessel-detail">
+            {groups
+              .filter((group) => tankGroupKey(group) === selectedGroup)
+              .map(({ batch: b, ids }) => {
+                const modern = b?.agingProfile === 'varietal-v1';
+                const vessel =
+                  b?.maturationPlan?.vessel ?? (b?.oak ? 'oak' : 'steel');
+                const wooden = vessel !== 'steel';
+                const outlook =
+                  b?.maturationProfile && b.maturationPlan
+                    ? maturationOutlook(
+                        b.maturationProfile,
+                        vessel,
+                        b.age,
+                        b.oak,
                       )
-                    : 0;
-                  return (
-                    <div className="tank-vessel" key={id}>
-                      <svg viewBox="0 0 180 155" width="170" aria-hidden="true">
-                        <ellipse
-                          cx="95"
-                          cy="139"
-                          rx="56"
-                          ry="9"
-                          fill="#413e2f0c"
-                        />
-                        <path
-                          d="M53 116v24M127 116v24"
-                          stroke="#999d89"
-                          strokeWidth="6"
-                        />
-                        <path
-                          d="M43 34V114Q90 146 137 114V34"
-                          fill={wooden ? '#c5a077' : '#bec5b5'}
-                        />
-                        <path
-                          d="M98 47V133Q121 130 137 114V34Z"
-                          fill={wooden ? '#ad8963' : '#a6b19f'}
-                        />
-                        <ellipse
-                          cx="90"
-                          cy="34"
-                          rx="47"
-                          ry="21"
-                          fill={wooden ? '#d5b48c' : '#d9dece'}
-                        />
-                        <ellipse
-                          cx="90"
-                          cy="34"
-                          rx="35"
-                          ry="14"
-                          fill={wooden ? '#bf9a72' : '#c7cebd'}
-                        />
-                        <path d="M83 16V8H98V17" fill="#adb8a2" />
-                        <path
-                          d="M43 56Q90 82 137 56M43 105Q90 133 137 105"
-                          fill="none"
-                          stroke={wooden ? '#81725a' : '#9da991'}
-                          strokeWidth="4"
-                        />
-                        <rect
-                          x="64"
-                          y="73"
-                          width="31"
-                          height="29"
-                          rx="3"
-                          fill="#f5f2df"
-                        />
-                        <text
-                          x="79"
-                          y="85"
-                          textAnchor="middle"
-                          fontSize="6"
-                          fill="#817c65"
-                        >
-                          TERROIR
-                        </text>
-                        <text
-                          x="79"
-                          y="95"
-                          textAnchor="middle"
-                          fontSize="7"
-                          fill="#817c65"
-                        >
-                          {b ? `Y${b.year}` : 'EMPTY'}
-                        </text>
-                        <path
-                          d="M119 105h15v7"
-                          stroke="#6f7f6a"
-                          strokeWidth="4"
-                          fill="none"
-                        />
-                        {b?.stage === 'fermenting' &&
-                          vinificationStage(b) === 'Fermenting' && (
-                            <g className="ferment-bubbles" fill="#b5bf9e">
-                              <circle cx="81" cy="2" r="3" />
-                              <circle cx="99" cy="-4" r="2" />
-                            </g>
-                          )}
-                      </svg>
-                      {b && (
-                        <small>
-                          #{id} · {filled} / {tank.capacity} L
-                        </small>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              {b ? (
-                <>
-                  <h3>{getVariety(state, b.variety).name}</h3>
-                  <small className="parcel-source">
-                    {state.estates.length > 1 &&
-                      `${getEstate(state, b.estateId ?? 1).name} · `}
-                    {parcelLabel(b.parcel)}
-                  </small>
-                  <p className="tank-detail">
-                    Year {b.year} · {b.liters} / {capacity} L ·{' '}
-                    {b.maturationPlan
-                      ? `${VESSELS[vessel].name} maturation`
-                      : `${b.oak ? 'French oak' : 'Stainless steel'} fermentation`}
-                  </p>
-                  {Boolean(b.techniques?.length) && (
-                    <p className="tank-techniques">
-                      {b
-                        .techniques!.map((id) => CELLAR_TECHNIQUES[id].name)
-                        .join(' · ')}
-                    </p>
-                  )}
-                  <div className="tank-measure">
-                    <span>
-                      {b.stage === 'fermenting'
-                        ? `${b.remaining} ${b.remaining === 1 ? 'week' : 'weeks'} until ready for reserves`
-                        : b.stage === 'aging'
-                          ? modern
-                            ? `${b.age} game weeks matured`
-                            : `${b.age} / 8 weeks aged`
-                          : 'Cellar plan complete'}
-                    </span>
-                    <b>
-                      {quality(b)}
-                      <small>/100</small>
-                    </b>
-                  </div>
-                  <Progress
-                    value={
-                      b.stage === 'fermenting'
-                        ? Math.max(
-                            0,
-                            (1 -
-                              b.remaining / vinificationWeeks(b.techniques)) *
-                              100,
-                          )
-                        : b.stage === 'aging'
-                          ? Math.min(
-                              100,
-                              (b.age / (outlook?.readyFrom ?? 8)) * 100,
-                            )
-                          : 100
-                    }
-                  />
-                  {modern && b.stage !== 'fermenting' && (
-                    <BatchMaturation
-                      batch={b}
-                      name={getVariety(state, b.variety).name}
-                      cash={state.cash}
-                      dispatch={dispatch}
-                    />
-                  )}
-                  {!modern && b.stage !== 'fermenting' && (
-                    <p className="maturation-footnote">
-                      This older batch keeps its original vessel and eight-week
-                      quality curve.
-                    </p>
-                  )}
-                  <div className="tank-actions">
-                    <button
-                      className="button primary"
-                      disabled={
-                        b.stage === 'fermenting' ||
-                        state.reserves.length >= ESTATE_LIMITS.reserves
-                      }
-                      onClick={() => {
-                        if (dispatch({ type: 'reserve', id: b.id })) onStored();
-                      }}
-                    >
-                      {b.stage === 'fermenting'
-                        ? `${vinificationStage(b)}…`
-                        : ids.length > 1
-                          ? `Move ${ids.length} tanks to reserves`
-                          : 'Move to reserves'}
-                      <Icon name="glass" size={15} />
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h3>A little breathing room.</h3>
-                  <p className="tank-detail">
-                    {capacity} L available · Harvest grapes to start a new
-                    batch.
-                  </p>
-                  <button
-                    className="text-button"
-                    onClick={() => navigate('estate')}
+                    : undefined;
+                const capacity = ids.reduce(
+                  (n, id) =>
+                    n + state.cellar.tanks.find((t) => t.id === id)!.capacity,
+                  0,
+                );
+                return (
+                  <div
+                    className={`tank-card ${b ? 'occupied' : ''}`}
+                    key={b ? `batch-${b.id}` : ids.join('-')}
                   >
-                    Back to the vineyard <ArrowUpRight size={15} />
-                  </button>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                    <div className="tank-top">
+                      <span className="eyebrow">
+                        {modern && b?.maturationPlan && wooden
+                          ? `CELLAR SLOT${ids.length > 1 ? 'S' : ''} ${ids.join(' + ')}`
+                          : ids.length > 3
+                            ? `${ids.length} TANKS`
+                            : `TANK${ids.length > 1 ? 'S' : ''} ${ids.map((id) => String(id).padStart(2, '0')).join(' + ')}`}
+                      </span>
+                      <span
+                        className={`status-tag ${modern ? (b?.stage === 'ready' || outlook?.readiness === 'Ready to release' ? 'ripe' : '') : b && b.stage !== 'fermenting' && b.age === 8 ? 'ripe' : ''}`}
+                      >
+                        {b
+                          ? b.stage === 'fermenting'
+                            ? vinificationStage(b)
+                            : modern
+                              ? b.stage === 'aging'
+                                ? (outlook?.readiness ?? 'Aging')
+                                : 'Ready for reserves'
+                              : b.age === 8
+                                ? 'Peak maturity'
+                                : 'Aging automatically'
+                          : 'Available'}
+                      </span>
+                    </div>
+                    <div
+                      className={`tank-illustration tank-vessels ${ids.length > 3 ? 'many-tanks' : ''}`}
+                    >
+                      {ids.map((id, index) => {
+                        const tank = state.cellar.tanks.find(
+                          (t) => t.id === id,
+                        )!;
+                        const earlierCapacity = ids
+                          .slice(0, index)
+                          .reduce(
+                            (n, earlier) =>
+                              n +
+                              state.cellar.tanks.find((t) => t.id === earlier)!
+                                .capacity,
+                            0,
+                          );
+                        const filled = b
+                          ? Math.min(
+                              tank.capacity,
+                              Math.max(0, b.liters - earlierCapacity),
+                            )
+                          : 0;
+                        return (
+                          <div className="tank-vessel" key={id}>
+                            <svg
+                              viewBox="0 0 180 155"
+                              width="170"
+                              aria-hidden="true"
+                            >
+                              <ellipse
+                                cx="95"
+                                cy="139"
+                                rx="56"
+                                ry="9"
+                                fill="#413e2f0c"
+                              />
+                              <path
+                                d="M53 116v24M127 116v24"
+                                stroke="#999d89"
+                                strokeWidth="6"
+                              />
+                              <path
+                                d="M43 34V114Q90 146 137 114V34"
+                                fill={wooden ? '#c5a077' : '#bec5b5'}
+                              />
+                              <path
+                                d="M98 47V133Q121 130 137 114V34Z"
+                                fill={wooden ? '#ad8963' : '#a6b19f'}
+                              />
+                              <ellipse
+                                cx="90"
+                                cy="34"
+                                rx="47"
+                                ry="21"
+                                fill={wooden ? '#d5b48c' : '#d9dece'}
+                              />
+                              <ellipse
+                                cx="90"
+                                cy="34"
+                                rx="35"
+                                ry="14"
+                                fill={wooden ? '#bf9a72' : '#c7cebd'}
+                              />
+                              <path d="M83 16V8H98V17" fill="#adb8a2" />
+                              <path
+                                d="M43 56Q90 82 137 56M43 105Q90 133 137 105"
+                                fill="none"
+                                stroke={wooden ? '#81725a' : '#9da991'}
+                                strokeWidth="4"
+                              />
+                              <rect
+                                x="64"
+                                y="73"
+                                width="31"
+                                height="29"
+                                rx="3"
+                                fill="#f5f2df"
+                              />
+                              <text
+                                x="79"
+                                y="85"
+                                textAnchor="middle"
+                                fontSize="6"
+                                fill="#817c65"
+                              >
+                                TERROIR
+                              </text>
+                              <text
+                                x="79"
+                                y="95"
+                                textAnchor="middle"
+                                fontSize="7"
+                                fill="#817c65"
+                              >
+                                {b ? `Y${b.year}` : 'EMPTY'}
+                              </text>
+                              <path
+                                d="M119 105h15v7"
+                                stroke="#6f7f6a"
+                                strokeWidth="4"
+                                fill="none"
+                              />
+                              {b?.stage === 'fermenting' &&
+                                vinificationStage(b) === 'Fermenting' && (
+                                  <g className="ferment-bubbles" fill="#b5bf9e">
+                                    <circle cx="81" cy="2" r="3" />
+                                    <circle cx="99" cy="-4" r="2" />
+                                  </g>
+                                )}
+                            </svg>
+                            {b && (
+                              <small>
+                                #{id} · {filled} / {tank.capacity} L
+                              </small>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {b ? (
+                      <>
+                        <h3>{getVariety(state, b.variety).name}</h3>
+                        <small className="parcel-source">
+                          {state.estates.length > 1 &&
+                            `${getEstate(state, b.estateId ?? 1).name} · `}
+                          {parcelLabel(b.parcel)}
+                        </small>
+                        <p className="tank-detail">
+                          Year {b.year} · {b.liters} / {capacity} L ·{' '}
+                          {b.maturationPlan
+                            ? `${VESSELS[vessel].name} maturation`
+                            : `${b.oak ? 'French oak' : 'Stainless steel'} fermentation`}
+                        </p>
+                        {Boolean(b.techniques?.length) && (
+                          <p className="tank-techniques">
+                            {b
+                              .techniques!.map(
+                                (id) => CELLAR_TECHNIQUES[id].name,
+                              )
+                              .join(' · ')}
+                          </p>
+                        )}
+                        <div className="tank-measure">
+                          <span>
+                            {b.stage === 'fermenting'
+                              ? `${b.remaining} ${b.remaining === 1 ? 'week' : 'weeks'} until ready for reserves`
+                              : b.stage === 'aging'
+                                ? modern
+                                  ? `${b.age} game weeks matured`
+                                  : `${b.age} / 8 weeks aged`
+                                : 'Cellar plan complete'}
+                          </span>
+                          <b>
+                            {quality(b)}
+                            <small>/100</small>
+                          </b>
+                        </div>
+                        <Progress
+                          value={
+                            b.stage === 'fermenting'
+                              ? Math.max(
+                                  0,
+                                  (1 -
+                                    b.remaining /
+                                      vinificationWeeks(b.techniques)) *
+                                    100,
+                                )
+                              : b.stage === 'aging'
+                                ? Math.min(
+                                    100,
+                                    (b.age / (outlook?.readyFrom ?? 8)) * 100,
+                                  )
+                                : 100
+                          }
+                        />
+                        {modern && b.stage !== 'fermenting' && (
+                          <BatchMaturation
+                            batch={b}
+                            name={getVariety(state, b.variety).name}
+                            cash={state.cash}
+                            dispatch={dispatch}
+                          />
+                        )}
+                        {!modern && b.stage !== 'fermenting' && (
+                          <p className="maturation-footnote">
+                            This older batch keeps its original vessel and
+                            eight-week quality curve.
+                          </p>
+                        )}
+                        <div className="tank-actions">
+                          <button
+                            className="button primary"
+                            disabled={
+                              b.stage === 'fermenting' ||
+                              state.reserves.length >= ESTATE_LIMITS.reserves
+                            }
+                            onClick={() => {
+                              if (dispatch({ type: 'reserve', id: b.id }))
+                                onStored();
+                            }}
+                          >
+                            {b.stage === 'fermenting'
+                              ? `${vinificationStage(b)}…`
+                              : ids.length > 1
+                                ? `Move ${ids.length} tanks to reserves`
+                                : 'Move to reserves'}
+                            <Icon name="glass" size={15} />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h3>Ready for the next harvest.</h3>
+                        <p className="tank-detail">
+                          {capacity} L available · Harvest grapes to start a new
+                          batch.
+                        </p>
+                        <button
+                          className="text-button"
+                          onClick={() => navigate('estate')}
+                        >
+                          Back to the vineyard <ArrowUpRight size={15} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+        </Modal>
+      )}
       <div className="cellar-note">
         <Icon name="help" size={17} />
         <p>
@@ -835,6 +859,8 @@ function WineCard({
   const [name, setName] = useState(w.label);
   const [priceDraft, setPriceDraft] = useState<string | null>(null);
   const forecast = demandForecast({ ...w, listed: true }, state, demandGroups);
+  const available = saleStock(w);
+  const kept = privateStock(w);
   return (
     <article className="wine-card">
       <div className="wine-card-main">
@@ -843,7 +869,7 @@ function WineCard({
             {w.quality}
             <small>POINTS</small>
           </span>
-          <WineBottle
+          <BottleView
             name={w.label}
             estate={w.estate}
             design={w.design}
@@ -894,13 +920,15 @@ function WineCard({
             {w.bottles.toLocaleString()} bottles remaining{' '}
             <span className="subtle">
               ·{' '}
-              {w.listed && w.bottles > 0
-                ? shelfStock(w) > 0
-                  ? `${shelfStock(w).toLocaleString()} on the shelf · ${(w.bottles - shelfStock(w)).toLocaleString()} in warehouse`
-                  : 'Waiting for shelf space · all bottles in warehouse'
-                : w.bottles === 0
-                  ? 'Sold out'
-                  : 'In storage · not listed'}
+              {kept > 0
+                ? `${kept.toLocaleString()} in Private Collection · ${available.toLocaleString()} available for sale${w.listed ? ` · ${shelfStock(w).toLocaleString()} on shelf` : ' · not listed'}`
+                : w.listed && w.bottles > 0
+                  ? shelfStock(w) > 0
+                    ? `${shelfStock(w).toLocaleString()} on the shelf · ${(w.bottles - shelfStock(w)).toLocaleString()} in warehouse`
+                    : 'Waiting for shelf space · all bottles in warehouse'
+                  : w.bottles === 0
+                    ? 'Sold out'
+                    : 'In storage · not listed'}
             </span>
           </p>
           <p className="wine-sales">
@@ -913,6 +941,7 @@ function WineCard({
             shop sale · {signedPrestige(qualityResponse(w.quality).wholesale)}{' '}
             wholesale.
           </p>
+          {available === 0 && <JudgingStatus wine={w} />}
           <details className="wine-recipe">
             <summary>Tasting notes & provenance</summary>
             <Composition parts={w.components} state={state} />
@@ -922,6 +951,9 @@ function WineCard({
             </p>
           </details>
           {w.bottles > 0 && (
+            <PrivateCollectionControls wine={w} dispatch={dispatch} />
+          )}
+          {available > 0 && (
             <>
               <div className="price-heading">
                 <label htmlFor={`price-${w.id}`}>Price per bottle</label>
@@ -1015,15 +1047,15 @@ function WineCard({
                 className="text-button wholesale"
                 onClick={() => dispatch({ type: 'wholesale', id: w.id })}
               >
-                Sell all wholesale ·{' '}
-                {money(w.bottles * wholesalePrice(w, state.reputation, state))}
+                Sell {available.toLocaleString()} wholesale ·{' '}
+                {money(available * wholesalePrice(w, state.reputation, state))}
                 <ArrowUpRight size={13} />
               </button>
             </>
           )}
         </div>
       </div>
-      {w.bottles > 0 && (
+      {available > 0 && (
         <WinePromotion
           wine={w}
           state={state}
@@ -1035,109 +1067,199 @@ function WineCard({
   );
 }
 export function Market({ state, dispatch, navigate }: Props) {
-  const [tab, setTab] = useState<'stock' | 'history'>('stock');
-  const stock = state.wines.filter((w) => w.bottles > 0);
+  const [tab, setTab] = useState<'stock' | 'private' | 'history'>('stock');
+  const [selected, setSelected] = useState<number | null>(null);
+  const closeWine = useCallback(() => setSelected(null), []);
+  const selectedWine = state.wines.find((wine) => wine.id === selected);
+  const stock = state.wines.filter((w) => saleStock(w) > 0);
+  const collection = state.wines.filter((w) => privateStock(w) > 0);
+  const keptBottles = collection.reduce((n, w) => n + privateStock(w), 0);
   const demandGroups = demandContext(state);
   return (
     <div className="market-workspace">
-      <nav className="cellar-tabs" aria-label="Wine shop views">
-        <button
-          className={tab === 'stock' ? 'active' : ''}
-          aria-current={tab === 'stock' ? 'page' : undefined}
-          onClick={() => setTab('stock')}
+      {selectedWine && (
+        <Modal
+          title={`${selectedWine.label} · Release ${selectedWine.release}`}
+          onClose={closeWine}
         >
-          Current wines <span>{stock.length}</span>
-        </button>
-        <button
-          className={tab === 'history' ? 'active' : ''}
-          aria-current={tab === 'history' ? 'page' : undefined}
-          onClick={() => setTab('history')}
-        >
-          Wine history <span>{releaseCount(state)}</span>
-        </button>
-      </nav>
-      {tab === 'history' ? (
-        <WineLines state={state} history />
-      ) : (
-        <div className="operations-page">
-          <div className="section-intro">
-            <div>
-              <span className="eyebrow">A VINTAGE WORTH SHARING</span>
-              <h2>From your estate, to their table.</h2>
-              <p>Set your price. Build your Prestige. Find your regulars.</p>
-            </div>
-            <span className="capacity-chip">
-              <Icon name="shop" />
-              {state.stats.sold.toLocaleString()} bottles sold
-            </span>
+          <div className="wine-detail">
+            <WineCard
+              key={selectedWine.id}
+              wine={selectedWine}
+              state={state}
+              dispatch={dispatch}
+              demandGroups={demandGroups}
+            />
           </div>
-          <BottleStoragePanel state={state} dispatch={dispatch} shop />
-          {stock.length ? (
-            <div className="wine-grid">
-              {[...stock].reverse().map((w) => (
-                <WineCard
-                  key={w.id}
-                  wine={w}
-                  demandGroups={demandGroups}
-                  state={state}
-                  dispatch={dispatch}
-                />
-              ))}
-            </div>
-          ) : state.wines.length ? (
-            <Empty
-              icon="glass"
-              title="Every bottle found a home."
-              action="View wine history"
-              onAction={() => setTab('history')}
-            >
-              Your sold-out wines are kept in the archive. Bottle your reserves
-              to bring a new release to the shop.
-            </Empty>
-          ) : (
-            <Empty
-              icon="glass"
-              title="Your first vintage belongs here."
-              action="Visit the cellar"
-              onAction={() => navigate('cellar')}
-            >
-              Harvest your grapes, let them ferment, and bottle your wine. Then
-              open the shop and share what you’ve made.
-            </Empty>
-          )}
-          <div className="market-guide">
-            <div>
-              <Icon name="shop" />
-              <h3>The wine shop</h3>
-              <p>
-                Above 90 points, each extra point commands a larger price
-                premium. Prestige strengthens that premium. Use the suggested
-                price and sales forecast to find your market. Interest fades
-                gradually over several years. Seasons, grape trends, and visitor
-                surges or slumps move demand up and down. The range allows for
-                weekly surprises; incoming judging results can lift it further.
-              </p>
-            </div>
-            <div>
-              <Icon name="package" />
-              <h3>A distributor’s offer</h3>
-              <p>
-                Distributors pay 60% of suggested value, including medals.
-                Temporary marketing boosts apply only to the wine shop.
-              </p>
-            </div>
-            <div>
-              <Icon name="glass" />
-              <h3>A place at your table</h3>
-              <p>
-                Visitor facilities and specialist teams can raise income and
-                wine demand. Review their running costs and seasonal returns in
-                Build.
-              </p>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
+      <div inert={Boolean(selectedWine)}>
+        <nav className="cellar-tabs" aria-label="Wine shop views">
+          <button
+            className={tab === 'stock' ? 'active' : ''}
+            aria-current={tab === 'stock' ? 'page' : undefined}
+            onClick={() => setTab('stock')}
+          >
+            Current wines <span>{stock.length}</span>
+          </button>
+          <button
+            className={tab === 'private' ? 'active' : ''}
+            aria-current={tab === 'private' ? 'page' : undefined}
+            onClick={() => setTab('private')}
+          >
+            Private Collection <span>{keptBottles.toLocaleString()}</span>
+          </button>
+          <button
+            className={tab === 'history' ? 'active' : ''}
+            aria-current={tab === 'history' ? 'page' : undefined}
+            onClick={() => setTab('history')}
+          >
+            Wine history <span>{releaseCount(state)}</span>
+          </button>
+        </nav>
+        {tab === 'private' ? (
+          <div className="operations-page">
+            <div className="section-intro">
+              <div>
+                <span className="eyebrow">KEPT FOR YOUR OWN TABLE</span>
+                <h2>Private Collection.</h2>
+                <p>
+                  A first vintage. A favorite blend. A bottle worth keeping.
+                </p>
+              </div>
+              <span className="capacity-chip">
+                {keptBottles.toLocaleString()}{' '}
+                {keptBottles === 1 ? 'bottle' : 'bottles'} · {collection.length}{' '}
+                {collection.length === 1 ? 'release' : 'releases'}
+              </span>
+            </div>
+            <p className="private-collection-note">
+              These bottles are protected from all sales and still use warehouse
+              space. Open a wine to revisit its story, keep more, or return
+              bottles to stock.
+            </p>
+            {collection.length ? (
+              <WineCollection
+                key="private"
+                wines={collection}
+                state={state}
+                onSelect={setSelected}
+                dispatch={dispatch}
+                privateView
+              />
+            ) : (
+              <Empty
+                icon="glass"
+                title="Some bottles are yours to keep."
+                action={
+                  stock.length ? 'Choose a wine to keep' : 'Visit the cellar'
+                }
+                onAction={() =>
+                  stock.length ? setTab('stock') : navigate('cellar')
+                }
+              >
+                Open a wine from Current wines, choose how many bottles to set
+                aside, and select Keep bottles. Its artwork, vintage and tasting
+                notes will stay here with it.
+              </Empty>
+            )}
+          </div>
+        ) : tab === 'history' ? (
+          <WineLines state={state} history />
+        ) : (
+          <div className="operations-page">
+            <div className="section-intro">
+              <div>
+                <span className="eyebrow">BOTTLED AT YOUR ESTATE</span>
+                <h2>Your current wines.</h2>
+                <p>
+                  Adjust prices and shelf space here. Open a wine for its story,
+                  promotion, judging and your Private Collection.
+                </p>
+              </div>
+              <span className="capacity-chip">
+                <Icon name="shop" />
+                {state.stats.sold.toLocaleString()} bottles sold
+              </span>
+            </div>
+            <BottleStoragePanel state={state} dispatch={dispatch} shop />
+            {stock.length ? (
+              <WineCollection
+                key="stock"
+                wines={stock}
+                state={state}
+                onSelect={setSelected}
+                dispatch={dispatch}
+              />
+            ) : collection.length ? (
+              <Empty
+                icon="glass"
+                title="Your remaining bottles are kept for you."
+                action="View Private Collection"
+                onAction={() => setTab('private')}
+              >
+                Return bottles from your collection to stock, or bottle a new
+                release in the cellar.
+              </Empty>
+            ) : state.wines.length ? (
+              <Empty
+                icon="glass"
+                title="Every bottle found a home."
+                action="View wine history"
+                onAction={() => setTab('history')}
+              >
+                Your sold-out wines are kept in the archive. Bottle your
+                reserves to bring a new release to the shop.
+              </Empty>
+            ) : (
+              <Empty
+                icon="glass"
+                title="Your first vintage belongs here."
+                action="Visit the cellar"
+                onAction={() => navigate('cellar')}
+              >
+                Harvest your grapes, let them ferment, and bottle your wine.
+                Then open the shop and share what you’ve made.
+              </Empty>
+            )}
+            <details className="shop-guide">
+              <summary>How selling, demand and distribution work</summary>
+              <div className="market-guide">
+                <div>
+                  <Icon name="shop" />
+                  <h3>The wine shop</h3>
+                  <p>
+                    Above 90 points, each extra point commands a larger price
+                    premium. Prestige strengthens that premium. Use the
+                    suggested price and sales forecast to find your market.
+                    Interest fades gradually over several years. Seasons, grape
+                    trends, and visitor surges or slumps move demand up and
+                    down. The range allows for weekly surprises; incoming
+                    judging results can lift it further.
+                  </p>
+                </div>
+                <div>
+                  <Icon name="package" />
+                  <h3>A distributor’s offer</h3>
+                  <p>
+                    Distributors pay 60% of suggested value, including medals.
+                    Temporary marketing boosts apply only to the wine shop.
+                  </p>
+                </div>
+                <div>
+                  <Icon name="glass" />
+                  <h3>A place at your table</h3>
+                  <p>
+                    Visitor facilities and specialist teams can raise income and
+                    wine demand. Review their running costs and seasonal returns
+                    in Build.
+                  </p>
+                </div>
+              </div>
+            </details>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1185,7 +1307,35 @@ export function Improvements({
     </>
   );
 }
-export function Journal({ state }: Props) {
+export function Journal(props: Props) {
+  const [tab, setTab] = useState<'book' | 'accounts'>('book');
+  return (
+    <div className="journal-workspace">
+      <nav className="cellar-tabs" aria-label="Journal views">
+        <button
+          className={tab === 'book' ? 'active' : ''}
+          aria-current={tab === 'book' ? 'page' : undefined}
+          onClick={() => setTab('book')}
+        >
+          Vintage book
+        </button>
+        <button
+          className={tab === 'accounts' ? 'active' : ''}
+          aria-current={tab === 'accounts' ? 'page' : undefined}
+          onClick={() => setTab('accounts')}
+        >
+          Accounts & events
+        </button>
+      </nav>
+      {tab === 'book' ? (
+        <VintageBook state={props.state} dispatch={props.dispatch} />
+      ) : (
+        <JournalAccounts {...props} />
+      )}
+    </div>
+  );
+}
+function JournalAccounts({ state }: Props) {
   return (
     <div className="operations-page">
       <div className="section-intro">

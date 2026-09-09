@@ -1,3 +1,12 @@
+import {
+  EstateTerrain,
+  EstateTree,
+  RegionalBuilding,
+  SEASON_PALETTES,
+} from './EstateScenery';
+import { CrestDrawing } from './HouseCrest';
+import { DEFAULT_HOUSE } from './houseIdentity';
+import { weather } from './game';
 import { districtForPlot, plotId } from './estates';
 import { useState } from 'react';
 import { Minus, Plus, Maximize2 } from 'lucide-react';
@@ -14,113 +23,6 @@ import {
 } from './game';
 import type { GameState, Plot } from './game';
 
-function Tree({
-  x,
-  y,
-  scale = 1,
-  cypress = false,
-}: {
-  x: number;
-  y: number;
-  scale?: number;
-  cypress?: boolean;
-}) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${scale})`}>
-      <ellipse cx="8" cy="3" rx="18" ry="8" fill="#5a704629" />
-      <path d="M0 1V-30" stroke="#8e7657" strokeWidth="5" />
-      {cypress ? (
-        <>
-          <path
-            d="M0-76C-7-63-15-37-12-22C-10-10 11-10 13-22C15-38 5-70 0-76"
-            fill="#577352"
-          />
-          <path
-            d="M0-76C-2-51-5-28 1-15C12-14 14-22 12-34C10-50 4-71 0-76"
-            fill="#476349"
-          />
-        </>
-      ) : (
-        <>
-          <path
-            d="M-24-28C-37-40-24-61-12-58C-7-79 19-72 24-55C44-48 34-24 22-23C10-12-16-12-24-28"
-            fill="#8b9b60"
-          />
-          <path
-            d="M-12-58C-23-43-17-25 0-21C17-10 34-28 33-40C23-34 15-42 10-60Z"
-            fill="#758953"
-          />
-          <ellipse cx="-9" cy="-51" rx="13" ry="10" fill="#a3b174" />
-        </>
-      )}
-    </g>
-  );
-}
-
-function Building({
-  x,
-  y,
-  small = false,
-}: {
-  x: number;
-  y: number;
-  small?: boolean;
-}) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${small ? 0.7 : 0.78})`}>
-      <ellipse cx="12" cy="24" rx="91" ry="31" fill="#73754a20" />
-      <path d="M-70-20 10 25 78-14 0-60Z" fill="#ded4b7" />
-      <path d="M-70-20V-80L10-35V25Z" fill="#f5edd7" />
-      <path d="M10-35 78-74V-14L10 25Z" fill="#d8c9a6" />
-      <path d="M-77-78 3-33 39-76-39-119Z" fill="#b66f54" />
-      <path d="M3-33 85-79 39-106 39-76Z" fill="#9c5947" />
-      <path
-        d="M-39-119 43-165 121-121 39-76Z"
-        fill="#b97859"
-        transform="translate(-.2 46)"
-      />
-      <path d="M-70-83-40-116-5-97-2-46" fill="#c77f5d" opacity=".65" />
-      {Array.from({ length: 6 }, (_, i) => (
-        <path
-          key={i}
-          d={`M${-68 + i * 12} ${-81 + i * 6.8}l34-37`}
-          stroke="#97563e"
-          strokeWidth="1.2"
-          opacity=".38"
-        />
-      ))}
-      <path d="M-17-104V-136L-4-144 9-137V-91" fill="#e5d8b8" />
-      <path d="M-20-137-6-146 12-138-3-129Z" fill="#c0ac89" />
-      <path d="M-45-5V-38Q-34-53-23-25V8Z" fill="#8b7555" />
-      <path d="M-41-4V-34Q-33-43-27-26V4Z" fill="#657663" />
-      <path
-        d="M-61-57-50-51V-37L-61-43Z M-17-32-6-26V-12L-17-18Z"
-        fill="#758a7a"
-        stroke="#d5c3a1"
-        strokeWidth="3"
-      />
-      <path
-        d="M26-32 42-41V-20L26-11Z M55-49 68-56V-35L55-27Z"
-        fill="#788673"
-        stroke="#bfac8a"
-        strokeWidth="3"
-      />
-      <path d="M-70 1 11 46 11 27-70-19Z" fill="#c8bf9d" />
-      <path d="M-70-19 11 27 22 21-59-25Z" fill="#e8debf" />
-      <g transform="translate(58 8)">
-        <ellipse cy="-12" rx="11" ry="7" fill="#ae8355" />
-        <path d="M-11-12V5Q0 17 11 5V-12" fill="#a17d52" />
-        <ellipse cy="5" rx="11" ry="6" fill="#9b744b" />
-        <path
-          d="M-11-6Q0 4 11-6M-11 1Q0 11 11 1"
-          stroke="#695e45"
-          strokeWidth="2"
-          fill="none"
-        />
-      </g>
-    </g>
-  );
-}
 function Vines({
   plot,
   winter,
@@ -155,11 +57,13 @@ function Vines({
                         <path
                           d="M-8-8C-14-13-9-20-3-17C0-25 9-22 9-16C18-15 13-5 6-7C0-2-5-5-8-8"
                           fill={
-                            plot.growth >= 80
-                              ? '#708549'
-                              : plot.growth < 30
-                                ? '#a1ac6b'
-                                : '#839853'
+                            calendar(state.week).season === 'Autumn'
+                              ? '#a8914f'
+                              : plot.growth >= 80
+                                ? '#708549'
+                                : plot.growth < 30
+                                  ? '#a1ac6b'
+                                  : '#839853'
                           }
                         />
                         <path
@@ -198,18 +102,38 @@ export default function EstateMap({
   onCellar: () => void;
 }) {
   const [zoom, setZoom] = useState(1);
+  const date = calendar(state.week);
+  const palette = SEASON_PALETTES[date.season];
   const estate = getEstate(state),
     district = districtForPlot(selected);
+  const sky = weather(state.week, estate.region);
+  const treeKind =
+    estate.region === 'tuscany'
+      ? 'cypress'
+      : estate.region === 'barossa'
+        ? 'gum'
+        : estate.region === 'mendoza' || estate.region === 'mosel'
+          ? 'poplar'
+          : estate.region === 'rioja'
+            ? 'olive'
+            : 'oak';
   return (
     <div
       className="estate-map"
+      data-region={estate.region}
+      data-season={date.season}
       style={{ background: REGIONS[estate.region].sky }}
     >
       <div className="map-heading">
-        <span className="map-live-dot" /> ESTATE VIEW{' '}
+        <span className="map-heading-label">
+          <span className="map-live-dot" /> ESTATE VIEW
+        </span>{' '}
         <span className="map-heading-divider" />{' '}
-        {estatePlots(state).filter((p) => p.owned).length} parcels ·{' '}
-        {hectares(estateArea(state))} ha
+        <span className="map-heading-details">
+          {estatePlots(state).filter((p) => p.owned).length} parcels ·{' '}
+          {hectares(estateArea(state))} ha · {REGIONS[estate.region].name} ·{' '}
+          {date.season}
+        </span>
       </div>
       <svg
         className="world"
@@ -247,39 +171,10 @@ export default function EstateMap({
             transition: 'transform .3s ease',
           }}
         >
-          <path
-            d="M-80 190Q80 114 213 172T552 145T1050 186V720H-80"
-            fill="#e1e5c5"
-          />
-          <path
-            d="M-20 358Q163 285 232 325T565 284T1040 349V710H-20"
-            fill="#d9dfb9"
-          />
-          <path
-            d="M-20 501Q106 429 194 484T489 521T1050 449V710H-20"
-            fill="#d0d9b0"
-          />
-          <path d="M56 313 500 59 955 318 515 597Z" fill="#bec99d" />
-          <path d="M56 306 500 52 955 311 515 590Z" fill="#e7e7c5" />
-          <path d="M56 306 500 52 955 311 515 590Z" fill="url(#terrain-dots)" />
-          <path
-            d="M38 574Q114 499 106 466T68 397Q50 365 86 337"
-            fill="none"
-            stroke="#b9ccb0"
-            strokeWidth="39"
-          />
-          <path
-            d="M38 574Q114 499 106 466T68 397Q50 365 86 337"
-            fill="none"
-            stroke="#a5c7bc"
-            strokeWidth="26"
-          />
-          <path
-            d="M48 557Q95 504 97 481M81 414Q66 388 71 373"
-            fill="none"
-            stroke="#d4e4ca"
-            strokeWidth="3"
-            strokeLinecap="round"
+          <EstateTerrain
+            region={estate.region}
+            season={date.season}
+            wet={sky.name === 'Light rain' || sky.name === 'Overcast'}
           />
           <g
             fill="none"
@@ -303,17 +198,28 @@ export default function EstateMap({
             <path d="M201 416 729 113" />
             <path d="M515 581V647" />
           </g>
-          <g opacity=".8">
-            <Tree x={100} y={180} scale={1.1} />
-            <Tree x={150} y={127} scale={0.7} />
-            <Tree x={829} y={100} scale={1.1} />
-            <Tree x={874} y={146} scale={0.7} />
-            <Tree x={898} y={421} scale={1.2} />
-            <Tree x={850} y={485} scale={0.85} />
-            <Tree x={181} y={552} scale={0.8} />
-            <Tree x={208} y={565} scale={0.6} />
-            <Tree x={716} y={578} scale={1} />
-            <Tree x={785} y={532} scale={0.6} />
+          <g aria-hidden="true">
+            {[
+              [109, 193, 1],
+              [159, 129, 0.7],
+              [849, 119, 1.2],
+              [898, 171, 0.7],
+              [921, 431, 1.1],
+              [855, 484, 0.9],
+              [190, 554, 0.8],
+              [218, 574, 0.65],
+              [725, 581, 1],
+              [799, 543, 0.6],
+            ].map(([x, y, scale], i) => (
+              <EstateTree
+                key={i}
+                x={x + (estate.region === 'mosel' ? 22 : 0)}
+                y={y}
+                scale={scale}
+                kind={treeKind}
+                season={date.season}
+              />
+            ))}
           </g>
           <g opacity=".5" stroke="#8b9f63" strokeWidth="2" fill="none">
             {Array.from({ length: 24 }, (_, i) => (
@@ -357,9 +263,7 @@ export default function EstateMap({
                 <path
                   className="parcel-surface"
                   d="M-126 0 0-72 126 0 0 72Z"
-                  fill={
-                    p.owned ? (p.variety ? '#d4d7a6' : '#dad2a5') : '#dce0b6'
-                  }
+                  fill={p.owned ? palette.soil : palette.ground}
                   stroke={active ? '#805168' : p.owned ? '#b7b888' : '#b2bb8f'}
                   strokeWidth={active ? '2.5' : '1.5'}
                   strokeDasharray={p.owned ? undefined : '7 5'}
@@ -435,8 +339,8 @@ export default function EstateMap({
                   <text
                     y="15"
                     textAnchor="middle"
-                    fill={active ? '#e1cbd2' : '#93947d'}
-                    fontSize="9"
+                    fill={active ? '#f3e0e5' : '#69705c'}
+                    fontSize="10"
                   >
                     {p.owned
                       ? p.variety
@@ -486,7 +390,7 @@ export default function EstateMap({
             }}
             className="winery-building"
           >
-            <Building x={472} y={130} />
+            <RegionalBuilding region={estate.region} x={472} y={130} />
             <g transform="translate(480 180)" filter="url(#label-shadow)">
               <rect
                 x="-54"
@@ -507,26 +411,74 @@ export default function EstateMap({
               </text>
             </g>
           </g>
-          <Building x={851} y={292} small />
-          <Tree x={381} y={154} cypress scale={0.82} />
-          <Tree x={587} y={159} cypress scale={0.9} />
-          <Tree x={805} y={275} cypress scale={0.78} />
-          <Tree x={342} y={511} cypress scale={0.85} />
-          <Tree x={636} y={502} cypress scale={0.9} />
-          <g transform="translate(513 616)">
-            <path d="M-36-18v30M37-18v30" stroke="#a68b63" strokeWidth="4" />
-            <path d="M-38-20H39V-3H-38Z" fill="#8d805d" />
+          <RegionalBuilding region={estate.region} x={851} y={292} small />
+          <EstateTree
+            season={date.season}
+            kind={treeKind}
+            x={381}
+            y={154}
+            scale={0.82}
+          />
+          <EstateTree
+            season={date.season}
+            kind={treeKind}
+            x={587}
+            y={159}
+            scale={0.9}
+          />
+          <EstateTree
+            season={date.season}
+            kind={treeKind}
+            x={805}
+            y={275}
+            scale={0.78}
+          />
+          <g transform="translate(513 630)" aria-hidden="true">
+            <path d="M-80-22v32M80-22v32" stroke="#99815e" strokeWidth="5" />
+            <path d="M-85-25H85V-4H-85Z" fill="#7e7557" />
             <text
-              x="0"
-              y="-9"
+              y="-11"
               textAnchor="middle"
-              fontSize="7.5"
-              letterSpacing="2"
-              fill="#f8edce"
+              fontSize="9"
+              fill="#fff7e2"
+              textLength={estate.name.length > 25 ? 150 : undefined}
+              lengthAdjust="spacingAndGlyphs"
             >
-              {REGIONS[estate.region].name.toUpperCase()}
+              {estate.name}
             </text>
+            <g transform="translate(-13 -58) scale(.4)">
+              <CrestDrawing
+                identity={state.houseIdentity ?? DEFAULT_HOUSE}
+                name={state.name}
+              />
+            </g>
           </g>
+          {state.grapes.some(
+            (grapes) => (grapes.estateId ?? 1) === estate.id,
+          ) && (
+            <g
+              className="harvest-crates"
+              aria-hidden="true"
+              transform="translate(587 275)"
+            >
+              {[0, 1, 2].map((i) => (
+                <g key={i} transform={`translate(${i * 21} ${(i % 2) * 13})`}>
+                  <path d="M-16-8 4-19 22-9 2 3Z" fill="#b09565" />
+                  <path d="M-16-8V8L2 19V3Z" fill="#ab8457" />
+                  <path d="M2 3 22-9V8L2 19Z" fill="#c8a473" />
+                  <path
+                    d="M-13-3 0 5m-13 1 13 8M5 6 19-2m-14 14 14-8"
+                    stroke="#e7cf9e"
+                  />
+                  <g fill="#755068">
+                    <circle cx="0" cy="-10" r="4" />
+                    <circle cx="8" cy="-10" r="4" />
+                    <circle cx="4" cy="-5" r="4" />
+                  </g>
+                </g>
+              ))}
+            </g>
+          )}
           <g transform="translate(565 365)">
             <path d="M-12-12 17-29 40-15 11 2Z" fill="#e7dcbf" />
             <path d="M-12-12V1L11 15V2Z" fill="#a98c69" />

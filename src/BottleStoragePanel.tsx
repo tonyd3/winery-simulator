@@ -39,7 +39,7 @@ export function BottleStoragePanel({
               </h3>
               <p>
                 {kind === 'warehouse'
-                  ? 'Shared by all estates. Every bottled wine counts, including bottles on the shelf.'
+                  ? 'Shared by all estates. Every bottled wine counts, including shelf stock and your Private Collection.'
                   : 'Assign spaces to each release below. Shelves refill from stored stock each game week.'}
               </p>
               {used >= capacity && (

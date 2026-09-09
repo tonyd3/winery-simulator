@@ -9,6 +9,7 @@ import { Composition, SalesCount, WineBottle } from './WinePresentation';
 import { JudgingStatus } from './WinePromotion';
 import { TastingNotes } from './TastingNotes';
 import { releaseTasting } from './wineSensory';
+import { privateStock } from './bottleStorage';
 import { releaseFacts, wineLineResult } from './finance';
 import { recordedMoney, ReleaseFacts } from './ReleaseFacts';
 
@@ -83,6 +84,12 @@ function ReleaseHistory({
                   <dt>Remaining</dt>
                   <dd>{wine.bottles.toLocaleString()}</dd>
                 </div>
+                {privateStock(wine) > 0 && (
+                  <div>
+                    <dt>Private Collection</dt>
+                    <dd>{privateStock(wine).toLocaleString()}</dd>
+                  </div>
+                )}
                 <div>
                   <dt>Sold through</dt>
                   <dd>

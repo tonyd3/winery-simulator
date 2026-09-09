@@ -38,7 +38,10 @@
 }
 .fieldwork-parcel {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.1fr) repeat(2, minmax(0, 1fr)) minmax(
+      135px,
+      0.65fr
+    );
   align-items: center;
   gap: 24px;
   padding: 12px 10px;
@@ -74,6 +77,24 @@
 }
 .fieldwork-meter strong {
   font-variant-numeric: tabular-nums;
+}
+.fieldwork-quality {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fieldwork-quality strong {
+  font: 400 20px/1.2 var(--serif);
+  font-variant-numeric: tabular-nums;
+}
+.fieldwork-quality small {
+  font:
+    400 12px 'DM Sans',
+    sans-serif;
+  color: var(--muted);
+}
+.fieldwork-quality-status {
+  color: var(--muted);
 }
 .estate-fieldwork > .fine-print {
   margin: 8px 0 0;
@@ -111,5 +132,11 @@
   }
   .fieldwork-name {
     grid-column: 1 / -1;
+  }
+  .fieldwork-quality {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
   }
 }

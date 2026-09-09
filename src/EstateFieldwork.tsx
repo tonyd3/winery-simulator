@@ -6,6 +6,7 @@ import {
   getEstate,
   getLand,
   getVariety,
+  harvestQuality,
   money,
   readyToHarvest,
 } from './game';
@@ -112,6 +113,19 @@ export function EstateFieldwork({
                   </span>
                   <Progress value={plot.health} />
                 </span>
+                <span className="fieldwork-quality">
+                  <span>Est. grape quality</span>
+                  {harvested || dormant ? (
+                    <span className="fieldwork-quality-status">
+                      {harvested ? 'Harvested' : 'Dormant'}
+                    </span>
+                  ) : (
+                    <strong>
+                      {harvestQuality(state, plot)}
+                      <small> / 100</small>
+                    </strong>
+                  )}
+                </span>
               </button>
             );
           })}
@@ -122,9 +136,10 @@ export function EstateFieldwork({
         </p>
       )}
       <p className="fine-print">
-        Tending restores up to 16 health points, once per week. Harvesting picks
-        every ready parcel now; waiting for 100% ripeness can improve quality.
-        Fresh lots stay separate in the cellar.
+        Quality is estimated at current conditions. Tending restores up to 16
+        health points, once per week. Harvesting picks every ready parcel now;
+        waiting for 100% ripeness can improve quality. Fresh lots stay separate
+        in the cellar.
       </p>
     </section>
   );

@@ -37,7 +37,7 @@ Example request: “Use $playtest-terroir to play from a fresh save until a seco
 2. Select **South slope**. Tend the vines if you like, then harvest its ripe regional grape.
 3. In **Cellar**, review each harvest's fermentation options, available tanks, and processing cost. Start in steel, or choose French oak and extra techniques. **Select all available** includes oak and unlocked techniques; **Clear all** returns to steel. Choices are remembered by grape variety in this browser when you reopen Fermentation or reload. Large harvests fill multiple tanks; if only part fits, start that portion and process or sell the remaining grapes later. Fresh grapes keep their original three-week spoilage deadline.
 4. Advance two weeks, plus any selected technique time. Move the finished wine directly to reserves, or choose **stainless steel, neutral oak, or French oak maturation** for that batch. Follow its suggested release window and optionally schedule an automatic transfer. Transfer frees all tanks used by the batch. In **Reserves & blending**, store the wine, blend it with other grapes and vintages, or bottle it on its own.
-5. Bottle into a new or existing wine line, up to your available kits and warehouse space. Preview its likely tasting notes, choose a bottle and label for a new line, then watch its tasting score appear. In **Wine shop**, set its price and shelf allocation, then list the release. Customers buy each game week, limited by its shelf stock. Wholesale sells the entire remaining stock immediately at a lower price.
+5. Bottle into a new or existing wine line, up to your available kits and warehouse space. Preview its likely tasting notes, choose a bottle and label for a new line, then watch its tasting score appear. In **Wine shop**, set its price and shelf allocation, then list the release. Customers buy each game week, limited by its shelf stock. Wholesale sells all bottles available for sale immediately at a lower price; bottles in your Private Collection are protected.
 6. Review income and expenses in **Journal**, plant your empty parcel, buy more land, and research investments that suit your estate.
 
 The year has 12 game weeks: spring 1–3, summer 4–6, autumn 7–9, winter 10–12. Harvest each parcel once per year at 80%+ ripeness, before winter. Grapes regrow each spring. Regional climate, grape resilience, vine health, ripeness, soil match, and inherited traits affect production. The calendar is deliberately compressed for play, not a realistic winemaking schedule.
@@ -50,9 +50,15 @@ Weather varies by region and year, with a wider temperature range. Sunshine adds
 
 ## Warehouse and shelf space
 
-Start with **600 warehouse bottle spaces** and **120 shop shelf spaces**, shared by all estates. Warehouse capacity counts every unsold bottle, including those on the shelf. Partial bottling leaves unused wine in reserves. Assign shelf space to each listed release; it refills automatically each week and caps that release's retail sales. Pausing frees shelf space, and sales free warehouse space.
+Start with **600 warehouse bottle spaces** and **120 shop shelf spaces**, shared by all estates. Warehouse capacity counts every unsold bottle, including those on the shelf and in your Private Collection. Partial bottling leaves unused wine in reserves. Assign shelf space to each listed release; it refills automatically each week and caps that release's retail sales. Pausing frees shelf space, and sales free warehouse space.
 
-Add **600 warehouse spaces for $2,400** in the Cellar or Wine shop, or **60 shelf spaces for $900** in the Wine shop. Later purchases cost more; both are permanent investments with no extra upkeep. Wholesale can clear a release's entire stock. Old saves keep all their wine, even above warehouse capacity. See [storage rules and save behavior](docs/bottle-storage.md).
+Add **600 warehouse spaces for $2,400** in the Cellar or Wine shop, or **60 shelf spaces for $900** in the Wine shop. Later purchases cost more; both are permanent investments with no extra upkeep. Wholesale can clear a release's selling stock while keeping private bottles safe. Old saves keep all their wine, even above warehouse capacity. See [storage rules and save behavior](docs/bottle-storage.md).
+
+## Private Collection
+
+In **Wine shop**, open a wine, enter a quantity under **Private Collection**, and choose **Keep bottles**. Browse your kept releases in the **Private Collection** tab, with their bottle artwork, vintage, quality and original tasting notes. They are protected from both weekly shop sales and wholesale. Open a kept wine and use **Return bottles** to make a chosen quantity available for sale again; returning never starts a paused listing.
+
+Kept bottles still use warehouse space. Setting them aside is free and does not count as a sale, change quality, or reset their vintage. They survive save/export/import and remain available even after the rest of a release sells out.
 
 ## Regions, research, and breeding
 
@@ -221,6 +227,10 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `tests/estates.test.ts`: estate migration, purchases, regional production, provenance, and full portfolio capacity.
 - `src/prestige.ts`, `src/EstatePrestige.tsx`, `src/prestige.css`: uncapped Prestige, named tiers, economic influence, and the tier browser.
 - `src/Panels.tsx`: vineyard inspector, production, pricing, and the estate ledger.
+- `src/CellarFloor.tsx`, `src/WineCollection.tsx`: selectable illustrated cellar and bottle collection, with companion ledger views.
+- `src/HouseCrest.tsx`, `src/IdentityEditor.tsx`, `src/houseIdentity.ts`: cosmetic house identity and immutable marks on bottled releases.
+- `src/VintageBook.tsx`, `src/vintageJournal.ts`: annual harvest and bottling records, six release keepsakes per year, and personal notes; legacy saves recover only known releases.
+- `src/EstateScenery.tsx`, `src/atmosphere.css`: playable regional scenery, seasonal foliage, weather, working-space composition and readable controls.
 - `src/EstateInvestments.tsx`, `src/investments.ts`, `src/investments.css`: investment catalog, running costs, suspension, hospitality forecasts, and staff benefits.
 - `tests/investments.test.ts`: investment economy, prerequisites, suspension, production and sales benefits, and save compatibility.
 - `src/winemaking.ts`: reserve, recipe, label, and line schemas; exact volume allocation and blending quality.

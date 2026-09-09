@@ -12,7 +12,7 @@ Each screen has one main job and a clear next action. Keep the current content h
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | New estate               | Region choices beside a large illustrated preview, with regional details below it and the estate name/start action at the end | [Regions.tsx](../src/Regions.tsx), [expansion.css](../src/expansion.css)                                                    |
 | Estate                   | Landscape as the main workspace, with parcel selection opening its inspector; resources and seasons provide context           | [EstateMap.tsx](../src/EstateMap.tsx), [App.tsx](../src/App.tsx), [styles.css](../src/styles.css)                           |
-| Cellar and reserves      | Ledger rows with quantities and actions; a distinct workbench for blending or bottling                                        | [Reserves.tsx](../src/Reserves.tsx), [BlendAnalysis.tsx](../src/BlendAnalysis.tsx), [winemaking.css](../src/winemaking.css) |
+| Cellar and reserves      | Illustrated selectable vessels and a tank ledger; reserve rows and a blending or bottling workbench                                        | [Reserves.tsx](../src/Reserves.tsx), [BlendAnalysis.tsx](../src/BlendAnalysis.tsx), [winemaking.css](../src/winemaking.css) |
 | Wine presentation        | Illustrated bottle, readable label, provenance, and a restrained score reveal                                                 | [WinePresentation.tsx](../src/WinePresentation.tsx)                                                                         |
 | Research                 | Compact study ledger, optional outcome planning, and a filterable grape library                                               | [Research.tsx](../src/Research.tsx), [research.css](../src/research.css)                                                    |
 | Dialogs and empty states | A focused title, short explanation, and useful action using the shared primitives                                             | [components.tsx](../src/components.tsx)                                                                                     |
@@ -21,11 +21,21 @@ Use spacing, alignment, typography, and thin dividers to group information. Tint
 
 ### Journal and estate guidance
 
-The Journal pairs accounts with a dated history of important estate events. Unacknowledged warnings and production or research completions appear above the current workspace and pause time until acknowledged. Financial totals sit above full-width ledger rows. Keep entries readable on narrow screens. There are no neighboring-work or loan controls. The estate may show a contextual winemaker note for available actions; do not add achievement checklists, milestone targets, or completion bars.
+The Journal opens to a vintage book, with **Accounts & events** keeping the financial ledger and dated event history one tab away. The book pairs the house crest, regional postcard and annual totals with release keepsakes and an editable year note. Use a two-page spread on desktop and stack the folio above the keepsakes on mobile. Records contain real harvests and bottlings; never invent missing history. Retain the latest six release keepsakes per year and annual totals independently of wine-history compaction. Explain where historical tracking began. See [VintageBook.tsx](../src/VintageBook.tsx) and [vintageJournal.ts](../src/vintageJournal.ts).
+
+Unacknowledged warnings and production or research completions appear above the current workspace and pause time until acknowledged. Financial totals sit above full-width ledger rows. Keep entries readable on narrow screens. There are no neighboring-work or loan controls. The estate may show a contextual winemaker note for available actions; do not add achievement checklists, milestone targets, or completion bars.
 
 ### Cellar floor
 
 Show occupied tank groups before empty tanks, keeping each batch together. Order occupied groups by their lowest tank number, then list empty tanks in tank-number order. Reapply this order as tanks fill or become available. See `Fermentation` in [Panels.tsx](../src/Panels.tsx).
+
+[CellarFloor.tsx](../src/CellarFloor.tsx) presents those groups in an illustrated room, with steel or wood vessels reflecting the actual cellar plan. Keep volume, stage and estimated quality out of 100 visible, and open the existing batch controls in a shared modal when selected. Use the inspector's batch-quality calculation and explain that the estimate reflects time matured so far; do not imply an unselected future maturation plan. Include the score in the vessel's accessible name and the **Tank ledger**. Empty tanks have no score. Show eight groups per page on the illustrated floor. The Tank ledger shows every occupied group and empty tank in one continuous table, without pagination. A grouped batch depicts up to three vessels while its caption and inspector retain every reserved tank. Cases carry the house mark. On mobile, keep two vessel groups per row and scroll the ledger within its own region.
+
+### Wine collection and house mark
+
+[WineCollection.tsx](../src/WineCollection.tsx) gives bottles the main visual role in the shop: large original artwork, name, vintage, score and stock. Both Collection and Ledger put daily selling controls directly beside each release: whole-dollar price entry with $1 steppers and a suggested-price shortcut, plus shelf entry with 10-space steps, Max, List and Pause. Valid price and listed-wine shelf changes save immediately, including stepper and Max shortcuts. Keep price and shelf controls free of save reminders and Update buttons. Place the compact shelf limit beside its label instead of on a separate line below the controls. Invalid shelf drafts return to the saved quantity on blur. Listing a stored wine and pausing a listing remain explicit actions; choosing a quantity for an unlisted wine does not put it on sale. Keep these controls outside the bottle's detail button, with 44px touch targets and room for five-digit prices on narrow screens. See [WineQuickControls.tsx](../src/WineQuickControls.tsx) and [ShelfAllocation.tsx](../src/ShelfAllocation.tsx). Selecting a release opens its front/back label, detailed sales outlook, promotion and judging. Keep the bottle and its back note in normal document flow so long notes cannot overlap the controls on mobile.
+
+The house identity editor is accessible from the top-bar crest and settings. Three emblems, three ink colors and up to three initials are cosmetic choices shared by the gate, cellar cases, journal and future bottlings. Snapshot the mark into each bottled release; changing the house must not repaint previous releases. See [IdentityEditor.tsx](../src/IdentityEditor.tsx), [HouseCrest.tsx](../src/HouseCrest.tsx) and [houseIdentity.ts](../src/houseIdentity.ts).
 
 ### Bottling supplies
 
@@ -33,13 +43,17 @@ Keep the bottling-supplies strip directly beneath the Cellar department navigati
 
 ### Warehouse and shop shelves
 
-Show bottled-wine capacity as fine-divided rows beneath the Cellar's bottling supplies and above the Wine shop's releases. Keep used/total counts, free space, and the priced expansion action together. State that warehouse totals include shelf stock; show full or excess-capacity guidance without hiding stored wine. Each release's labeled shelf-count input, update/list action, and pause control sit together below pricing. Shelves refill weekly; communicate the sales ceiling without implying guaranteed demand. Stack capacity details and purchase controls on narrow screens. See [BottleStoragePanel.tsx](../src/BottleStoragePanel.tsx), [ShelfAllocation.tsx](../src/ShelfAllocation.tsx), and [bottle-storage.css](../src/bottle-storage.css).
+Show bottled-wine capacity as fine-divided rows beneath the Cellar's bottling supplies and above the Wine shop's releases. Keep used/total counts, free space, and the priced expansion action together. State that warehouse totals include shelf stock; show full or excess-capacity guidance without hiding stored wine. Each release's labeled shelf-count input, initial List action when unlisted, and pause control sit together below pricing. Keep shelf autosaving consistent in the collection, ledger and wine details. Shelves refill weekly; communicate the sales ceiling without implying guaranteed demand. Stack capacity details and purchase controls on narrow screens. See [BottleStoragePanel.tsx](../src/BottleStoragePanel.tsx), [ShelfAllocation.tsx](../src/ShelfAllocation.tsx), and [bottle-storage.css](../src/bottle-storage.css).
 
 ### Blend planning and trials
 
 Keep percentage and batch-size controls in a native disclosure inside the existing blend bench. Source lot names, available liters, percentage inputs, the total, and the maximum batch action belong together. Applying proportions returns keyboard focus to the bench heading. Present expected bottle yield and likely taste beside the existing quality analysis; distinguish estimates from a recorded tasting. See [BlendProportions.tsx](../src/BlendProportions.tsx) and [Reserves.tsx](../src/Reserves.tsx).
 
 Saved bench trials use a full-width comparison ledger beneath the reserve workspace, with a quiet tint on the current recipe column. Keep source stock and the explicit use/remove actions within each trial's column. The table scrolls within its labeled, keyboard-focusable region on narrow screens; it must not widen the page. Reusing or removing a trial returns focus to the bench. See [BlendTrials.tsx](../src/BlendTrials.tsx), [blend-planning.css](../src/blend-planning.css), and the [planning rules](blend-planning.md).
+
+### Private Collection
+
+The Wine shop's **Private Collection** tab holds bottles set aside from sales. Reuse the bottle gallery and searchable ledger from [WineCollection.tsx](../src/WineCollection.tsx), showing kept quantities and the original artwork, vintage and score. Keep sales controls in Current wines. The release detail groups labeled **Set aside** and **Return to stock** quantities with explicit transfer buttons in [PrivateCollectionControls.tsx](../src/PrivateCollectionControls.tsx). Explain protection from shop and wholesale sales and continued warehouse usage nearby. Empty collections point to Current wines; private-only stock has its own empty-shop guidance. Preserve the existing bottle details, back note and judging status. Counts remain readable in the navigation at 360px; transfer rows stack labels above 44px controls on narrow screens.
 
 ### Wine lines and release history
 
@@ -57,7 +71,7 @@ Build groups facilities and staff in department-filtered ledger rows, implemente
 
 ### Estate framing
 
-Keep estate-wide **Tend all** and **Harvest all ready** controls above the map with their total price, eligible parcel count and disabled reason. A compact parcel ledger shows labeled ripeness and vine-health percentages beside thin bars; harvested and dormant states use words instead of a misleading zero percent. Selecting a row opens that parcel, including across districts. Scope the controls visibly to the current estate. On narrow screens, place the parcel name above its two meters and let action buttons wrap at a 44px minimum height. See [EstateFieldwork.tsx](../src/EstateFieldwork.tsx) and [fieldwork.css](../src/fieldwork.css). These are crop measurements, not achievement progress.
+Keep estate-wide **Tend all** and **Harvest all ready** controls above the map with their total price, eligible parcel count and disabled reason. A compact parcel ledger shows labeled ripeness and vine-health percentages beside thin bars, followed by estimated grape quality out of 100 using the same current-conditions calculation as the parcel forecast. Harvested and dormant states use words instead of a misleading zero percent or quality estimate. Selecting a row opens that parcel, including across districts. Scope the controls visibly to the current estate. On narrow screens, place the parcel name above its two meters and the quality score below them; let action buttons wrap at a 44px minimum height. See [EstateFieldwork.tsx](../src/EstateFieldwork.tsx) and [fieldwork.css](../src/fieldwork.css). These are crop measurements, not achievement progress.
 
 Place **Harvest grapes** and **Tend the vines** directly below the selected parcel's name and area, before grape details and forecasts. Keep the pair in one sticky action group with visible prices, readiness guidance, and at least 44px-high buttons. On desktop it stays within the scrolling inspector; on mobile it stays at the top while the player reads the parcel. Preserve disabled and completion states. See `PlotInspector` in [Panels.tsx](../src/Panels.tsx) and `.parcel-actions` in [styles.css](../src/styles.css).
 
@@ -85,7 +99,7 @@ The shared token definitions live in `:root` in [styles.css](../src/styles.css).
 | --------- | ---------------------------- | ------------------------------------------------------------------ |
 | `--paper` | `#f8f7f2`                    | Main warm paper background                                         |
 | `--ink`   | `#3d4639`                    | Primary text and strong labels                                     |
-| `--muted` | `#939586`                    | Subdued secondary accents; check readability before using for text |
+| `--muted` | `#68705f`                    | Readable secondary text and quieter controls |
 | `--wine`  | `#784759`                    | Primary actions, active controls, and links                        |
 | `--line`  | `#e5e5da`                    | Fine dividers and structural borders                               |
 | `--green` | `#768764`                    | Vineyard and growth accents                                        |
@@ -104,7 +118,7 @@ Use only the two existing font families:
 - **Fraunces**, through `var(--serif)`, for the wordmark, page and section headings, estate/wine names, and selected prominent figures. Prefer weights 400–500 and the existing gentle negative tracking for large headings.
 - **DM Sans**, inherited from the root, for body text, buttons, forms, navigation, labels, and working data. Prefer weights 400–500, with stronger weights for emphasis.
 
-The root text size is currently 13px. Existing section headings are commonly 23–34px; the region setup heading scales from 40–66px. These are reference ranges, not a demand to resize every screen. Reserve the largest type for onboarding and major page titles. Keep body copy comfortably readable, usually with 1.5–1.8 line height, and increase compact text where the screen needs it.
+The root text size is currently 14px. Existing section headings are commonly 23–34px; the region setup heading scales from 40–66px. These are reference ranges, not a demand to resize every screen. Reserve the largest type for onboarding and major page titles. Keep body copy comfortably readable, usually with 1.5–1.8 line height, and increase compact text where the screen needs it.
 
 Use the existing `.eyebrow` treatment for short uppercase context labels. Do not set instructions or whole paragraphs in spaced capitals. Align comparable quantities and use tabular numerals where changing numbers would otherwise shift the layout. Keep units beside values.
 
@@ -140,7 +154,7 @@ The studio in [BottleDesigner.tsx](../src/BottleDesigner.tsx) uses label-art thu
 
 ### Regional identity
 
-[RegionLandscape.tsx](../src/RegionLandscape.tsx) owns the regional postcards. A selection must visibly change the composition and geography as well as the palette. Each region should be distinguishable at a glance even if its label is hidden.
+[RegionLandscape.tsx](../src/RegionLandscape.tsx) owns the regional postcards. [EstateScenery.tsx](../src/EstateScenery.tsx) carries these identities into the playable maps with distinct terrain, architecture and trees. Seasonal ground and foliage follow the game calendar, with bare deciduous trees in winter and brief mist under wet or overcast weather. Harvest crates appear only while the estate has fresh grapes. Keep parcel hit targets, selection, and map framing stable as scenery changes. A selection must visibly change the composition and geography as well as the palette. Each region should be distinguishable at a glance even if its label is hidden.
 
 | Region      | Defining visual cues                                                                         |
 | ----------- | -------------------------------------------------------------------------------------------- |
@@ -181,7 +195,7 @@ Keep the task sequence and important actions available when columns stack. Let l
 
 ## Implementation and review
 
-The app uses React, TypeScript, and plain CSS. Shared styles live in [styles.css](../src/styles.css), region/research styles in [expansion.css](../src/expansion.css), and cellar/bottle styles in [winemaking.css](../src/winemaking.css). [main.tsx](../src/main.tsx) imports them in that order, followed by [prestige.css](../src/prestige.css) for the resource and tier dialog. Check later overrides before assuming an earlier rule is the rendered value.
+The app uses React, TypeScript, and plain CSS. Shared styles live in [styles.css](../src/styles.css), region/research styles in [expansion.css](../src/expansion.css), and cellar/bottle styles in [winemaking.css](../src/winemaking.css). [main.tsx](../src/main.tsx) imports them in that order, followed by [prestige.css](../src/prestige.css) for the resource and tier dialog, and [atmosphere.css](../src/atmosphere.css) for the illustrated working spaces, house marks, vintage book and readability. Check later overrides before assuming an earlier rule is the rendered value.
 
 Extend an existing component or class when its role matches. Keep new rules near the related feature and name classes by their role. Use inline styles for data-dependent values, such as composition proportions or grape colors; put reusable presentation rules in CSS. A routine feature should not introduce another CSS framework, font family, icon set, or animation dependency.
 

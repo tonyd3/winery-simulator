@@ -1,4 +1,5 @@
 import type { ResearchId } from './catalog';
+import { houseInitials } from './houseIdentity';
 import { blendResearchMissing } from './researchProgression';
 import { RESEARCH } from './catalog';
 import { ESTATE_LIMITS } from './estates';
@@ -63,7 +64,17 @@ function BottlingForm({
   const limit = Math.min(max, state.kits, room);
   const [count, setCount] = useState(String(limit));
   const line = state.lines.find((l) => String(l.id) === lineId);
-  const activeDesign = line?.design ?? design;
+  const activeDesign = {
+    ...(line?.design ?? design),
+    ...(state.houseIdentity
+      ? {
+          houseMark: {
+            ...state.houseIdentity,
+            monogram: houseInitials(state.name, state.houseIdentity),
+          },
+        }
+      : {}),
+  };
   const q = assess(reserve.components, state.hybrids);
   const bottles = Number(count);
   const previewParts =
@@ -154,7 +165,9 @@ function BottlingForm({
             <option value="new">Create a new wine line</option>
             {[...state.lines]
               .sort((a, b) =>
-                a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+                a.name.localeCompare(b.name, undefined, {
+                  sensitivity: 'base',
+                }),
               )
               .map((l) => (
                 <option key={l.id} value={l.id}>
@@ -168,8 +181,9 @@ function BottlingForm({
               {state.wines.filter((w) => w.lineId === line.id).length +
                 (line.archive?.releases ?? 0) +
                 1}{' '}
-              will carry this line’s original bottle and label. Earlier releases
-              stay in its history.
+              will carry this line’s bottle and label
+              {state.houseIdentity ? ' with your current house mark' : ''}.
+              Earlier releases stay in its history.
             </p>
           ) : (
             <>
@@ -184,7 +198,7 @@ function BottlingForm({
                 required
               />
               <BottleDesigner
-                design={design}
+                design={{ ...design, houseMark: activeDesign.houseMark }}
                 onChange={setDesign}
                 name={name}
                 estate={state.name}

@@ -1,4 +1,6 @@
 import type { ResearchId } from './catalog';
+import { HouseCrest } from './HouseCrest';
+import { IdentityEditor } from './IdentityEditor';
 import { EstateToolbar } from './Holdings';
 import { plotId, estateIdForPlot } from './estates';
 import './holdings.css';
@@ -140,16 +142,17 @@ export default function App() {
   } | null>(null);
   const [buildLand, setBuildLand] = useState(false);
   const [speed, setSpeed] = useState(0);
-  const [modal, setModal] = useState<'help' | 'settings' | 'prestige' | null>(
-    null,
-  );
-  const prestigeTrigger = useRef<HTMLButtonElement | null>(null);
+  const [modal, setModal] = useState<
+    'help' | 'settings' | 'prestige' | 'identity' | null
+  >(null);
+  const modalTrigger = useRef<HTMLButtonElement | null>(null);
+  const identityTrigger = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
-    // Opening makes the resource bar inert before the modal can capture focus.
+    // Opening makes the page inert before the modal can capture focus.
     // Restore the trigger after closing has made the page interactive again.
-    if (modal === null && prestigeTrigger.current) {
-      prestigeTrigger.current.focus();
-      prestigeTrigger.current = null;
+    if (modal === null && modalTrigger.current) {
+      modalTrigger.current.focus();
+      modalTrigger.current = null;
     }
   }, [modal]);
   const [reveal, setReveal] = useState<Wine | null>(null);
@@ -214,13 +217,15 @@ export default function App() {
           setToast(null);
           setReveal(next.wines.at(-1)!);
         }
-        if (action.type === 'advance') setToast(null);
+        if (['advance', 'collectWine', 'returnWine'].includes(action.type))
+          setToast(null);
         if (next.bankruptcy || next.pendingEvents > 0) setSpeed(0);
         if (
           action.type !== 'acknowledgeEvents' &&
           action.type !== 'bottle' &&
           action.type !== 'advance' &&
           action.type !== 'price' &&
+          action.type !== 'shelfSpace' &&
           action.type !== 'rename' &&
           action.type !== 'label' &&
           action.type !== 'visitEstate' &&
@@ -229,6 +234,10 @@ export default function App() {
             'shortlistResearch',
             'moveShortlist',
             'dismissDiscovery',
+            'houseIdentity',
+            'vintageNote',
+            'collectWine',
+            'returnWine',
           ].includes(action.type)
         )
           notify(next.log[0].text);
@@ -566,6 +575,21 @@ export default function App() {
               {REGIONS[state.region].name} · {REGIONS[state.region].country}
             </span>
           </div>
+          <button
+            className="house-identity-trigger"
+            ref={identityTrigger}
+            aria-label="Design your house identity"
+            onClick={() => {
+              modalTrigger.current = identityTrigger.current;
+              setSpeed(0);
+              setModal('identity');
+            }}
+          >
+            <HouseCrest
+              identity={state.houseIdentity ?? undefined}
+              name={state.name}
+            />
+          </button>
           <div className="topbar-actions">
             <span className={`save-status ${!saved ? 'warning-text' : ''}`}>
               <span className="tiny-dot" />
@@ -614,7 +638,7 @@ export default function App() {
           <PrestigeResource
             value={state.reputation}
             onOpen={(trigger) => {
-              prestigeTrigger.current = trigger;
+              modalTrigger.current = trigger;
               setSpeed(0);
               setModal('prestige');
             }}
@@ -678,14 +702,14 @@ export default function App() {
                 {view === 'estate'
                   ? 'Tend your vines. Follow the seasons. Make something worth waiting for.'
                   : view === 'cellar'
-                    ? 'A little science, a little patience, and a lot of character.'
+                    ? 'Follow each harvest from fermentation to its next release.'
                     : view === 'market'
                       ? 'Every bottle has a story. This one is yours.'
                       : view === 'improvements'
                         ? 'Thoughtful additions for the vintages ahead.'
                         : view === 'research'
                           ? 'Study new grapes. Master your craft. Shape the estate’s future.'
-                          : 'Your income, expenses, and estate accounts.'}
+                          : 'Your vintages, memories, and estate accounts.'}
               </p>
             </div>
             <div className="season-weather">
@@ -970,6 +994,15 @@ export default function App() {
           }}
         />
       )}
+      {modal === 'identity' && (
+        <Modal title="A mark of your own." onClose={closeModal}>
+          <IdentityEditor
+            state={state}
+            dispatch={dispatch}
+            onClose={closeModal}
+          />
+        </Modal>
+      )}
       {modal === 'settings' && (
         <Modal title="Make yourself at home." onClose={closeModal}>
           <p className="modal-intro">
@@ -978,7 +1011,10 @@ export default function App() {
           </p>
           <div className="save-summary">
             <div className="save-estate-icon">
-              <Icon name="map" size={29} />
+              <HouseCrest
+                identity={state.houseIdentity ?? undefined}
+                name={state.name}
+              />
             </div>
             <div>
               <h3>{state.name}</h3>
@@ -996,6 +1032,15 @@ export default function App() {
             </div>
           </div>
           <div className="save-actions">
+            <button
+              className="button secondary wide"
+              onClick={() => {
+                modalTrigger.current = identityTrigger.current;
+                setModal('identity');
+              }}
+            >
+              Design your house identity
+            </button>
             <button
               className="button primary wide"
               onClick={() => {

@@ -21,6 +21,7 @@ import {
   LabelArtwork,
 } from './BottleArtwork';
 import { backLabelNote } from './bottleStudio';
+import { CrestDrawing } from './HouseCrest';
 
 export function SalesCount({
   wines,
@@ -185,7 +186,9 @@ export function WineBottle({
           finish={design.finish}
           accent={accent}
           paper={paper}
-          monogram={estate.charAt(0).toUpperCase()}
+          monogram={
+            design.houseMark?.monogram || estate.charAt(0).toUpperCase()
+          }
         />
         <g clipPath={`url(#${clipId})`}>
           <g
@@ -228,27 +231,39 @@ export function WineBottle({
                       stroke={accent}
                       strokeWidth=".6"
                     />
-                    <path
-                      d="M63 134q7 -7 14 0v8q-7 9-14 0Z"
-                      fill="none"
-                      stroke={accent}
-                    />
-                    <text
-                      x="70"
-                      y="142"
-                      textAnchor="middle"
-                      fontSize="8"
-                      fill={accent}
-                      fontFamily="Georgia"
-                    >
-                      {estate.charAt(0).toUpperCase()}
-                    </text>
-                    <path
-                      d="M57 137q-6 8 4 13M83 137q6 8-4 13"
-                      fill="none"
-                      stroke={accent}
-                      strokeWidth=".6"
-                    />
+                    {!design.houseMark && (
+                      <>
+                        <path
+                          d="M63 134q7 -7 14 0v8q-7 9-14 0Z"
+                          fill="none"
+                          stroke={accent}
+                        />
+                        <text
+                          x="70"
+                          y="142"
+                          textAnchor="middle"
+                          fontSize="8"
+                          fill={accent}
+                          fontFamily="Georgia"
+                        >
+                          {estate.charAt(0).toUpperCase()}
+                        </text>
+                        <path
+                          d="M57 137q-6 8 4 13M83 137q6 8-4 13"
+                          fill="none"
+                          stroke={accent}
+                          strokeWidth=".6"
+                        />
+                      </>
+                    )}
+                    {design.houseMark && (
+                      <g transform="translate(59 128) scale(.35)">
+                        <CrestDrawing
+                          identity={design.houseMark}
+                          name={estate}
+                        />
+                      </g>
+                    )}
                   </>
                 )}
                 {(modern || design.style === 'estate') && (
@@ -266,6 +281,15 @@ export function WineBottle({
                   accent={accent}
                   paper={paper}
                 />
+                {design.houseMark && !heritage && (
+                  <g transform="translate(63 95) scale(.22)">
+                    <path
+                      d="M10 8Q32 0 54 8V35Q54 52 32 61Q10 52 10 35Z"
+                      fill={paper}
+                    />
+                    <CrestDrawing identity={design.houseMark} name={estate} />
+                  </g>
+                )}
                 {lines.slice(0, 3).map((line, i) => (
                   <text
                     key={i}
