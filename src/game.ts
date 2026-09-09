@@ -1,5 +1,17 @@
 import { parcelProvenanceSchema } from './parcelProvenance';
 import {
+  houseIdentitySchema,
+  houseInitials,
+  type HouseIdentity,
+} from './houseIdentity';
+import {
+  vintageJournalSchema,
+  estateJournal,
+  journalChapter,
+  rememberRelease,
+  rememberMoment,
+} from './vintageJournal';
+import {
   centsSchema,
   financeSchema,
   releaseAccountsSchema,
@@ -468,6 +480,8 @@ export const stateSchema = z
     nextHybrid: z.number().int().min(1).max(100000),
     name: z.string().trim().min(1).max(32),
     week: z.number().int().min(1).max(100000),
+    houseIdentity: houseIdentitySchema.nullable().default(null),
+    vintageJournal: vintageJournalSchema.nullable().default(null),
     cash: bounded(),
     finance: financeSchema.nullable().default(null),
     kitCostCents: centsSchema.nullable().default(null),
@@ -907,6 +921,8 @@ function compactWineHistory(s: GameState) {
 }
 
 export type Action =
+  | { type: 'houseIdentity'; identity: HouseIdentity }
+  | { type: 'vintageNote'; year: number; note: string }
   | { type: 'planResearch'; goal: ResearchGoalId | null }
   | { type: 'shortlistResearch'; id: ResearchId; add: boolean }
   | { type: 'moveShortlist'; id: ResearchId; direction: -1 | 1 }
@@ -1002,6 +1018,8 @@ export function newGame(
   const r = REGIONS[region];
   return {
     version: 6,
+    houseIdentity: null,
+    vintageJournal: { startedWeek: 6, chapters: [] },
     bottleStorage: { warehouse: 0, shelves: 0 },
     cellar: {
       bays: 4,
@@ -1715,6 +1733,8 @@ export function act(current: GameState, action: Action): GameState {
   s.introCrossId ??= null;
   s.blendTrials ??= [];
   s.operatedUpgrades ??= [];
+  s.houseIdentity ??= null;
+  s.vintageJournal = estateJournal(s);
   const setStudies = (projects: z.infer<typeof researchProjectSchema>[]) => {
     s.researchProject = projects[0] ?? null;
     s.additionalResearchProjects = projects.slice(1);
@@ -1856,6 +1876,25 @@ export function act(current: GameState, action: Action): GameState {
   const spend = (state: GameState, label: string, amount: number) =>
     debit(state, label, amount, investment);
   switch (action.type) {
+    case 'houseIdentity': {
+      const identity = houseIdentitySchema.safeParse(action.identity);
+      if (!identity.success)
+        throw new Error('Choose an emblem, ink and up to three initials.');
+      s.houseIdentity = identity.data;
+      break;
+    }
+    case 'vintageNote': {
+      if (
+        !Number.isInteger(action.year) ||
+        action.year < 1 ||
+        action.year > calendar(s.week).year ||
+        typeof action.note !== 'string' ||
+        action.note.trim().length > 600
+      )
+        throw new Error('Choose a recorded year and use up to 600 characters.');
+      journalChapter(s.vintageJournal, action.year).note = action.note.trim();
+      break;
+    }
     case 'visitEstate': {
       getEstate(s, action.id);
       s.activeEstate = action.id;
@@ -1891,6 +1930,11 @@ export function act(current: GameState, action: Action): GameState {
       });
       s.plots.push(...newDistrict(id, 0));
       s.activeEstate = id;
+      rememberMoment(
+        s.vintageJournal,
+        s.week,
+        `${name} acquired in ${REGIONS[action.region].name}.`,
+      );
       note(
         s,
         `${name} acquired in ${REGIONS[action.region].name}. Three empty parcels are ready. Buy cellar space and tanks separately.`,
@@ -2506,6 +2550,15 @@ export function act(current: GameState, action: Action): GameState {
       p.harvestedYear = calendar(s.week).year;
       p.growth = 0;
       s.stats.harvested += kg;
+      const chapter = journalChapter(s.vintageJournal, calendar(s.week).year);
+      chapter.harvestKg += kg;
+      chapter.harvests++;
+      if (chapter.harvests === 1)
+        rememberMoment(
+          s.vintageJournal,
+          s.week,
+          `The first pick: ${kg} kg of ${getVariety(s, p.variety!).name} from ${land.name}.`,
+        );
       s.knowledge = Math.min(1e9, s.knowledge + 12);
       note(
         s,
@@ -2912,11 +2965,26 @@ export function act(current: GameState, action: Action): GameState {
         components,
         bottled: s.week,
         tasting: tastingProfile(components, s),
-        design: { ...line.design },
+        design: {
+          ...line.design,
+          ...(s.houseIdentity
+            ? {
+                houseMark: {
+                  ...s.houseIdentity,
+                  monogram: houseInitials(s.name, s.houseIdentity),
+                },
+              }
+            : {}),
+        },
         estate: s.name,
         founded: line.founded,
       });
       s.reserves = s.reserves.filter((r) => volume(r.components) > 0);
+      rememberRelease(
+        s.vintageJournal,
+        s.wines.at(-1)!,
+        getVariety(s, s.wines.at(-1)!.variety).wineType === 'White',
+      );
       // Reward volume, so splitting one lot into tiny releases cannot farm knowledge.
       const knowledge =
         Math.floor((s.stats.bottled + count) / 40) -

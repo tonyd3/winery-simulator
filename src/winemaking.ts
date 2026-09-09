@@ -1,6 +1,7 @@
 import { parcelProvenanceSchema, parcelKey } from './parcelProvenance';
 import { centsSchema, archivedAccountsSchema } from './finance';
 import { z } from 'zod';
+import { houseIdentitySchema } from './houseIdentity';
 import { cellarTechniquesSchema, techniqueKey } from './cellarTechniques';
 import { grapeCompatibility } from './blendCompatibility';
 import type { GrapeLineage } from './blendCompatibility';
@@ -31,6 +32,7 @@ export const labelDesignSchema = z
     finish: z.enum(['foil', 'wax', 'cork', 'wrap']).optional(),
     paper: z.enum(['cream', 'ivory', 'blush']).optional(),
     note: z.string().trim().max(160).optional(),
+    houseMark: houseIdentitySchema.optional(),
   })
   .strict();
 export const DEFAULT_DESIGN: LabelDesign = {
