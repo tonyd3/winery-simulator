@@ -486,7 +486,11 @@ function Fermentation({
     ...state.cellar.tanks
       .filter((t) => !used.has(t.id))
       .map((t) => ({ batch: undefined, ids: [t.id] })),
-  ].sort((a, b) => Math.min(...a.ids) - Math.min(...b.ids));
+  ].sort(
+    (a, b) =>
+      Number(Boolean(b.batch)) - Number(Boolean(a.batch)) ||
+      Math.min(...a.ids) - Math.min(...b.ids),
+  );
   return (
     <div className="operations-page">
       <div className="section-intro">

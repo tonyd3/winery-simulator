@@ -23,6 +23,10 @@ Use spacing, alignment, typography, and thin dividers to group information. Tint
 
 The Journal pairs accounts with a dated history of important estate events. Unacknowledged warnings and production or research completions appear above the current workspace and pause time until acknowledged. Financial totals sit above full-width ledger rows. Keep entries readable on narrow screens. There are no neighboring-work or loan controls. The estate may show a contextual winemaker note for available actions; do not add achievement checklists, milestone targets, or completion bars.
 
+### Cellar floor
+
+Show occupied tank groups before empty tanks, keeping each batch together. Order occupied groups by their lowest tank number, then list empty tanks in tank-number order. Reapply this order as tanks fill or become available. See `Fermentation` in [Panels.tsx](../src/Panels.tsx).
+
 ### Bottling supplies
 
 Keep the bottling-supplies strip directly beneath the Cellar department navigation, visible in every department, including Reserves & blending. Group stock, incoming deliveries, and the explicit order action with its price and next-week delivery timing. On narrow screens, place a full-width order button beneath the supply details. See `Cellar` in [Panels.tsx](../src/Panels.tsx) and `.supply-strip` in [styles.css](../src/styles.css).
