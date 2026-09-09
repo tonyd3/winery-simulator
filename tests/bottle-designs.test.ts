@@ -128,7 +128,7 @@ test('finishes, paper, and personal notes survive saves and subsequent releases 
 
 test('overlong notes are rejected before consuming wine or kits', () => {
   const base = readyReserve();
-  const before = serialize(base);
+  const before = structuredClone(base);
   assert.equal(
     labelDesignSchema.safeParse({ ...DEFAULT_DESIGN, note: 'a'.repeat(160) })
       .success,
@@ -145,7 +145,7 @@ test('overlong notes are rejected before consuming wine or kits', () => {
       },
     }),
   );
-  assert.equal(serialize(base), before);
+  assert.deepEqual(base, before);
 });
 
 test('complete looks preserve the personal note without mutating either design', () => {
