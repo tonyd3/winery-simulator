@@ -25,6 +25,12 @@ npm run preview  # Serve the production build locally
 
 Requires Node.js 22 or newer. Built with React, TypeScript, Vite, and Zod. All artwork is original SVG rendered by the game; no image service or API key is required. Fonts use Google Fonts with system fallbacks.
 
+## Agent playtesting
+
+Use the repo-local [playtest-terroir skill](.agents/skills/playtest-terroir/SKILL.md) for a browser playthrough and a numbered review of bugs, usability, mechanics, and balance. It covers save preservation, production and sales, expansion into a second region, persistence checks, and evidence for selected fixes.
+
+Example request: “Use $playtest-terroir to play from a fresh save until a second regional winery sells its first wine, then report the findings.”
+
 ## Your first vintage
 
 1. Pick or randomize one of eight wine regions and name your estate. Start with $12,500, three parcels, two regional grapes, two 150 L tanks in a four-bay cellar, and 600 bottling kits. Time is paused.
