@@ -1,8 +1,29 @@
 # Grape library
 
-The catalog contains 52 varieties and 85 research projects (33 techniques and 52 individual grape studies). Each addition can be planted in any region after its study, used as a breeding parent, fermented, stored, blended, bottled, and sold. New estates still begin with two founding grapes.
+The catalog contains 64 varieties and 97 research projects (33 techniques and 64 individual grape studies). Each addition can be planted in any region after its study, used as a breeding parent, fermented, stored, blended, bottled, and sold. New estates still begin with two founding grapes.
 
 These are base study costs and durations, excluding prerequisite projects. Home-region favorites cost 20% less and take two fewer study weeks; an operating research lab accelerates progress. A game year contains 12 weeks. Planting and breeding are separate purchases.
+
+## Iberian, Greek, Georgian, and South African additions
+
+Twelve more varieties expand the library: seven reds and five whites. Bobal and Verdejo offer lower-cost studies and generous crops; Touriga Nacional, Saperavi, and Assyrtiko trade yield and study expense for finesse. Moschofilero favors a light, aromatic style, while Baga needs more careful tending and patient maturation. Their numeric traits and pairings are game design choices.
+
+| Grape | Study prerequisite | Cash | Knowledge | Weeks | Recipe idea in the game |
+| --- | --- | ---: | ---: | ---: | --- |
+| Touriga Nacional | Experimental viticulture | $25,400 | 240 | 34 | Touriga Franca |
+| Touriga Franca | Nursery propagation | $12,550 | 150 | 22 | Tempranillo |
+| Baga | Nursery propagation | $12,450 | 160 | 24 | Touriga Nacional |
+| Mencía | Nursery propagation | $13,200 | 160 | 24 | Cabernet Franc |
+| Bobal | Vine science | $4,250 | 70 | 12 | Tempranillo |
+| Pinotage | Nursery propagation | $13,300 | 150 | 22 | Merlot |
+| Saperavi | Experimental viticulture | $24,200 | 240 | 34 | Cabernet Sauvignon |
+| Assyrtiko | Experimental viticulture | $23,000 | 240 | 34 | Moschofilero |
+| Moschofilero | Nursery propagation | $11,050 | 150 | 22 | Riesling |
+| Godello | Nursery propagation | $13,200 | 160 | 24 | Albariño |
+| Verdejo | Vine science | $4,250 | 70 | 12 | Sauvignon Blanc |
+| Rkatsiteli | Nursery propagation | $11,800 | 150 | 22 | Chenin Blanc |
+
+Each has an explicit tasting and maturation profile, including vessel advice and oak tolerance. Moschofilero uses the existing white-wine model. Rkatsiteli does not automatically receive skin contact; that remains a separate cellar technique. These additions do not add regions or grant new founding grapes. Estates with the previous 52 varieties retain their licenses and must study each new grape individually.
 
 ## Italian and French additions
 
@@ -54,7 +75,7 @@ The additions offer different tradeoffs. Gamay grows best in cool conditions and
 
 Pairing adjustments remain bounded between −6 and +4. Syrah–Viognier is proportion-sensitive: Viognier supports the blend at up to 15%, then gradually becomes overpowering. Tiny additions have small effects. This recipe still requires **Red & white experiments**, reached through **Advanced blending**. Hybrid recipes inherit pairing tendencies through their parentage. Good pairings cannot guarantee a 90-point bottle from ordinary fruit; already scored reserves and released bottles retain their scores.
 
-Existing saves keep their earned grape access and active studies. Estates with access to the previous 34-grape catalog still need individual studies for all 18 Italian and French additions. Collection rewards from saves predating individual research stay limited to the original 24 varieties, including unfinished legacy collection projects. All 28 later additions require individual studies in those estates too. Save version six and the browser storage key remain unchanged.
+Existing saves keep their earned grape access and active studies. Estates with access to the previous 34-grape catalog still need individual studies for all 18 Italian and French additions. Collection rewards from saves predating individual research stay limited to the original 24 varieties, including unfinished legacy collection projects. All 40 later additions require individual studies in those estates too. Save version six and the browser storage key remain unchanged.
 
 ## Inspiration
 
@@ -76,3 +97,11 @@ Regional identities and some pairings draw on these primary sources. Additional 
 - [Austrian Wine: Grüner Veltliner tasting guide](https://www.austrianwine.com/fileadmin/user_upload/PDF/AVZs/WG15_GV_Verkostung-WEB.pdf) — aromatic character.
 - [Rhône Valley: grape varieties](https://www.vins-rhone.com/en/rhone-valley-vineyards/grape-varieties) and [Rhône Rangers: white grapes](https://www.rhonerangers.org/wine-education/white-grapes) — the white-grape family and complementary textures.
 - [Langmeil: Three Gardens](https://www.langmeilwinery.com.au/products/2025-three-gardens-viognier-marsanne-roussanne) — a Barossa producer’s Viognier–Marsanne–Roussanne blend.
+
+Sources for the latest additions:
+
+- [Wines of Portugal: grape varieties](https://winesofportugal.com/en/portuguese-wines/grape-varieties/) and [Douro and Port Wine Institute: grapes](https://www.ivdp.pt/pt/vinha/castas/) — Touriga Nacional, Touriga Franca, and Baga.
+- [Bierzo: grape varieties](https://www.crdobierzo.es/en/the-bierzo-designation-of-origin/varieties-grapes/), [Rueda: Verdejo](https://dorueda.com/verdejo/), and [Utiel-Requena: Bobal](https://utielrequena.org/en/grape-bobal/) — Spanish regional associations.
+- [Wines of Greece: Assyrtiko](https://winesofgreece.org/varieties/assyrtiko/) and [Moschofilero](https://winesofgreece.org/varieties/moschofilero/) — warmth, acidity, and aromatic style.
+- [Wines of Georgia: grape varieties](https://www.winesgeorgia.com/grape-varieties/) — Saperavi and Rkatsiteli.
+- [Wines of South Africa: cultivars](https://www.wosa.co.za/The-Industry/Wines-Of-Origin/The-Role-Of-Cultivar/) — Pinotage’s identity.

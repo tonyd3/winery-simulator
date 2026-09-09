@@ -20,12 +20,18 @@ const powerful = new Set([
   'montepulciano',
   'nero_davola',
   'tannat',
+  'touriga_nacional',
+  'baga',
+  'bobal',
+  'pinotage',
+  'saperavi',
 ]);
 const aromatic = new Set([
   'riesling',
   'gewurztraminer',
   'torrontes',
   'viognier',
+  'moschofilero',
 ]);
 const pairKey = (a: string, b: string) => [a, b].sort().join(':');
 const partners = new Map<string, Rule>([
@@ -300,6 +306,102 @@ const partners = new Map<string, Rule>([
       affinity: 3,
       reason:
         'Grenache Blanc provides body while Roussanne brings fragrance and detail.',
+    },
+  ],
+  [
+    pairKey('touriga_nacional', 'touriga_franca'),
+    {
+      affinity: 4,
+      reason:
+        'Touriga Nacional supplies structure while Touriga Franca adds floral lift and rounded fruit.',
+    },
+  ],
+  [
+    pairKey('touriga_franca', 'tempranillo'),
+    {
+      affinity: 3,
+      reason:
+        'Touriga Franca’s floral fruit complements Tempranillo’s savory structure.',
+    },
+  ],
+  [
+    pairKey('baga', 'touriga_nacional'),
+    {
+      affinity: 2,
+      reason:
+        'Baga’s bright acidity meets Touriga Nacional’s dark fruit and perfume.',
+    },
+  ],
+  [
+    pairKey('mencia', 'cabernet_franc'),
+    {
+      affinity: 2,
+      reason:
+        'Fragrant red fruit and fresh herbs create a lively, finely structured blend.',
+    },
+  ],
+  [
+    pairKey('bobal', 'tempranillo'),
+    {
+      affinity: 3,
+      reason:
+        'Bobal’s fresh dark fruit adds depth to Tempranillo’s savory cherry style.',
+    },
+  ],
+  [
+    pairKey('pinotage', 'merlot'),
+    {
+      affinity: 3,
+      reason:
+        'Merlot’s supple plum fruit softens Pinotage’s firmer, spicy character.',
+    },
+  ],
+  [
+    pairKey('saperavi', 'cabernet'),
+    {
+      affinity: 3,
+      reason:
+        'Saperavi brings vivid acidity and dark fruit to Cabernet’s firm framework.',
+    },
+  ],
+  [
+    pairKey('assyrtiko', 'moschofilero'),
+    {
+      affinity: 3,
+      reason:
+        'Assyrtiko’s citrus structure supports Moschofilero’s delicate floral perfume.',
+    },
+  ],
+  [
+    pairKey('moschofilero', 'riesling'),
+    {
+      affinity: 2,
+      reason:
+        'Rose perfume joins Riesling’s lively citrus in a light, aromatic white.',
+    },
+  ],
+  [
+    pairKey('godello', 'albarino'),
+    {
+      affinity: 3,
+      reason:
+        'Godello’s rounded pear texture gains a bright citrus edge from Albariño.',
+    },
+  ],
+  [
+    pairKey('verdejo', 'sauvignon'),
+    {
+      affinity: 3,
+      reason:
+        'Verdejo’s rounded citrus fruit balances Sauvignon Blanc’s sharper herbal freshness.',
+    },
+  ],
+  [
+    pairKey('rkatsiteli', 'chenin'),
+    {
+      affinity: 2,
+      reason:
+        'Fresh apple and quince combine with Chenin’s acidity for a firm, textured white.',
     },
   ],
 ]);

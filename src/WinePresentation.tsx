@@ -1,13 +1,26 @@
 import { parcelLabel } from './parcelProvenance';
-import { useEffect, useState } from 'react';
-import { ArrowRight, Check, Sparkles } from 'lucide-react';
+import { useEffect, useId, useState } from 'react';
+import { ArrowRight, Check, RotateCw, Sparkles } from 'lucide-react';
 import { Modal } from './components';
 import { getVariety, getEstate, wineSales } from './game';
 import type { GameState, Wine } from './game';
-import { LABEL_COLORS, vintage, volume, wineSourceKey } from './winemaking';
+import {
+  LABEL_COLORS,
+  LABEL_PAPERS,
+  vintage,
+  volume,
+  wineSourceKey,
+} from './winemaking';
 import type { ArchiveSummary, LabelDesign, WineComponent } from './winemaking';
 import { TastingNotes } from './TastingNotes';
 import { releaseTasting } from './wineSensory';
+import {
+  BackLabel,
+  BOTTLE_PATHS,
+  BottleFinish,
+  LabelArtwork,
+} from './BottleArtwork';
+import { backLabelNote } from './bottleStudio';
 
 export function SalesCount({
   wines,
@@ -100,6 +113,17 @@ export function Composition({
   );
 }
 
+type WineBottleProps = {
+  name: string;
+  estate: string;
+  design: LabelDesign;
+  founded: number;
+  year: string;
+  release: number;
+  white?: boolean;
+  score?: number;
+};
+
 export function WineBottle({
   name,
   estate,
@@ -109,25 +133,15 @@ export function WineBottle({
   release,
   white = false,
   score,
-}: {
-  name: string;
-  estate: string;
-  design: LabelDesign;
-  founded: number;
-  year: string;
-  release: number;
-  white?: boolean;
-  score?: number;
-}) {
+  back = false,
+  labelDetail = false,
+}: WineBottleProps & { back?: boolean; labelDetail?: boolean }) {
   const accent = LABEL_COLORS[design.color];
+  const paper = LABEL_PAPERS[design.paper ?? 'cream'].color;
   const modern = design.style === 'modern';
   const heritage = design.style === 'heritage';
-  const path =
-    design.bottle === 'rounded'
-      ? 'M59 12H81V62C81 84 108 82 108 117V210Q108 222 96 222H44Q32 222 32 210V117C32 82 59 84 59 62Z'
-      : design.bottle === 'slender'
-        ? 'M60 6H80V61C80 86 96 108 96 135V212Q96 222 86 222H54Q44 222 44 212V135C44 108 60 86 60 61Z'
-        : 'M58 12H82V65Q83 73 96 86Q103 94 103 108V210Q103 222 91 222H49Q37 222 37 210V108Q37 94 44 86Q57 73 58 65Z';
+  const path = BOTTLE_PATHS[design.bottle];
+  const clipId = useId();
   const words = name.trim().split(/\s+/);
   const lines: string[] = [];
   for (const word of words) {
@@ -145,10 +159,19 @@ export function WineBottle({
         </span>
       )}
       <svg
-        viewBox="0 0 140 238"
+        viewBox={labelDetail ? '40 113 60 94' : '0 0 140 238'}
         role="img"
-        aria-label={`${name || 'Your wine line'}, ${design.style} label, ${design.bottle} bottle`}
+        aria-label={
+          back
+            ? `${name || 'Your wine line'}, back label`
+            : `${name || 'Your wine line'}, ${design.style} label, ${design.bottle} bottle`
+        }
       >
+        <defs>
+          <clipPath id={clipId}>
+            <path d={path} />
+          </clipPath>
+        </defs>
         <ellipse cx="70" cy="227" rx="40" ry="7" fill="#56473a12" />
         <path d={path} fill={white ? '#8d9464' : '#405b4c'} />
         <path
@@ -156,94 +179,158 @@ export function WineBottle({
           stroke="#ffffff13"
           strokeWidth="5"
           fill="none"
+          clipPath={`url(#${clipId})`}
         />
-        <path d="M57 10H83V47H57Z" fill={accent} />
-        <path d="M57 18H83M57 22H83" stroke="#ffffff35" />
-        <rect
-          x="44"
-          y="117"
-          width="52"
-          height="85"
-          fill={modern ? accent : '#f7f0dd'}
+        <BottleFinish
+          finish={design.finish}
+          accent={accent}
+          paper={paper}
+          monogram={estate.charAt(0).toUpperCase()}
         />
-        {heritage && (
-          <>
-            <rect
-              x="47"
-              y="120"
-              width="46"
-              height="79"
-              fill="none"
-              stroke={accent}
-              strokeWidth=".6"
-            />
-            <path
-              d="M63 134q7 -7 14 0v8q-7 9-14 0Z"
-              fill="none"
-              stroke={accent}
-            />
-            <text
-              x="70"
-              y="142"
-              textAnchor="middle"
-              fontSize="8"
-              fill={accent}
-              fontFamily="Georgia"
-            >
-              {estate.charAt(0).toUpperCase()}
-            </text>
-            <path
-              d="M57 137q-6 8 4 13M83 137q6 8-4 13"
-              fill="none"
-              stroke={accent}
-              strokeWidth=".6"
-            />
-          </>
-        )}
-        {!heritage && (
-          <path
-            d={
-              modern
-                ? 'M50 126h40v3H50z'
-                : 'M51 141 63 129 73 139 85 130 90 146H51Z'
+        <g clipPath={`url(#${clipId})`}>
+          <g
+            transform={
+              design.bottle === 'amphora'
+                ? 'translate(70 0) scale(.84 1) translate(-70 0)'
+                : undefined
             }
-            fill={modern ? '#f7f0dd' : '#9fa880'}
-          />
-        )}
-        {lines.slice(0, 3).map((line, i) => (
-          <text
-            key={i}
-            x="70"
-            y={158 + i * 8}
-            textAnchor="middle"
-            fill={modern ? '#f7f0dd' : accent}
-            fontSize="6"
-            textLength={line.length > 15 ? 43 : undefined}
-            lengthAdjust="spacingAndGlyphs"
-            fontFamily="Georgia"
           >
-            {line}
-          </text>
-        ))}
-        <text
-          x="70"
-          y="187"
-          textAnchor="middle"
-          fontSize="4.5"
-          fill={modern ? '#f7f0dd' : accent}
-        >
-          {year.startsWith('Multi') ? 'MULTI-VINTAGE' : year.toUpperCase()}
-        </text>
-        <text
-          x="70"
-          y="194"
-          textAnchor="middle"
-          fontSize="3.6"
-          fill={modern ? '#f7f0dd' : accent}
-        >
-          EST. Y{founded} · No. {String(release).padStart(2, '0')}
-        </text>
+            {back ? (
+              <BackLabel
+                note={backLabelNote(design.note, estate)}
+                estate={estate}
+                year={year}
+                release={release}
+                paper={paper}
+                accent={accent}
+              />
+            ) : (
+              <>
+                {design.style === 'vintage' ? (
+                  <path d="M44 202V141a26 26 0 0 1 52 0V202Z" fill={paper} />
+                ) : (
+                  <rect
+                    x="44"
+                    y="117"
+                    width="52"
+                    height="85"
+                    fill={modern ? accent : paper}
+                  />
+                )}
+                {heritage && (
+                  <>
+                    <rect
+                      x="47"
+                      y="120"
+                      width="46"
+                      height="79"
+                      fill="none"
+                      stroke={accent}
+                      strokeWidth=".6"
+                    />
+                    <path
+                      d="M63 134q7 -7 14 0v8q-7 9-14 0Z"
+                      fill="none"
+                      stroke={accent}
+                    />
+                    <text
+                      x="70"
+                      y="142"
+                      textAnchor="middle"
+                      fontSize="8"
+                      fill={accent}
+                      fontFamily="Georgia"
+                    >
+                      {estate.charAt(0).toUpperCase()}
+                    </text>
+                    <path
+                      d="M57 137q-6 8 4 13M83 137q6 8-4 13"
+                      fill="none"
+                      stroke={accent}
+                      strokeWidth=".6"
+                    />
+                  </>
+                )}
+                {(modern || design.style === 'estate') && (
+                  <path
+                    d={
+                      modern
+                        ? 'M50 126h40v3H50z'
+                        : 'M51 141 63 129 73 139 85 130 90 146H51Z'
+                    }
+                    fill={modern ? paper : '#9fa880'}
+                  />
+                )}
+                <LabelArtwork
+                  style={design.style}
+                  accent={accent}
+                  paper={paper}
+                />
+                {lines.slice(0, 3).map((line, i) => (
+                  <text
+                    key={i}
+                    x="70"
+                    y={158 + i * 8}
+                    textAnchor="middle"
+                    fill={modern ? paper : accent}
+                    fontSize="6"
+                    textLength={line.length > 15 ? 43 : undefined}
+                    lengthAdjust="spacingAndGlyphs"
+                    fontFamily="Georgia"
+                  >
+                    {line}
+                  </text>
+                ))}
+                <text
+                  x="70"
+                  y="187"
+                  textAnchor="middle"
+                  fontSize="4.5"
+                  fill={modern ? paper : accent}
+                >
+                  {year.startsWith('Multi')
+                    ? 'MULTI-VINTAGE'
+                    : year.toUpperCase()}
+                </text>
+                <text
+                  x="70"
+                  y="194"
+                  textAnchor="middle"
+                  fontSize="3.6"
+                  fill={modern ? paper : accent}
+                >
+                  EST. Y{founded} · No. {String(release).padStart(2, '0')}
+                </text>
+              </>
+            )}
+          </g>
+        </g>
       </svg>
+    </div>
+  );
+}
+
+export function BottleView(props: WineBottleProps) {
+  const [back, setBack] = useState(false);
+  return (
+    <div className="bottle-view">
+      <div className={`bottle-face${back ? ' is-back' : ''}`}>
+        <WineBottle {...props} back={back} />
+      </div>
+      <button
+        type="button"
+        className="text-button bottle-turn"
+        onClick={() => setBack(!back)}
+        aria-pressed={back}
+      >
+        <RotateCw size={14} aria-hidden="true" />{' '}
+        {back ? 'Show front label' : 'Read back label'}
+      </button>
+      {back && (
+        <p className="bottle-back-note">
+          {backLabelNote(props.design.note, props.estate)}
+        </p>
+      )}
     </div>
   );
 }
@@ -299,7 +386,7 @@ export function ReleaseReveal({
         <div className="reveal-body">
           <div className="reveal-identity">
             <div className="reveal-stage">
-              <WineBottle
+              <BottleView
                 name={wine.label}
                 estate={wine.estate}
                 design={wine.design}

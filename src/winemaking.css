@@ -615,33 +615,6 @@
   grid-template-columns: 1fr 1fr;
   gap: 15px;
 }
-.label-swatches {
-  border: 0;
-  padding: 0;
-  margin: 20px 0 0;
-  display: flex;
-  gap: 12px;
-}
-.label-swatches legend {
-  font-size: 11px;
-  margin-bottom: 12px;
-}
-.label-swatches button {
-  border: 2px solid #fff;
-  width: 27px;
-  height: 27px;
-  border-radius: 50%;
-  cursor: pointer;
-  outline: 1px solid transparent;
-  outline-offset: 2px;
-  transition:
-    outline 0.2s,
-    transform 0.2s;
-}
-.label-swatches button.selected {
-  outline-color: #7d746b;
-  transform: scale(1.08);
-}
 .bottling-quantity {
   display: flex;
   gap: 20px;
@@ -1335,8 +1308,7 @@
     animation: none;
   }
   .composition-bar span,
-  .reserve-row,
-  .label-swatches button {
+  .reserve-row {
     transition: none;
   }
 }

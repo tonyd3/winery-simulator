@@ -72,8 +72,8 @@ const blend = (s: GameState) =>
     ],
   });
 
-test('85 studies form an acyclic graph and every capital investment has a research prerequisite', () => {
-  assert.equal(RESEARCH_IDS.length, 85);
+test('97 studies form an acyclic graph and every capital investment has a research prerequisite', () => {
+  assert.equal(RESEARCH_IDS.length, 97);
   assert.equal(TECHNIQUE_IDS.length, 33);
   const walk = (id: ResearchId, path: ResearchId[]) => {
     assert.ok(RESEARCH[id]);

@@ -26,6 +26,8 @@ At equal source quality of 80, before final tasting:
 
 The blending bench and tasting table show source quality, compatibility, and each pair's contribution at the chosen proportions. They show up to six largest pair effects; every pair contributes to the total. A recorded tasting is shown separately from current recipe analysis, so an old score is not presented as a recalculated result.
 
+The [blend planner and trial notebook](blend-planning.md) let players scale a recipe by percentage and compare up to three saved recipes with the current bench. These tools use the same source-quality, compatibility, and sensory models. Saving or applying a trial neither consumes wine nor records a final tasting score.
+
 ## Calculation and persistence
 
 Aggregate each variety across lots and vintages. For shares `a` and `b`, a pair's weight is `a × b`. Compute the weighted mean of all pair affinities, including neutral pairs, then multiply by `min(1, 4 × sum(pair weights))`. This fades out tiny additions and caps total harmony without stacking bonuses for every extra grape. Sum full-precision effects before rounding the overall potential; UI contributions are rounded to one decimal.

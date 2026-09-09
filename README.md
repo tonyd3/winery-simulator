@@ -52,11 +52,13 @@ Choose Bordeaux, Burgundy, Napa Valley, Mosel, Tuscany, Rioja, Mendoza, or Baros
 
 **Cellar techniques** are researched after Cellar foundations, then selected separately for each fresh harvest before fermentation. Skin contact adds body and tannin (+1 week, $40 per tank); malolactic fermentation softens acidity (+2 weeks, $60 per tank); lees aging adds texture and bread-dough notes (+3 weeks, $50 per tank). The batch shows its full processing cost and tank time upfront. Steps run automatically, preserve partial-harvest handling, and carry into blend and bottle tasting notes. See [cellar techniques](docs/cellar-techniques.md) for research terms and save behavior.
 
-**Research** contains **85 studies**: 33 techniques across vineyard science, cellar techniques, tourism/hospitality, and commerce/discovery, plus 52 individual grape studies. Search by technique, grape, or unlock; follow clickable prerequisites; filter by availability. Studies range from **6–72 weeks** and **$1,200–$180,000**. A game year has 12 weeks. Research costs are separate from buildings, teams, and planting.
+**Research** contains **97 studies**: 33 techniques across vineyard science, cellar techniques, tourism/hospitality, and commerce/discovery, plus 64 individual grape studies. Search by technique, grape, or unlock; follow clickable prerequisites; filter by availability. Studies range from **6–72 weeks** and **$1,200–$180,000**. A game year has 12 weeks. Research costs are separate from buildings, teams, and planting.
 
 Use **Plan toward an outcome** to trace prerequisites, remaining cash and knowledge, study time, follow-on purchases, and facility upkeep. Save and reorder up to five studies with **Study next**; each still requires an explicit Start study action. Discoveries stay visible until dismissed and link to the relevant next task. The grape library filters by color, soil, climate fit, and availability, and compares growing traits, planting prices, and study terms.
 
-The 52-grape library now includes ten more Italian varieties—Aglianico, Sagrantino, Corvina, Montepulciano, Nero d’Avola, Dolcetto, Fiano, Verdicchio, Garganega, and Arneis—and eight French selections: Tannat, Carignan, Cinsault / Cinsaut, Pinot Meunier, Savagnin, Melon de Bourgogne, Clairette, and Grenache Blanc. Each has its own field study, growing traits, tasting profile, and blending affinities. Search accepts names without accents and either apostrophe style. See the [grape expansion guide](docs/grape-library.md) for costs and recipe ideas.
+The 64-grape library includes 12 new varieties: Touriga Nacional, Touriga Franca, Baga, Mencía, Bobal, Pinotage, Saperavi, Assyrtiko, Moschofilero, Godello, Verdejo, and Rkatsiteli. Each has its own field study, growing traits, tasting profile, maturation advice, and blending affinities. Search accepts names without accents and either apostrophe style. See the [grape expansion guide](docs/grape-library.md) for all additions, costs, and recipe ideas.
+
+When creating a wine line, choose from six bottle silhouettes, six label styles, six colors, four neck finishes, and three paper tones: **2,592 combinations**. Start with one of four complete looks or choose each detail visually. Add a personal back-label note, then turn the preview or finished bottle to read it. Find the studio in **Cellar → Reserves & blending → Bottle this reserve**. Each release and subsequent vintage keeps its line’s design and note. All bottles remain 750 mL and consume one kit. See [bottle designs](docs/bottle-designs.md).
 
 Knowledge comes from weekly observation (+6; +2 after Vine science; +4 after Field notebooks), harvesting (+12), and bottling (+1 per 40 bottles). Start with one study slot and buy up to eight under **Research → Add study slot**. The second slot costs $5,000, the third $10,000, and each later slot costs $5,000 more; slots are permanent and add no weekly upkeep. Every study pays its own cash and knowledge costs upfront and progresses in parallel, with individual pause/resume and abandon controls. Paused studies keep their slots; abandoning refunds nothing. One breeding trial can run separately. An operating research lab doubles all running study and trial progress and adds 10 knowledge each week.
 
@@ -119,7 +121,9 @@ Open **Cellar → Space & tanks**, or **Build → Buildings & equipment → Cell
 
 The cellar has **Fermentation**, **Reserves & blending**, **Wine lines**, and **Space & tanks** departments. Store up to 256 reserve lots, indefinitely, without occupying fermentation tanks. Aging improves quality in the tank before transfer; time in reserves preserves it.
 
-Select two or more lots and enter liters to create a blend. Mix different grape varieties, harvest years, and existing blends. Only the selected amounts are consumed, and each source grape and year remains in the recipe. Liquid is measured internally in whole milliliters, including the remainder after filling 750 mL bottles.
+Select two or more lots and enter liters to create a blend, or open **Set percentages & batch size** for custom shares, equal shares, and two-lot 60/40 or 80/20 presets. Set a batch size or use the maximum available at those proportions, then **Apply proportions**. The bench shows bottle yield, likely aromas and palate, and estimated quality. Mix different grape varieties, harvest years, and existing blends. Only creating the blend consumes the selected source amounts; each source grape and year remains in the recipe. Liquid is measured internally in whole milliliters, including the remainder after filling 750 mL bottles.
+
+**Save bench trial** keeps up to three recipes in a tasting notebook beside the current recipe. Compare proportions, aromas, palate, source quality, and estimated score without using wine, cash, kits, or game time. Trials save with the estate. **Use** restores a recipe to the bench while its source stock is available; **Create blend in reserves** remains the production action and requires the normal research. Depleted recipes retain their notes but cannot restore used wine. See [blend planning and trials](docs/blend-planning.md).
 
 Lots smaller than 750 mL appear in a **Small leftovers** summary. **Select for blending** fills the blending selection with their full volumes; normal recipe and research requirements still apply. **Clear small leftovers** reviews the exact lots and total volume before permanently discarding them to free reserve spaces. Clearing earns no cash, knowledge, or Prestige and consumes no kits or game time. Lots of 750 mL or more and bottled releases are preserved. Bottling continues to keep remainders until you choose what to do with them.
 
@@ -137,7 +141,7 @@ The blending bench previews the estimated range as you change quantities. Expand
 
 Every stored lot has **Analyze & score**. Analysis is free; an optional **Taste & score · $60** fixes its final score before bottling, without consuming wine, kits, or game time. After tasting, use **Bottle this reserve** to create a release. The lot becomes **Tasting notes**, where its score remains available, including after partial bottling and reloading. You can also bottle an untasted reserve directly and reveal its score as usual. Independent judging in the wine shop is a separate review for the bottled release.
 
-New wine lines offer three label styles (heritage crest, estate landscape, modern colorblock), three bottle shapes, and four label colors. Existing lines reuse their design and founding year. Every release has its own recipe, rating, original production quantity, and remaining stock. Sold-out releases stay in the archive. The prototype supports up to 1,000 releases, subject to a 2 MB save limit; actions that would exceed the save limit are rejected without consuming inventory.
+New wine lines offer visual label choices, bottle shapes, inks, finishes, paper tones, and an optional personal note; see [bottle designs](docs/bottle-designs.md). Existing lines reuse their design, note, and founding year. Every release has its own recipe, rating, original production quantity, and remaining stock. Sold-out releases stay in the archive. The prototype supports up to 1,000 releases, subject to a 2 MB save limit; actions that would exceed the save limit are rejected without consuming inventory.
 
 Open **Wine shop → Wine history** to see every saved release, grouped by wine line, with bottles produced, sold, and remaining. Expand a release for its blend, source vintages, and bottling details. Line totals include both retail and wholesale sales; the archive also shows estate lifetime sales and current stock. **Current wines** contains releases with stock available. These same release counts appear in **Cellar → Wine lines**.
 
@@ -161,13 +165,13 @@ The shop shows a **forecast range** for the next weekly sale, weeks since bottli
 Above **90 points**, suggested value includes a quadratic premium: each additional point adds more value than the previous one. Prestige strengthens that premium. For example, at 50 Prestige before medals or marketing:
 
 | Bottle score | Suggested price |
-| --- | --- |
-| 90 | $31 |
-| 91 | $38 |
-| 92 | $56 |
-| 95 | $183 |
-| 98 | $417 |
-| 100 | $634 |
+| ------------ | --------------- |
+| 90           | $31             |
+| 91           | $38             |
+| 92           | $56             |
+| 95           | $183            |
+| 98           | $417            |
+| 100          | $634            |
 
 This premium uses the original bottle score. Independent judging adds its medal's price and demand bonuses; it does not replace the bottle score. The same value curve feeds shop demand and wholesale offers. Existing releases gain the new suggested valuation while keeping their chosen shelf prices until you change them.
 
@@ -213,6 +217,7 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `tests/investments.test.ts`: investment economy, prerequisites, suspension, production and sales benefits, and save compatibility.
 - `src/winemaking.ts`: reserve, recipe, label, and line schemas; exact volume allocation and blending quality.
 - `src/Reserves.tsx`: reserve storage, blending bench, and bottling form.
+- `src/blendPlanning.ts`, `src/BlendProportions.tsx`, `src/BlendTrials.tsx`: exact percentage allocation, batch sizing, and the saved trial notebook.
 - `src/bottleStorage.ts`: bottled-stock capacity, shelf allocations, expansion terms, and legacy initialization.
 - `src/BottleStoragePanel.tsx`, `src/ShelfAllocation.tsx`: warehouse and shelf controls in the cellar and shop.
 - `src/WineLines.tsx`: searchable wine-line ledger and expandable release history, shared by the cellar and wine shop.
@@ -223,11 +228,11 @@ The **Guide** is available from the desktop sidebar and from Save & settings on 
 - `src/blendCompatibility.ts`: grape pairings, proportion effects, and inherited hybrid affinities.
 - `tests/compatibility.test.ts`: complementary and conflicting recipes, proportions, ancestry, bounds, and preview-to-bottle consistency.
 - `tests/quality.test.ts`: quality distribution, exceptional-wine progression, legacy maturation, and nonlinear pricing.
-- `src/maturation.ts`, `src/BatchMaturation.tsx`: all 52 grape profiles, inherited readiness, vessel plans, costs, and oak balance.
+- `src/maturation.ts`, `src/BatchMaturation.tsx`: all 64 grape profiles, inherited readiness, vessel plans, costs, and oak balance.
 - `src/grapeCharacter.ts`: shared grape and region character used by maturation and tasting notes.
 - `tests/maturation.test.ts`: vessel balance, automatic transfers, capacity recovery, ancestry, treatment history, and old saves.
 - `src/cellarTechniques.ts`, `src/GrapeArrival.tsx`: batch technique rules, progress labels, and per-harvest cellar choices.
-- `src/catalog.ts`: 52 grape definitions, eight regions, and 85 research projects.
+- `src/catalog.ts`: 64 grape definitions, eight regions, and 97 research projects.
 - `src/Regions.tsx`: new-estate region selection.
 - `src/RegionLandscape.tsx`: distinct SVG postcards for all eight regions.
 - `src/Research.tsx` and `src/ResearchProjects.tsx`: research departments, exact prerequisite navigation, active studies, and the study ledger.

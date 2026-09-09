@@ -13,19 +13,22 @@ import type { Dispatch } from './Panels';
 import {
   assess,
   blendProfile,
-  combine,
   DEFAULT_DESIGN,
-  LABEL_COLORS,
   isSmallReserve,
   liters,
   portion,
   vintage,
   volume,
 } from './winemaking';
-import type { LabelDesign, Reserve } from './winemaking';
-import { Composition, WineBottle } from './WinePresentation';
+import type { LabelDesign, Reserve, WineComponent } from './winemaking';
+import { Composition, BottleView } from './WinePresentation';
+import { BottleDesigner } from './BottleDesigner';
 import { TastingNotes } from './TastingNotes';
 import { tastingProfile } from './wineSensory';
+import { planBlend, BLEND_TRIAL_LIMIT } from './blendPlanning';
+import { BlendProportions } from './BlendProportions';
+import { BlendTrials } from './BlendTrials';
+import './blend-planning.css';
 import {
   loadReserveSort,
   RESERVE_SORT_KEY,
@@ -96,7 +99,8 @@ function BottlingForm({
       <div className="bottling-layout">
         <div className="bottling-story">
           <div className="bottling-preview">
-            <WineBottle
+            <BottleView
+              key={lineId}
               name={line?.name ?? name}
               estate={state.name}
               design={activeDesign}
@@ -119,7 +123,10 @@ function BottlingForm({
             <span className="eyebrow">YOUR NEXT RELEASE</span>
             <p>{vintage(reserve.components)}</p>
           </div>
-          <TastingNotes profile={tastingProfile(previewParts, state)} />
+          <details className="studio-disclosure">
+            <summary>Wine & tasting notes</summary>
+            <TastingNotes profile={tastingProfile(previewParts, state)} />
+          </details>
         </div>
         <form
           onSubmit={(e) => {
@@ -145,11 +152,15 @@ function BottlingForm({
             onChange={(e) => setLineId(e.target.value)}
           >
             <option value="new">Create a new wine line</option>
-            {state.lines.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.name} · established Year {l.founded}
-              </option>
-            ))}
+            {[...state.lines]
+              .sort((a, b) =>
+                a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+              )
+              .map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name} · established Year {l.founded}
+                </option>
+              ))}
           </select>
           {line ? (
             <p className="line-inheritance">
@@ -172,65 +183,20 @@ function BottlingForm({
                 maxLength={40}
                 required
               />
-              <div className="design-selects">
-                <div>
-                  <label className="field-label" htmlFor="label-style">
-                    Label
-                  </label>
-                  <select
-                    id="label-style"
-                    value={design.style}
-                    onChange={(e) =>
-                      setDesign({
-                        ...design,
-                        style: e.target.value as LabelDesign['style'],
-                      })
-                    }
-                  >
-                    <option value="heritage">Heritage crest</option>
-                    <option value="estate">Estate landscape</option>
-                    <option value="modern">Modern colorblock</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="field-label" htmlFor="bottle-shape">
-                    Bottle
-                  </label>
-                  <select
-                    id="bottle-shape"
-                    value={design.bottle}
-                    onChange={(e) =>
-                      setDesign({
-                        ...design,
-                        bottle: e.target.value as LabelDesign['bottle'],
-                      })
-                    }
-                  >
-                    <option value="shouldered">Classic shoulders</option>
-                    <option value="rounded">Rounded shoulders</option>
-                    <option value="slender">Slender flute</option>
-                  </select>
-                </div>
-              </div>
-              <fieldset className="label-swatches">
-                <legend>Label color</legend>
-                {Object.entries(LABEL_COLORS).map(([id, color]) => (
-                  <button
-                    type="button"
-                    key={id}
-                    className={design.color === id ? 'selected' : ''}
-                    style={{ background: color }}
-                    aria-label={`${id} label`}
-                    aria-pressed={design.color === id}
-                    onClick={() =>
-                      setDesign({
-                        ...design,
-                        color: id as LabelDesign['color'],
-                      })
-                    }
-                  />
-                ))}
-              </fieldset>
+              <BottleDesigner
+                design={design}
+                onChange={setDesign}
+                name={name}
+                estate={state.name}
+                founded={calendar(state.week).year}
+                year={vintage(reserve.components)}
+                white={
+                  getVariety(
+                    state,
+                    blendProfile(previewParts, state.hybrids).dominant!.variety,
+                  ).wineType === 'White'
+                }
+              />
             </>
           )}
           <div className="bottling-quantity">
@@ -305,6 +271,7 @@ export default function Reserves({
   const [clearing, setClearing] = useState<Reserve[] | null>(null);
   const closeClearing = useCallback(() => setClearing(null), []);
   const reserveHeading = useRef<HTMLHeadingElement>(null);
+  const benchHeading = useRef<HTMLHeadingElement>(null);
   const smallReserves = state.reserves.filter(isSmallReserve);
   const smallVolume = smallReserves.reduce(
     (n, r) => n + volume(r.components),
@@ -317,21 +284,19 @@ export default function Reserves({
     id: r.id,
     ml: Math.round(Number(amounts[r.id]) * 1000),
   }));
-  const valid =
-    selected.length >= 2 &&
-    portions.every(
-      (p) =>
-        Number.isFinite(p.ml) &&
-        p.ml > 0 &&
-        p.ml <= volume(state.reserves.find((r) => r.id === p.id)!.components),
-    );
-  const preview = valid
-    ? combine(
-        selected.flatMap((r, i) =>
-          portion(r.components, portions[i].ml).filter((p) => p.ml > 0),
-        ),
-      )
-    : [];
+  let preview: WineComponent[] = [];
+  let recipeError = '';
+  if (selected.length >= 2) {
+    try {
+      preview = planBlend(state.reserves, portions).components;
+    } catch (e) {
+      recipeError =
+        e instanceof Error ? e.message : 'Check your selected amounts.';
+    }
+  }
+  const valid = preview.length > 0;
+  const tastePreview = valid ? tastingProfile(preview, state) : null;
+  const trialCount = (state.blendTrials ?? []).length;
   const missingResearch = blendResearchMissing(state, preview);
   const bottleReserve = state.reserves.find((r) => r.id === bottling);
   const tastingReserve = state.reserves.find((r) => r.id === tasting);
@@ -511,25 +476,57 @@ export default function Reserves({
             </div>
             <aside className="blend-bench">
               <span className="eyebrow">THE BLENDING BENCH</span>
-              <h3>Your next cuvée.</h3>
+              <h3 ref={benchHeading} tabIndex={-1}>
+                Your next cuvée.
+              </h3>
               <p>
                 Select two or more lots and choose how much to use from each.
               </p>
+              {selected.length >= 2 && (
+                <BlendProportions
+                  key={portions.map((p) => `${p.id}:${p.ml}`).join(',')}
+                  lots={selected}
+                  portions={portions}
+                  onApply={(recipe) => {
+                    setAmounts(
+                      Object.fromEntries(
+                        recipe.map((p) => [p.id, String(p.ml / 1000)]),
+                      ),
+                    );
+                    benchHeading.current?.focus();
+                  }}
+                />
+              )}
               {valid ? (
                 <>
                   <div className="blend-volume">
                     {liters(volume(preview))}
                     <small> L in your blend</small>
                   </div>
+                  <p className="blend-bottle-yield">
+                    {Math.floor(volume(preview) / 750).toLocaleString()} full
+                    750 mL bottles · {liters(volume(preview) % 750)} L left
+                    after bottling
+                  </p>
                   <Composition parts={preview} state={state} />
                   <BlendAnalysis parts={preview} state={state} />
+                  {tastePreview && (
+                    <div className="blend-taste-preview">
+                      <h4>How it may taste</h4>
+                      <p className="trial-aromas">
+                        {tastePreview.aromas.join(' · ')}
+                      </p>
+                      <p>{tastePreview.palate}</p>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="blend-placeholder">
                   <Icon name="glass" size={38} />
                   <span>
                     {selected.length
-                      ? 'Choose valid amounts from at least two lots.'
+                      ? recipeError ||
+                        'Choose valid amounts from at least two lots.'
                       : 'A little of this. A little of that.'}
                   </span>
                 </div>
@@ -591,6 +588,25 @@ export default function Reserves({
                   required
                 />
                 <button
+                  type="button"
+                  className="button secondary wide"
+                  disabled={!valid || trialCount >= BLEND_TRIAL_LIMIT}
+                  onClick={() =>
+                    dispatch({
+                      type: 'saveBlendTrial',
+                      name: blendName.trim() || `Trial ${trialCount + 1}`,
+                      portions,
+                    })
+                  }
+                >
+                  Save bench trial · {trialCount} / {BLEND_TRIAL_LIMIT}
+                </button>
+                <p className="trial-save-note">
+                  {trialCount >= BLEND_TRIAL_LIMIT
+                    ? 'Three trials saved. Remove one below to make room.'
+                    : 'Save this recipe to compare below. No stock is consumed.'}
+                </p>
+                <button
                   className="button primary wide"
                   disabled={
                     !valid || !blendName.trim() || missingResearch.length > 0
@@ -629,6 +645,24 @@ export default function Reserves({
           )}
         </>
       )}
+      <BlendTrials
+        state={state}
+        current={preview}
+        onRemove={(slot) => {
+          if (dispatch({ type: 'removeBlendTrial', slot }))
+            (benchHeading.current ?? reserveHeading.current)?.focus();
+        }}
+        onUse={(trial) => {
+          setAmounts(
+            Object.fromEntries(
+              trial.portions.map((p) => [p.id, String(p.ml / 1000)]),
+            ),
+          );
+          setBlendName(trial.name);
+          setBottling(null);
+          benchHeading.current?.focus();
+        }}
+      />
       {clearing && (
         <Modal title="Clear small leftovers?" onClose={closeClearing}>
           <div className="reserve-clear-review">

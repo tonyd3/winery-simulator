@@ -295,3 +295,32 @@ test('blending ordinary or poor source wines cannot guarantee a 90-point result'
   assert.ok(blendProfile(parts).high < 90);
   assert.ok(blendProfile(parts.map((p) => ({ ...p, quality: 60 }))).high < 70);
 });
+
+test('new world grapes provide balanced recipes and preserve powerful-style clashes', () => {
+  for (const [a, b] of [
+    ['touriga_nacional', 'touriga_franca'],
+    ['touriga_franca', 'tempranillo'],
+    ['baga', 'touriga_nacional'],
+    ['mencia', 'cabernet_franc'],
+    ['bobal', 'tempranillo'],
+    ['pinotage', 'merlot'],
+    ['saperavi', 'cabernet'],
+    ['assyrtiko', 'moschofilero'],
+    ['moschofilero', 'riesling'],
+    ['godello', 'albarino'],
+    ['verdejo', 'sauvignon'],
+    ['rkatsiteli', 'chenin'],
+  ])
+    assert.ok(assess(recipe(a, b)).compatibility > 0, `${a} / ${b}`);
+  for (const powerful of [
+    'touriga_nacional',
+    'baga',
+    'bobal',
+    'pinotage',
+    'saperavi',
+  ]) {
+    assert.ok(assess(recipe(powerful, 'pinot')).compatibility < 0);
+    assert.ok(assess(recipe(powerful, 'gamay')).compatibility < 0);
+  }
+  assert.ok(assess(recipe('moschofilero', 'cabernet')).compatibility < 0);
+});

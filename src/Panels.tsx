@@ -114,6 +114,50 @@ export function PlotInspector({
       <p className="inspector-subtitle">
         {land.area} hectares · {land.aspect}
       </p>
+      {plot.variety && (
+        <div
+          className="parcel-actions"
+          role="group"
+          aria-label={`${land.name} field actions`}
+        >
+          <button
+            className="button primary wide"
+            disabled={!ready || state.cash < plotHarvestCost(plot)}
+            onClick={() => dispatch({ type: 'harvest', id: selected })}
+          >
+            <Icon name="grape" size={17} />
+            {harvested
+              ? 'Harvest complete'
+              : ready
+                ? 'Harvest grapes'
+                : 'Waiting for ripeness'}
+            {ready && (
+              <span className="button-price">
+                {money(plotHarvestCost(plot))}
+              </span>
+            )}
+          </button>
+          <button
+            className="button secondary wide"
+            disabled={
+              winter ||
+              harvested ||
+              plot.tended === state.week ||
+              state.cash < plotTendCost(plot)
+            }
+            onClick={() => dispatch({ type: 'tend', id: selected })}
+          >
+            <Icon name="sprout" size={17} />
+            {plot.tended === state.week ? 'Tended this week' : 'Tend the vines'}
+            <span className="button-price">{money(plotTendCost(plot))}</span>
+          </button>
+          <p className="fine-print">
+            {harvested
+              ? 'One harvest per parcel, per year.'
+              : 'Harvest at 80%+ ripeness, before winter.'}
+          </p>
+        </div>
+      )}
       <div className={`grape-summary ${!plot.variety ? 'unplanted' : ''}`}>
         <div className="grape-medallion">
           <Icon name={plot.variety ? 'grape' : 'sprout'} size={35} />
@@ -230,42 +274,6 @@ export function PlotInspector({
             <Icon name={ready ? 'sun' : 'sprout'} size={19} />
             <p>{harvestAdvice(plot, state.week)}</p>
           </div>
-          <button
-            className="button primary wide"
-            disabled={!ready || state.cash < plotHarvestCost(plot)}
-            onClick={() => dispatch({ type: 'harvest', id: selected })}
-          >
-            <Icon name="grape" size={17} />
-            {harvested
-              ? 'Harvest complete'
-              : ready
-                ? 'Harvest grapes'
-                : 'Waiting for ripeness'}
-            {ready && (
-              <span className="button-price">
-                {money(plotHarvestCost(plot))}
-              </span>
-            )}
-          </button>
-          <button
-            className="button secondary wide"
-            disabled={
-              winter ||
-              harvested ||
-              plot.tended === state.week ||
-              state.cash < plotTendCost(plot)
-            }
-            onClick={() => dispatch({ type: 'tend', id: selected })}
-          >
-            <Icon name="sprout" size={17} />
-            {plot.tended === state.week ? 'Tended this week' : 'Tend the vines'}
-            <span className="button-price">{money(plotTendCost(plot))}</span>
-          </button>
-          <p className="fine-print">
-            {harvested
-              ? 'One harvest per parcel, per year.'
-              : 'Harvest at 80%+ ripeness, before winter.'}
-          </p>
           {clearing ? (
             <div className="replant-confirm">
               <p>

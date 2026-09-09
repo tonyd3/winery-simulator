@@ -22,7 +22,7 @@ The release window is advice. Quality gains plateau at the first ready week; pas
 
 ## Grape and lot profiles
 
-[maturation.ts](../src/maturation.ts) explicitly defines all 52 catalog grapes. Each has steel and wood development times, steel and French-oak gain ceilings, oak tolerance, a preferred vessel, and style advice. Examples without additional techniques:
+[maturation.ts](../src/maturation.ts) explicitly defines all 64 catalog grapes. Each has steel and wood development times, steel and French-oak gain ceilings, oak tolerance, a preferred vessel, and style advice. Examples without additional techniques:
 
 - Chardonnay offers a one-week steel route or a three-week wood route, each capable of the full six-point gain.
 - Riesling favors steel, with neutral oak available for texture. Its low tolerance makes long French-oak plans risky.

@@ -2,7 +2,7 @@
 
 Approved design proposal, September 8, 2026. This document preserves the research and proposed defaults for all 34 base grapes in [the catalog](../src/catalog.ts), plus bred varieties and blends. The implemented rules, exact coefficients, technique scheduling, and compatibility behavior are in [Maturation](aging.md); the table below remains the original balance proposal.
 
-The current catalog has since expanded to 52 grapes. [Maturation](aging.md) also documents the 18 additional profiles and their integration with vintage notes, production costs, and automatic aging for older batches.
+The current catalog has since expanded to 64 grapes. [Maturation](aging.md) also documents the additional grape profiles and their integration with vintage notes, production costs, and automatic aging for older batches.
 
 The recommended change is to make maturation a choice about the wine's style, balance, and release timing. An expensive vessel should not automatically produce a better wine.
 

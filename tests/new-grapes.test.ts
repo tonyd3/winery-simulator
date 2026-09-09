@@ -54,6 +54,18 @@ const additions = [
   'melon',
   'clairette',
   'grenache_blanc',
+  'touriga_nacional',
+  'touriga_franca',
+  'baga',
+  'mencia',
+  'bobal',
+  'pinotage',
+  'saperavi',
+  'assyrtiko',
+  'moschofilero',
+  'godello',
+  'verdejo',
+  'rkatsiteli',
 ];
 const tick = (s: GameState, weeks = 1) => {
   for (let i = 0; i < weeks; i++) s = act(s, { type: 'advance' });
@@ -203,10 +215,43 @@ test('grape and research search accepts accents, ASCII spelling, alternate names
     ['cinsault', 'cinsaut'],
     ['pinot_meunier', 'meunier'],
     ['melon', 'melon de bourgogne'],
+    ['mencia', ' MENCIA '],
+    ['touriga_nacional', 'touriga nacional'],
+    ['rkatsiteli', 'rkatsiteli'],
   ]) {
     assert.ok(matchesSearch(VARIETIES[id].name, query));
     assert.ok(matchesSearch(RESEARCH[grapeResearchId(id)].name, query));
     assert.ok(matchesSearch(VARIETIES[id].name, VARIETIES[id].name));
     assert.equal(matchesSearch(VARIETIES[id].name, 'not a grape'), false);
+  }
+});
+
+test('the previous 52-grape catalog remains intact without granting the twelve new studies', () => {
+  const newIds = [
+    'touriga_nacional',
+    'touriga_franca',
+    'baga',
+    'mencia',
+    'bobal',
+    'pinotage',
+    'saperavi',
+    'assyrtiko',
+    'moschofilero',
+    'godello',
+    'verdejo',
+    'rkatsiteli',
+  ];
+  const previous = newGame();
+  previous.grapeLicenses = Object.keys(VARIETIES).filter(
+    (id) => !newIds.includes(id),
+  );
+  const loaded = reload(previous);
+  assert.equal(availableVarieties(loaded).length, 52);
+  for (const id of newIds) {
+    assert.equal(researchComplete(loaded, grapeResearchId(id)), false);
+    assert.throws(
+      () => act(loaded, { type: 'plant', id: 3, variety: id }),
+      /individual/,
+    );
   }
 });

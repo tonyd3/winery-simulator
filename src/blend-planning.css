@@ -1,0 +1,205 @@
+/* Recipe tools live inside the cellar's paper workbench. */
+.blend-proportions {
+  margin: 22px 0;
+  border-block: 1px solid var(--line);
+  padding: 14px 0;
+}
+.blend-proportions summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+.blend-proportions p,
+.blend-taste-preview p,
+.blend-trials > p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.recipe-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.recipe-presets .text-button,
+.blend-proportions > .text-button {
+  min-height: 44px;
+}
+.recipe-shares > label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.recipe-shares > label > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.recipe-shares small {
+  display: block;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.recipe-percent-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 90px;
+}
+.recipe-percent-input input {
+  min-width: 0;
+  min-height: 44px;
+}
+.recipe-total,
+.recipe-size {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+.recipe-size input {
+  max-width: 130px;
+  min-height: 44px;
+}
+.recipe-size small {
+  margin-left: 5px;
+}
+.blend-proportions .recipe-error {
+  color: var(--wine);
+}
+.blend-bottle-yield,
+.trial-save-note {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 6px 0 18px;
+}
+.blend-taste-preview {
+  border-top: 1px solid var(--line);
+  margin: 20px 0;
+  padding-top: 16px;
+}
+.blend-taste-preview h4 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+.blend-taste-preview .trial-aromas {
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--wine);
+}
+.blend-trials {
+  margin-top: 34px;
+  border-top: 1px solid var(--line);
+  padding-top: 26px;
+  min-width: 0;
+}
+.trial-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.trial-heading h3 {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 500;
+  margin: 8px 0;
+}
+.trial-heading > span {
+  font-size: 12px;
+}
+.trial-comparison-scroll {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+.trial-comparison {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 650px;
+  table-layout: fixed;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.blend-trials > .trial-scroll-hint {
+  margin: 20px 0 -8px;
+  font-size: 11px;
+}
+.trial-comparison th,
+.trial-comparison td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.trial-comparison th:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--paper);
+  z-index: 1;
+  width: 135px;
+  padding-left: 0;
+  font-weight: 500;
+}
+.trial-comparison thead th:not(:first-child) {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 500;
+}
+.trial-comparison td:nth-child(2),
+.trial-comparison thead th:nth-child(2) {
+  background: #f1eee5;
+}
+.trial-comparison .trial-score {
+  font-family: var(--serif);
+  color: var(--wine);
+  font-size: 26px;
+}
+.trial-comparison p {
+  margin: 0 0 10px;
+}
+.trial-comparison .button {
+  font-size: 11px;
+  max-width: 100%;
+  white-space: normal;
+}
+.trial-comparison .text-button {
+  display: block;
+  min-height: 44px;
+  margin-top: 8px;
+}
+@media (max-width: 600px) {
+  .trial-comparison-scroll {
+    scroll-padding-inline-start: 120px;
+    scroll-snap-type: x proximity;
+  }
+  .trial-comparison {
+    width: max-content;
+    min-width: 0;
+  }
+  .trial-comparison th,
+  .trial-comparison td {
+    width: 170px;
+    min-width: 170px;
+    max-width: 170px;
+  }
+  .trial-comparison th:first-child {
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+  }
+  .trial-comparison thead th:not(:first-child) {
+    scroll-snap-align: start;
+  }
+  .trial-heading h3 {
+    font-size: 24px;
+  }
+}

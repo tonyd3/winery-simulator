@@ -94,7 +94,6 @@ import {
   tastingScore,
   combine,
   take,
-  portion,
   volume,
   isSmallReserve,
   liters,
@@ -105,6 +104,11 @@ import {
   wineLineSchema,
 } from './winemaking';
 import type { LabelDesign, Reserve } from './winemaking';
+import {
+  BLEND_TRIAL_LIMIT,
+  blendTrialSchema,
+  planBlend,
+} from './blendPlanning';
 import {
   customerGroup,
   MARKET_SEED,
@@ -478,6 +482,7 @@ export const stateSchema = z
     batches: z.array(batchSchema).max(CELLAR_EQUIPMENT.maxBays),
     wines: z.array(wineSchema).max(1000),
     reserves: z.array(reserveSchema).max(ESTATE_LIMITS.reserves),
+    blendTrials: z.array(blendTrialSchema).max(BLEND_TRIAL_LIMIT).default([]),
     lines: z.array(wineLineSchema).max(1000),
     kits: integer(1000000),
     upgrades: z.array(z.enum(UPGRADE_IDS)).max(UPGRADE_IDS.length),
@@ -684,6 +689,7 @@ export const stateSchema = z
       ...s.grapes,
       ...s.batches,
       ...s.reserves.flatMap((r) => r.components),
+      ...s.blendTrials.flatMap((trial) => trial.components),
       ...s.wines.flatMap((w) => w.components),
     ];
     if (wineOrigins.some((x) => !estateIds.has(x.estateId ?? 1)))
@@ -755,8 +761,18 @@ export const stateSchema = z
     if (new Set(ids).size !== ids.length || ids.some((id) => id >= s.nextId))
       fail('Invalid inventory identifiers.');
     const lineIds = new Set(s.lines.map((l) => l.id));
+    if (
+      new Set(s.blendTrials.map((trial) => trial.slot)).size !==
+        s.blendTrials.length ||
+      s.blendTrials.some(
+        (trial) =>
+          trial.created > s.week ||
+          trial.portions.some((p) => p.id >= s.nextId),
+      )
+    )
+      fail('Invalid blend trial records.');
     const releases = new Set<string>();
-    for (const lot of [...s.reserves, ...s.wines]) {
+    for (const lot of [...s.reserves, ...s.wines, ...s.blendTrials]) {
       if (
         volume(lot.components) > 100000000 ||
         lot.components.some(
@@ -934,6 +950,12 @@ export type Action =
   | { type: 'discardSmallReserves'; lots: { id: number; ml: number }[] }
   | { type: 'blend'; name: string; portions: { id: number; ml: number }[] }
   | {
+      type: 'saveBlendTrial';
+      name: string;
+      portions: { id: number; ml: number }[];
+    }
+  | { type: 'removeBlendTrial'; slot: number }
+  | {
       type: 'bottle';
       id: number;
       bottles: number;
@@ -1015,6 +1037,7 @@ export function newGame(
     batches: [],
     wines: [],
     reserves: [],
+    blendTrials: [],
     lines: [],
     kits: 600,
     kitCostCents: 0,
@@ -1648,6 +1671,7 @@ export function act(current: GameState, action: Action): GameState {
   s.unseenDiscoveries ??= [];
   s.experimentCredits ??= [];
   s.introCrossId ??= null;
+  s.blendTrials ??= [];
   const setStudies = (projects: z.infer<typeof researchProjectSchema>[]) => {
     s.researchProject = projects[0] ?? null;
     s.additionalResearchProjects = projects.slice(1);
@@ -2644,34 +2668,48 @@ export function act(current: GameState, action: Action): GameState {
       );
       break;
     }
+    case 'saveBlendTrial': {
+      if (s.blendTrials.length >= BLEND_TRIAL_LIMIT)
+        throw new Error(
+          'Your three trial spaces are full. Remove a trial to save another.',
+        );
+      const name = action.name.trim();
+      if (!name || name.length > 40)
+        throw new Error('Name your trial using 1–40 characters.');
+      const { components } = planBlend(s.reserves, action.portions);
+      const slot = Array.from({ length: BLEND_TRIAL_LIMIT }, (_, i) => i).find(
+        (i) => !s.blendTrials.some((trial) => trial.slot === i),
+      )!;
+      s.blendTrials.push({
+        slot,
+        name,
+        created: s.week,
+        portions: structuredClone(action.portions),
+        components,
+      });
+      note(
+        s,
+        `${name} saved as a bench trial. No wine, cash, or kits were used.`,
+      );
+      break;
+    }
+    case 'removeBlendTrial': {
+      if (!s.blendTrials.some((trial) => trial.slot === action.slot))
+        throw new Error('This bench trial is no longer saved.');
+      s.blendTrials = s.blendTrials.filter(
+        (trial) => trial.slot !== action.slot,
+      );
+      break;
+    }
     case 'blend': {
       const name = action.name.trim();
       if (!name || name.length > 40)
         throw new Error('Name your blend using 1–40 characters.');
-      if (
-        action.portions.length < 2 ||
-        action.portions.length > ESTATE_LIMITS.reserves ||
-        new Set(action.portions.map((p) => p.id)).size !==
-          action.portions.length
-      )
-        throw new Error('Select at least two different reserve lots.');
-      const selected = action.portions.map((p) => {
-        const lot = s.reserves.find((r) => r.id === p.id);
-        if (!lot) throw new Error('Reserve lot not found.');
-        if (
-          !Number.isInteger(p.ml) ||
-          p.ml < 1 ||
-          p.ml > volume(lot.components)
-        )
-          throw new Error('Choose an available volume from each reserve.');
-        return { lot, ml: p.ml };
-      });
-      const missing = blendResearchMissing(
-        s,
-        selected.flatMap(({ lot, ml }) =>
-          portion(lot.components, ml).filter((p) => p.ml > 0),
-        ),
+      const { selected, components: preview } = planBlend(
+        s.reserves,
+        action.portions,
       );
+      const missing = blendResearchMissing(s, preview);
       if (missing.length)
         throw new Error(
           `Research ${missing.map((id) => RESEARCH[id].name).join(', ')} before creating this blend.`,

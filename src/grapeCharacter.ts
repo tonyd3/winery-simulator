@@ -92,6 +92,32 @@ export const GRAPE_CHARACTERS: Record<string, Character> = {
   melon: character('Lemon', 'Green apple', 'White flowers', 1.5, 4.5, 0),
   clairette: character('Apple', 'Peach', 'White flowers', 3, 2.5, 0),
   grenache_blanc: character('Pear', 'Lemon', 'Fresh herbs', 4, 3, 0),
+  touriga_nacional: character(
+    'Blackcurrant',
+    'Blackberry',
+    'Violet',
+    4.5,
+    4,
+    4.5,
+  ),
+  touriga_franca: character('Blackberry', 'Plum', 'Rose', 4, 3.5, 3.5),
+  baga: character('Sour cherry', 'Blackberry', 'Dried herbs', 3.5, 4.5, 4.5),
+  mencia: character('Raspberry', 'Redcurrant', 'Fresh herbs', 2.5, 4, 2.5),
+  bobal: character('Blackberry', 'Sour cherry', 'Dried herbs', 4, 4, 4),
+  pinotage: character('Plum', 'Blackberry', 'Black pepper', 4, 3.5, 4),
+  saperavi: character(
+    'Blackberry',
+    'Black cherry',
+    'Dried herbs',
+    4.5,
+    4.5,
+    4.5,
+  ),
+  assyrtiko: character('Lemon', 'Green apple', 'White flowers', 3, 5, 0),
+  moschofilero: character('Lime', 'Green apple', 'Rose', 1.5, 4.5, 0),
+  godello: character('Pear', 'Lemon', 'White flowers', 3, 4, 0),
+  verdejo: character('Lemon', 'Peach', 'Fresh herbs', 2.5, 4, 0),
+  rkatsiteli: character('Green apple', 'Quince', 'White flowers', 3, 4.5, 0),
 };
 
 export const REGIONAL_CHARACTER: Record<

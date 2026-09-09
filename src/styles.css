@@ -679,6 +679,7 @@ h1 {
   overflow-y: auto;
   overscroll-behavior-y: contain;
   scrollbar-gutter: stable;
+  scroll-padding-top: 170px;
 }
 .plot-inspector > * {
   flex-shrink: 0;
@@ -686,6 +687,24 @@ h1 {
 .plot-inspector:focus-visible {
   outline: 2px solid var(--wine);
   outline-offset: -3px;
+}
+.parcel-actions {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fbfaf5;
+  border-bottom: 1px solid var(--line);
+  padding: 16px 0 12px;
+  margin-top: 4px;
+}
+.plot-inspector .parcel-actions .button {
+  min-height: 44px;
+  font-size: 12px;
+}
+.parcel-actions .fine-print {
+  margin: 10px 0 0;
+  font-size: 10px;
+  color: var(--ink);
 }
 .eyebrow {
   font-size: 8px;
@@ -2450,6 +2469,8 @@ h1 {
   .estate-workspace {
     height: auto;
     grid-template-columns: 1fr;
+    /* Clip the map corners without trapping the field actions' sticky position. */
+    overflow: clip;
   }
   .estate-map {
     min-height: 350px;

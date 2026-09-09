@@ -11,9 +11,26 @@ export const CELLAR_TASTING = { cost: 60, variation: 3 };
 const count = (max = 1e9) => z.number().int().min(0).max(max);
 export const labelDesignSchema = z
   .object({
-    style: z.enum(['heritage', 'estate', 'modern']),
-    bottle: z.enum(['shouldered', 'rounded', 'slender']),
-    color: z.enum(['claret', 'olive', 'ochre', 'ink']),
+    style: z.enum([
+      'heritage',
+      'estate',
+      'modern',
+      'botanical',
+      'parcel',
+      'vintage',
+    ]),
+    bottle: z.enum([
+      'shouldered',
+      'rounded',
+      'slender',
+      'tapered',
+      'flask',
+      'amphora',
+    ]),
+    color: z.enum(['claret', 'olive', 'ochre', 'ink', 'terracotta', 'dusk']),
+    finish: z.enum(['foil', 'wax', 'cork', 'wrap']).optional(),
+    paper: z.enum(['cream', 'ivory', 'blush']).optional(),
+    note: z.string().trim().max(160).optional(),
   })
   .strict();
 export const DEFAULT_DESIGN: LabelDesign = {
@@ -21,11 +38,40 @@ export const DEFAULT_DESIGN: LabelDesign = {
   bottle: 'shouldered',
   color: 'claret',
 };
-export const LABEL_COLORS = {
+export const LABEL_STYLES: Record<LabelDesign['style'], string> = {
+  heritage: 'Heritage crest',
+  estate: 'Estate landscape',
+  modern: 'Modern colorblock',
+  botanical: 'Botanical vine',
+  parcel: 'Parcel map',
+  vintage: 'Vintage arch',
+};
+export const BOTTLE_SHAPES: Record<LabelDesign['bottle'], string> = {
+  shouldered: 'Classic shoulders',
+  rounded: 'Rounded shoulders',
+  slender: 'Slender flute',
+  tapered: 'Tapered silhouette',
+  flask: 'Round flask',
+  amphora: 'Amphora silhouette',
+};
+export const LABEL_COLORS: Record<LabelDesign['color'], string> = {
   claret: '#774b60',
   olive: '#657353',
   ochre: '#ab783f',
   ink: '#485c67',
+  terracotta: '#965d46',
+  dusk: '#695777',
+};
+export const BOTTLE_FINISHES = {
+  foil: 'Classic foil',
+  wax: 'Dipped wax',
+  cork: 'Natural cork',
+  wrap: 'Paper neck wrap',
+};
+export const LABEL_PAPERS = {
+  cream: { name: 'Warm cream', color: '#f7f0dd' },
+  ivory: { name: 'Ivory', color: '#fdfcf7' },
+  blush: { name: 'Blush', color: '#f1dfe0' },
 };
 // Captured when picked, before vine state resets or cellar quality gains apply.
 export const harvestCharacterSchema = z

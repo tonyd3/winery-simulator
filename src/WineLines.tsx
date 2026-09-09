@@ -104,6 +104,12 @@ function ReleaseHistory({
               <ReleaseFacts wine={wine} />
               <Composition parts={wine.components} state={state} />
               <TastingNotes profile={releaseTasting(wine, state)} />
+              {wine.design.note && (
+                <div className="release-winemaker-note">
+                  <h4>Winemaker’s note</h4>
+                  <p>{wine.design.note}</p>
+                </div>
+              )}
               <p className="fine-print">
                 Bottled by {wine.estate}
                 {wine.produced !== null &&

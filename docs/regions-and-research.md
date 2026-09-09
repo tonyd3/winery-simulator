@@ -31,7 +31,7 @@ For market value, Prestige influence equals the score through 100 and `100 + 25 
 
 ## Research progression
 
-The current catalog has 85 projects: 33 techniques and 52 individual grape field studies. See `src/catalog.ts` for the full cost/prerequisite table. The research ledger shows all costs, remaining time, prerequisites, and unlock descriptions. Each region starts with only its two founding grapes; technique nodes never grant an entire grape collection. All studied grapes can be planted across all owned regions, with region-specific climate and planting costs.
+The current catalog has 97 projects: 33 techniques and 64 individual grape field studies. See `src/catalog.ts` for the full cost/prerequisite table. The research ledger shows all costs, remaining time, prerequisites, and unlock descriptions. Each region starts with only its two founding grapes; technique nodes never grant an entire grape collection. All studied grapes can be planted across all owned regions, with region-specific climate and planting costs.
 
 **Plan toward an outcome** traces the prerequisites for a first cross, tasting room, vintage blending, fermentation quality, rare-grape studies, or quality-selected hybrid. Totals include unpaid studies, unowned prerequisite facilities, and any required nursery trial. Already paid projects retain their actual remaining time. The planner shows both one-at-a-time research time and the longest prerequisite path with enough free slots, at current lab speed; neither includes resource gathering, unrelated work, pauses, future labs, or optional bonuses. Facility upkeep is shown separately. The rare-grape outcome opens the rare-study catalog; individual varieties still require their own studies.
 
@@ -101,6 +101,6 @@ Legacy collection studies retain original remaining time and grant the exact pro
 
 The saved project stores its contracted duration, remaining study weeks, and pause state. Save validation checks the project against its catalog maximum, completed prerequisites, duplicate licenses, known grapes, custom lineage, and inventory references. New-game studies and field trials persist across reloads without refunds or rerolls. See `tests/research-progression.test.ts` and `tests/expansion.test.ts`.
 
-The expanded [52-grape library](grape-library.md) includes the earlier ten world-grape additions and 18 more Italian and French selections, each with an individual study and new blending options. Legacy collection rewards are frozen to their original 24-grape catalog; all 28 additions need individual studies in older estates too. Current saves retain their licenses, completed studies, and active projects.
+The expanded [64-grape library](grape-library.md) includes the earlier ten world-grape additions 18 Italian and French selections, and 12 Iberian, Greek, Georgian, and South African selections, each with an individual study and new blending options. Legacy collection rewards are frozen to their original 24-grape catalog; all 40 additions need individual studies in older estates too. Current saves retain their licenses, completed studies, and active projects.
 
 Previously paid studies and trials retain their saved durations and remaining weeks when catalog pacing changes.

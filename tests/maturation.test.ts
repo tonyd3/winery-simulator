@@ -66,7 +66,7 @@ function reload(s: GameState) {
   return result;
 }
 
-test('all 52 grapes have bounded maturation routes in all regions and complete cellar recipes', () => {
+test('all 64 grapes have bounded maturation routes in all regions and complete cellar recipes', () => {
   assert.deepEqual(
     Object.keys(GRAPE_MATURATION).sort(),
     Object.keys(VARIETIES).sort(),
