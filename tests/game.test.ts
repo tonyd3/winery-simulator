@@ -155,7 +155,7 @@ test('pricing affects demand; unlisted bottles do not sell; wholesale cannot dou
 test('expanded bottle prices survive saves and reject invalid changes without side effects', () => {
   const before = bottle();
   const copy = structuredClone(before);
-  for (const price of [1, 5, 6, 50, 75, 250, 1000]) {
+  for (const price of [1, 5, 6, 50, 75, 250, 1000, 1001, 5000, 10_000]) {
     const changed = act(before, {
       type: 'price',
       id: before.wines[0].id,
@@ -167,7 +167,7 @@ test('expanded bottle prices survive saves and reject invalid changes without si
     assert.equal(changed.wines[0].bottles, before.wines[0].bottles);
     assert.deepEqual(deserialize(serialize(changed)), changed);
   }
-  for (const price of [0, -1, 1001, 999.5, NaN, Infinity]) {
+  for (const price of [0, -1, 10_001, 999.5, 9999.5, NaN, Infinity]) {
     assert.throws(
       () => act(before, { type: 'price', id: before.wines[0].id, price }),
       /whole-dollar price/,
@@ -181,7 +181,7 @@ test('expanded bottle prices survive saves and reject invalid changes without si
 test('wide pricing keeps demand bounded and weekly sales use the chosen amount', () => {
   let base = bottle();
   base = act(base, { type: 'list', id: base.wines[0].id });
-  const prices = [1, 5, 25, 50, 75, 250, 1000];
+  const prices = [1, 5, 25, 50, 75, 250, 1000, 5000, 10_000];
   let previousDemand = base.wines[0].bottles;
   for (const price of prices) {
     const s = act(base, { type: 'price', id: base.wines[0].id, price });
@@ -195,6 +195,21 @@ test('wide pricing keeps demand bounded and weekly sales use the chosen amount',
     previousDemand = expected;
   }
   assert.equal(previousDemand, 0);
+});
+test('99-point wines can earn retail revenue above $1,000 at high Prestige', () => {
+  let s = bottle();
+  s.reputation = 4000;
+  s.wines[0].quality = 99;
+  const price = fairPrice(s.wines[0], s.reputation);
+  assert.ok(price > 1000);
+  s = act(s, { type: 'price', id: s.wines[0].id, price });
+  s = act(s, { type: 'list', id: s.wines[0].id });
+  const expected = demand(s.wines[0], s);
+  assert.ok(expected > 0);
+  const next = tick(s);
+  assert.equal(next.wines[0].bottles, s.wines[0].bottles - expected);
+  assert.equal(next.cash, s.cash + expected * price - upkeep(s));
+  assert.deepEqual(deserialize(serialize(next)), next);
 });
 test('tending cannot be repeated in the same week', () => {
   const s = act(newGame(), { type: 'tend', id: 1 });

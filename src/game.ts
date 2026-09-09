@@ -134,7 +134,7 @@ import type { MaturationVessel } from './maturation';
 
 export const SAVE_KEY = 'terroir.save.v1';
 export const BACKUP_KEY = 'terroir.backup.v1';
-export const BOTTLE_PRICE = { min: 1, max: 1000 };
+export const BOTTLE_PRICE = { min: 1, max: 10_000 };
 export const PLOT_EXPANSION = {
   max: 4,
   step: 0.5,
