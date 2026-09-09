@@ -1,6 +1,8 @@
 # Cellar techniques
 
-Research **Cellar foundations**, then complete any of these three independent studies in **Research → Cellar techniques**. Open **Cellar → Fermentation → Cellar techniques** beneath a fresh harvest and select the treatments for that batch. All choices start off. Basic steel and oak fermentation remain available immediately.
+Research **Cellar foundations**, then complete any of these three independent studies in **Research → Cellar techniques**. Open **Cellar → Fermentation → Cellar techniques** beneath a fresh harvest and select the treatments for that batch. Basic steel and oak fermentation remain available immediately.
+
+**Select all available** checks French oak and every completed technique; **Clear all** returns to basic steel. Each change is remembered by grape variety in this browser, including an empty selection. When you reopen Fermentation or reload the page, harvests start with the last choices for their variety; varieties without remembered choices start in steel with no extra techniques. Harvests already on screen retain their independent selections. Locked techniques are never restored or selected by the shortcut. These preferences stay on this browser and address, separately from exported estate saves. Review the complete price and duration before starting fermentation.
 
 | Technique               | Study cash | Knowledge | Study weeks | Processing cost | Extra tank weeks | Game style effect                     |
 | ----------------------- | ---------: | --------: | ----------: | --------------: | ---------------: | ------------------------------------- |

@@ -14,7 +14,8 @@ import type { Dispatch, View } from './Panels';
 import type { ResearchId } from './catalog';
 import { grapeStorageWeeks } from './investments';
 import { CELLAR_TECHNIQUES, CELLAR_TECHNIQUE_IDS } from './cellarTechniques';
-import type { CellarTechnique } from './cellarTechniques';
+import { loadCellarChoices, saveCellarChoices } from './cellarPreferences';
+import type { CellarChoices } from './cellarPreferences';
 import { resolveMaturation } from './maturation';
 
 export function GrapeArrival({
@@ -28,9 +29,20 @@ export function GrapeArrival({
   dispatch: Dispatch;
   navigate: (view: View, study?: ResearchId) => void;
 }) {
-  const [selected, setSelected] = useState<CellarTechnique[]>([]);
-  const [oak, setOak] = useState(false);
-  const techniques = selected.filter((id) => state.research.includes(id));
+  const [choices, setChoices] = useState(() =>
+    loadCellarChoices(g.variety, state.research),
+  );
+  const [remembered, setRemembered] = useState(true);
+  const available = CELLAR_TECHNIQUE_IDS.filter((id) =>
+    state.research.includes(id),
+  );
+  const { oak } = choices;
+  const techniques = choices.techniques.filter((id) => available.includes(id));
+  const selectedCount = techniques.length + Number(oak);
+  function choose(next: CellarChoices) {
+    setChoices(next);
+    setRemembered(saveCellarChoices(g.variety, next));
+  }
   const plan = fermentationPlan(state, g.kg, oak, techniques);
   const name = getVariety(state, g.variety).name;
   return (
@@ -97,8 +109,8 @@ export function GrapeArrival({
         <summary>
           Cellar techniques{' '}
           <span>
-            {techniques.length
-              ? `${techniques.length} selected`
+            {selectedCount
+              ? `${selectedCount} selected${oak ? ' · French oak' : ''}`
               : 'Standard fermentation'}{' '}
             · {plan.weeks} weeks
           </span>
@@ -108,12 +120,39 @@ export function GrapeArrival({
           below. Choose a separate maturation vessel when this cellar plan
           finishes. Extra steps change character and keep the tanks occupied.
         </p>
+        <div className="cellar-recipe-shortcuts">
+          <div className="cellar-recipe-actions">
+            <button
+              type="button"
+              className="button secondary"
+              disabled={oak && techniques.length === available.length}
+              onClick={() => choose({ oak: true, techniques: available })}
+            >
+              Select all available
+            </button>
+            <button
+              type="button"
+              className="text-button"
+              disabled={selectedCount === 0}
+              onClick={() => choose({ oak: false, techniques: [] })}
+            >
+              Clear all
+            </button>
+          </div>
+          <p role="status">
+            {remembered
+              ? `Choices are remembered for ${name} in this browser.`
+              : 'Choices apply to this harvest, but could not be remembered in this browser.'}
+          </p>
+        </div>
         <div className="cellar-technique">
           <label>
             <input
               type="checkbox"
               checked={oak}
-              onChange={(event) => setOak(event.target.checked)}
+              onChange={(event) =>
+                choose({ oak: event.target.checked, techniques })
+              }
               aria-label={`French oak fermentation for ${name}`}
             />
             <span>
@@ -142,11 +181,12 @@ export function GrapeArrival({
                     disabled={!unlocked}
                     checked={techniques.includes(id)}
                     onChange={(event) =>
-                      setSelected(
-                        event.target.checked
+                      choose({
+                        oak,
+                        techniques: event.target.checked
                           ? [...techniques, id]
                           : techniques.filter((value) => value !== id),
-                      )
+                      })
                     }
                   />
                   <span>
