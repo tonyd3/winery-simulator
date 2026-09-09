@@ -30,6 +30,8 @@ import {
   storageExpansionCost,
   warehouseRoom,
   shelfStock,
+  privateStock,
+  saleStock,
   shelvesUsed,
   shelfRoom,
   suggestedShelfSpace,
@@ -374,6 +376,8 @@ const legacyWineSchema = z
   })
   .strict();
 const wineSchema = legacyWineSchema.extend({
+  // Absent in older saves; private stock is a subset of unsold bottles.
+  privateBottles: integer(1000000).optional(),
   shelfSpace: integer(12000).nullable().default(null),
   accounts: releaseAccountsSchema.optional(),
   lineId: integer(),
@@ -812,6 +816,8 @@ export const stateSchema = z
     )
       fail('Invalid cellar dates.');
     for (const w of s.wines) {
+      if (privateStock(w) > w.bottles)
+        fail('Private collection exceeds remaining bottles.');
       const release = `${w.lineId}:${w.release}`;
       if (
         !lineIds.has(w.lineId) ||
@@ -996,6 +1002,7 @@ export type Action =
   | { type: 'price'; id: number; price: number }
   | { type: 'list'; id: number; bottles?: number }
   | { type: 'wholesale'; id: number }
+  | { type: 'collectWine' | 'returnWine'; id: number; bottles: number }
   | { type: 'marketWine'; id: number }
   | { type: 'judgeWine'; id: number }
   | { type: 'label'; id: number; name: string }
@@ -1397,6 +1404,8 @@ export const wholesalePrice = (wine: Wine, prestige: number, s?: GameState) =>
 
 export function marketingBlocked(s: GameState, wine: Wine) {
   if (!wine.bottles) return 'This release is sold out';
+  if (!saleStock(wine))
+    return 'Return bottles from your Private Collection before marketing';
   if ((wine.marketingWeeks ?? 0) > 0) return 'A campaign is already running';
   if (!wine.listed) return 'List this wine to start a campaign';
   if (s.cash < MARKETING.cost)
@@ -1416,7 +1425,7 @@ function demandOutlook(wine: Wine, s: GameState) {
   const market = marketConditions(wine, s);
   const ratio = wine.price / retailPrice(wine, s);
   const rate =
-    !wine.listed || !wine.bottles
+    !wine.listed || !saleStock(wine)
       ? 0
       : (18 +
           prestigeInfluence(s.reputation) * 0.55 +
@@ -1429,7 +1438,7 @@ function demandOutlook(wine: Wine, s: GameState) {
   return { rate, market };
 }
 const demandCount = (wine: Wine, rate: number) =>
-  Math.min(wine.bottles, Math.max(0, Math.floor(rate)));
+  Math.min(saleStock(wine), Math.max(0, Math.floor(rate)));
 
 // Build once per render or weekly sale; no mutable-state cache is retained.
 export function demandContext(s: GameState) {
@@ -1440,7 +1449,7 @@ export function demandContext(s: GameState) {
     if (!shelfStock(wine)) continue;
     const key = customerGroup(wine);
     const group = groups.get(key) ?? { stock: 0, wines: [] };
-    group.stock += wine.bottles;
+    group.stock += saleStock(wine);
     group.wines.push(wine);
     groups.set(key, group);
   }
@@ -1458,13 +1467,13 @@ export function demandForecast(
   const existing = context.byId.get(wine.id);
   const previousStock =
     existing && shelfStock(existing) && customerGroup(existing) === key
-      ? existing.bottles
+      ? saleStock(existing)
       : 0;
   const stock =
-    (context.groups.get(key)?.stock ?? 0) - previousStock + wine.bottles;
-  const rate = stock ? (outlook.rate * wine.bottles) / stock : 0;
+    (context.groups.get(key)?.stock ?? 0) - previousStock + saleStock(wine);
+  const rate = stock ? (outlook.rate * saleStock(wine)) / stock : 0;
   const available = Math.min(
-    wine.bottles,
+    saleStock(wine),
     Math.max(
       0,
       storageCapacity(s, 'shelves') -
@@ -1487,7 +1496,8 @@ export function weeklySales(s: GameState) {
     let preceding = 0;
     const roll = weeklyDemandMultiplier(group.wines[0], s);
     for (const wine of group.wines.sort((a, b) => a.id - b.id)) {
-      const rate = (demandOutlook(wine, s).rate * wine.bottles) / group.stock;
+      const rate =
+        (demandOutlook(wine, s).rate * saleStock(wine)) / group.stock;
       // Cumulative rounding preserves the group's total for one-bottle releases.
       sales.set(
         wine.id,
@@ -1506,7 +1516,7 @@ export function weeklySales(s: GameState) {
   return sales;
 }
 export function demand(wine: Wine, s: GameState) {
-  if (!wine.listed || !wine.bottles) return 0;
+  if (!wine.listed || !saleStock(wine)) return 0;
   // Public single-release queries support a counterfactual wine without changing s.
   const existing = s.wines.find((w) => w.id === wine.id);
   if (!existing?.listed && !wine.shelfSpace)
@@ -2202,6 +2212,10 @@ export function act(current: GameState, action: Action): GameState {
           w.salesSinceTracking = (w.salesSinceTracking ?? 0) + count;
         recordWineSale(w, count, count * w.price);
         w.bottles -= count;
+        if (!saleStock(w)) {
+          w.listed = false;
+          w.shelfSpace = 0;
+        }
         sales += count * w.price;
         bottles += count;
         prestige += count * qualityResponse(w.quality).retail;
@@ -3163,16 +3177,21 @@ export function act(current: GameState, action: Action): GameState {
         w.listed = false;
         w.shelfSpace = 0;
       } else {
-        if (!w.bottles) throw new Error('This release is sold out.');
+        if (!saleStock(w))
+          throw new Error(
+            privateStock(w)
+              ? 'Return bottles from your Private Collection before listing.'
+              : 'This release is sold out.',
+          );
         const count = action.bottles ?? suggestedShelfSpace(s, w);
         if (
           !Number.isInteger(count) ||
           count < 1 ||
-          count > w.bottles ||
+          count > saleStock(w) ||
           count > shelfRoom(s)
         )
           throw new Error(
-            `Choose 1–${Math.min(w.bottles, shelfRoom(s))} bottles for this shelf. Free space from another listing or add shelves in the wine shop.`,
+            `Choose 1–${Math.min(saleStock(w), shelfRoom(s))} bottles for this shelf. Free space from another listing or add shelves in the wine shop.`,
           );
         w.shelfSpace = count;
         w.listed = true;
@@ -3185,9 +3204,9 @@ export function act(current: GameState, action: Action): GameState {
     }
     case 'shelfSpace': {
       const w = getWine(action.id);
-      if (!w.listed || !w.bottles)
+      if (!w.listed || !saleStock(w))
         throw new Error('List this wine before adjusting its shelf space.');
-      const max = Math.min(w.bottles, shelfRoom(s) + shelfStock(w));
+      const max = Math.min(saleStock(w), shelfRoom(s) + shelfStock(w));
       if (
         !Number.isInteger(action.bottles) ||
         action.bottles < 1 ||
@@ -3238,27 +3257,59 @@ export function act(current: GameState, action: Action): GameState {
       );
       break;
     }
-    case 'wholesale': {
+    case 'collectWine':
+    case 'returnWine': {
       const w = getWine(action.id);
-      if (!w.bottles) throw new Error('This vintage is sold out.');
-      const revenue = w.bottles * wholesalePrice(w, s.reputation, s);
-      transaction(s, `${w.label} wholesale`, revenue);
-      recordWineSale(w, w.bottles, revenue);
-      s.stats.sold += w.bottles;
-      s.stats.revenue += revenue;
-      s.reputation = Number(
-        (
-          s.reputation +
-          w.bottles * qualityResponse(w.quality).wholesale
-        ).toFixed(2),
-      );
-      trackQualitySales(s, w, w.bottles);
-      if (w.produced === null)
-        w.salesSinceTracking = (w.salesSinceTracking ?? 0) + w.bottles;
-      w.bottles = 0;
+      const keeping = action.type === 'collectWine';
+      const max = keeping ? saleStock(w) : privateStock(w);
+      if (
+        !Number.isInteger(action.bottles) ||
+        action.bottles < 1 ||
+        action.bottles > max
+      )
+        throw new Error(
+          `Choose 1–${max} bottles to ${keeping ? 'keep' : 'return'}.`,
+        );
+      w.privateBottles =
+        privateStock(w) + (keeping ? action.bottles : -action.bottles);
+      // Returning bottles never starts a listing or expands its allocation.
+      w.shelfSpace = Math.min(w.shelfSpace ?? 0, saleStock(w));
+      if (!saleStock(w)) w.listed = false;
       note(
         s,
-        `A distributor bought the remaining ${w.label} for ${money(revenue)}.`,
+        `${action.bottles} ${action.bottles === 1 ? 'bottle' : 'bottles'} of ${w.label} ${keeping ? 'saved to your Private Collection. Protected from all sales.' : 'returned to selling stock.'}`,
+        'good',
+      );
+      break;
+    }
+    case 'wholesale': {
+      const w = getWine(action.id);
+      const count = saleStock(w);
+      if (!count)
+        throw new Error(
+          privateStock(w)
+            ? 'All remaining bottles are in your Private Collection.'
+            : 'This vintage is sold out.',
+        );
+      const revenue = count * wholesalePrice(w, s.reputation, s);
+      transaction(s, `${w.label} wholesale`, revenue);
+      recordWineSale(w, count, revenue);
+      s.stats.sold += count;
+      s.stats.revenue += revenue;
+      s.reputation = Number(
+        (s.reputation + count * qualityResponse(w.quality).wholesale).toFixed(
+          2,
+        ),
+      );
+      trackQualitySales(s, w, count);
+      if (w.produced === null)
+        w.salesSinceTracking = (w.salesSinceTracking ?? 0) + count;
+      w.bottles -= count;
+      w.listed = false;
+      w.shelfSpace = 0;
+      note(
+        s,
+        `A distributor bought ${count} bottles of ${w.label} for ${money(revenue)}.`,
         'good',
       );
       break;

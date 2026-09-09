@@ -1,3 +1,4 @@
+import { saleStock } from './bottleStorage';
 import type { DemandContext } from './game';
 import { Clock3, Megaphone, Trophy } from 'lucide-react';
 import {
@@ -74,9 +75,9 @@ export default function WinePromotion({
           {Math.round(MARKETING.demandBonus * 100)}% demand and +
           {money(MARKETING.priceBonus)} suggested shop price for this release.
         </p>
-        {!active && wine.bottles > 0 && wine.listed && (
+        {!active && saleStock(wine) > 0 && wine.listed && (
           <p>
-            {baseline.low >= wine.bottles
+            {baseline.low >= saleStock(wine)
               ? 'This stock is already forecast to sell out next week without a campaign. '
               : `Next week at your current price: ${extraLow}–${extraHigh} additional bottles forecast. `}
             The fee needs {Math.ceil(MARKETING.cost / wine.price)} additional

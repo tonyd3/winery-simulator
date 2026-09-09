@@ -41,6 +41,7 @@ test('a 1000-release save can keep bottling without losing totals or reusing rel
   s.wines[2].produced = null;
   s.wines[2].salesSinceTracking = 1;
   s.wines[5].bottles = 1; // Unsold stock must never be compacted.
+  s.wines[5].privateBottles = 1; // Including releases kept entirely for the owner.
   const retained = s.wines[5].id;
   const count = wineSales(s.wines).count;
   const next = act(s, {
@@ -52,6 +53,7 @@ test('a 1000-release save can keep bottling without losing totals or reusing rel
   assert.equal(releaseCount(next), 1001);
   assert.equal(next.wines.at(-1)!.release, 1001);
   assert.ok(next.wines.some((w) => w.id === retained));
+  assert.equal(next.wines.find((w) => w.id === retained)!.privateBottles, 1);
   assert.ok(next.wines.length < 1000);
   assert.equal(
     next.lines[0].archive!.sold + wineSales(next.wines).count,
