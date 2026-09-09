@@ -168,6 +168,9 @@ export const researchDuration = (weeks: number) =>
 
 // Paid studies from before the pacing update keep their original clock.
 const previousStudyWeeks: Partial<Record<ResearchId, number>> = {
+  tourism: 12,
+  visitor_services: 22,
+  hospitality: 32,
   heritage: 10,
   breeding: 24,
   selection: 40,

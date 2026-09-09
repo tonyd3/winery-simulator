@@ -28,6 +28,7 @@ import {
 } from './investments';
 import type { InvestmentDepartment, Upgrade } from './investments';
 import './investments.css';
+import { unpaidInvestmentResearch } from './researchPlanning';
 
 const departmentIcons = {
   vineyard: Sprout,
@@ -106,8 +107,9 @@ export function Investments({
         </p>
         <p>
           Attendance follows Prestige and the season. Suspending stops benefits
-          but retains 25% maintenance; dependent investments suspend too. Resume
-          when you can cover one week of total estate upkeep.
+          immediately; this week’s full bill remains, then maintenance falls to
+          25%. Dependent investments suspend too. Resume when you can cover one
+          week of total estate upkeep.
         </p>
       </section>
       <nav className="investment-filters" aria-label="Investment departments">
@@ -168,7 +170,7 @@ export function Investments({
         Purchases are permanent. Full running costs apply while operating, even
         during quiet weeks. If funds after weekly income cannot cover the bill,
         bankruptcy ends this estate and requires a new game. Suspend facilities
-        before advancing to reduce future bills.
+        to reduce bills after the current operating week.
       </p>
       <div className="cellar-note">
         <Sprout size={17} />
@@ -221,6 +223,7 @@ function InvestmentRow({
       ? null
       : annualHospitalityForecast(projected).net -
         annualHospitalityForecast(state).net;
+  const unpaidResearch = owned ? 0 : unpaidInvestmentResearch(state, id);
   return (
     <article
       className={`investment-row ${owned ? 'owned' : ''}`}
@@ -279,8 +282,13 @@ function InvestmentRow({
             }
           >
             Across all seasons: {signedMoney(extraAnnual)} extra hospitality
-            income after running costs per 12 weeks, at current Prestige.
-            Purchase cost is additional.
+            income after running costs per 12 weeks, at current Prestige. Build
+            + unpaid prerequisite studies: {money(u.cost + unpaidResearch)}.
+            {extraAnnual > 0
+              ? ` About ${((u.cost + unpaidResearch) / extraAnnual).toFixed(1)} years to recover that cost from hospitality alone.`
+              : ' Hospitality alone does not recover that cost at current traffic.'}{' '}
+            Excludes wine sales and estate overhead; research time is
+            additional.
           </p>
         )}
       </div>
@@ -289,7 +297,7 @@ function InvestmentRow({
           <>
             <strong>
               {money(investmentBill(state, id))}
-              <small> / week now</small>
+              <small> / next bill</small>
             </strong>
             <button
               className="button secondary"
@@ -307,6 +315,11 @@ function InvestmentRow({
               {active ? 'Suspend' : 'Resume'}
             </button>
             {!active && resumeBlocked && <small>{resumeBlocked}</small>}
+            {!active && state.operatedUpgrades?.includes(id) && (
+              <small>
+                Then {money(Math.ceil(u.upkeep * 0.25))} / week while suspended.
+              </small>
+            )}
           </>
         ) : (
           <>

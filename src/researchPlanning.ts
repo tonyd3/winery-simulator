@@ -65,6 +65,21 @@ export function researchPath(targets: ResearchId[]): ResearchId[] {
   return [...path];
 }
 
+export function unpaidInvestmentResearch(s: GameState, id: Upgrade) {
+  const studies = researchPath(
+    investmentPath(id).flatMap((upgrade) =>
+      UPGRADES[upgrade].research ? [UPGRADES[upgrade].research!] : [],
+    ),
+  );
+  return studies
+    .filter(
+      (study) =>
+        !researchComplete(s, study) &&
+        !activeStudies(s).some((project) => project.id === study),
+    )
+    .reduce((sum, study) => sum + researchTerms(s, study).cost, 0);
+}
+
 export function researchPlan(s: GameState, goalId: ResearchGoalId) {
   const goal = RESEARCH_GOALS[goalId];
   const investments = goal.investment ? investmentPath(goal.investment) : [];

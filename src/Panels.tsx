@@ -50,6 +50,7 @@ import {
   money,
   quality,
   readyToHarvest,
+  readyToTend,
   tankCount,
   occupiedTankCount,
   upkeep,
@@ -140,15 +141,16 @@ export function PlotInspector({
           <button
             className="button secondary wide"
             disabled={
-              winter ||
-              harvested ||
-              plot.tended === state.week ||
-              state.cash < plotTendCost(plot)
+              !readyToTend(plot, state.week) || state.cash < plotTendCost(plot)
             }
             onClick={() => dispatch({ type: 'tend', id: selected })}
           >
             <Icon name="sprout" size={17} />
-            {plot.tended === state.week ? 'Tended this week' : 'Tend the vines'}
+            {plot.tended === state.week
+              ? 'Tended this week'
+              : plot.health >= 100
+                ? 'Vines at full health'
+                : 'Tend the vines'}
             <span className="button-price">{money(plotTendCost(plot))}</span>
           </button>
           <p className="fine-print">

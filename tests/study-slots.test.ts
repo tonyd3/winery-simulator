@@ -55,7 +55,7 @@ test('study slots are permanent purchases with escalating prices and no weekly u
   assert.equal(act({ ...poor, cash: 5000 }, { type: 'buyStudySlot' }).cash, 0);
 });
 
-test('parallel studies pay their own terms, finish together and free slots without losing another project', () => {
+test('parallel studies pay their own terms, finish together and free slots for the next studies', () => {
   let s = act(act(funded(), { type: 'buyStudySlot' }), {
     type: 'buyStudySlot',
   });
@@ -72,20 +72,20 @@ test('parallel studies pay their own terms, finish together and free slots witho
   s = act(s, { type: 'research', id: 'oenology' });
   s = act(s, { type: 'research', id: 'tourism' });
   assert.match(researchBlocked(s, 'brand_strategy')!, /slots.*occupied/);
-  assert.equal(s.cash, before.cash - 1200 - 1500 - 8500);
+  assert.equal(s.cash, before.cash - 1200 - 1500 - 4500);
   assert.equal(s.knowledge, before.knowledge - 40 - 35 - 90);
   s = tick(deserialize(serialize(s)), 6);
   assert.ok(s.research.includes('ampelography'));
   assert.ok(s.research.includes('oenology'));
   assert.deepEqual(
     activeStudies(s).map((p) => [p.id, p.remaining]),
-    [['tourism', 6]],
+    [],
   );
   assert.equal(s.researchSlots, 3);
   s = act(s, { type: 'research', id: 'heritage' });
   assert.deepEqual(
     activeStudies(s).map((p) => p.id),
-    ['tourism', 'heritage'],
+    ['heritage'],
   );
   valid(s);
 });
@@ -208,7 +208,7 @@ test('paid legacy collection studies keep their promised grape unlocks beside a 
   assert.ok(promised.every((id) => s.grapeLicenses.includes(id)));
   assert.deepEqual(
     activeStudies(s).map((p) => [p.id, p.remaining]),
-    [['tourism', 10]],
+    [['tourism', 4]],
   );
   valid(s);
 });

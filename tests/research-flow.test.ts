@@ -77,11 +77,11 @@ test('outcome planning includes unpaid prerequisites and facility dependencies o
   const p = researchPlan(s, 'tasting_room');
   assert.deepEqual(p.path, ['tourism', 'visitor_services', 'hospitality']);
   assert.deepEqual(p.investments, ['visitorCenter', 'tastingRoom']);
-  assert.equal(p.researchCash, 75500);
-  assert.equal(p.investmentCash, 85000);
-  assert.equal(p.cash, 160500);
-  assert.equal(p.operatingUpkeep, 2200);
-  assert.equal(p.minimumWeeks, 66);
+  assert.equal(p.researchCash, 40500);
+  assert.equal(p.investmentCash, 64000);
+  assert.equal(p.cash, 104500);
+  assert.equal(p.operatingUpkeep, 1850);
+  assert.equal(p.minimumWeeks, 32);
   assert.deepEqual(researchPath(['breeding', 'adaptation']), [
     'ampelography',
     'heritage',

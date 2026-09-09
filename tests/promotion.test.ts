@@ -13,7 +13,7 @@ import {
   wineSales,
 } from '../src/game.ts';
 import type { GameState } from '../src/game.ts';
-import { JUDGING, MARKETING, wineAward } from '../src/promotion.ts';
+import { judgingCost, MARKETING, wineAward } from '../src/promotion.ts';
 import { DEFAULT_DESIGN } from '../src/winemaking.ts';
 import { marketConditions, weeklyDemandMultiplier } from '../src/market.ts';
 
@@ -131,7 +131,7 @@ test('judging resolves after two weeks with one saved result and an independent 
   const before = bottled(),
     id = before.wines[0].id;
   let s = act(before, { type: 'judgeWine', id });
-  assert.equal(s.cash, before.cash - JUDGING.cost);
+  assert.equal(s.cash, before.cash - judgingCost(before.wines[0]));
   assert.equal(s.wines[0].judging!.remaining, 2);
   assert.deepEqual(
     act(deserialize(serialize(before)), { type: 'judgeWine', id }),
@@ -296,4 +296,52 @@ test('judging cannot charge for an impossible medal, while the boundary remains 
     act(eligible, { type: 'judgeWine', id: eligible.wines[0].id }).wines[0]
       .judging,
   );
+});
+
+test('judging scales with original release size, survives prior sales and records the full fee', () => {
+  const small = bottled(87);
+  assert.equal(judgingCost(small.wines[0]), 780);
+  const big = bottled(90);
+  big.wines[0].produced = 1800;
+  big.wines[0].bottles = 1800;
+  for (const part of big.wines[0].components) part.ml *= 9;
+  big.stats.bottled += 1600;
+  big.bottleStorage.warehouse = 3;
+  assert.equal(judgingCost(big.wines[0]), 5580);
+  const soldSome = tick(listed(big));
+  assert.ok(soldSome.wines[0].bottles < 1800);
+  assert.equal(judgingCost(soldSome.wines[0]), 5580);
+  const entered = act(soldSome, {
+    type: 'judgeWine',
+    id: soldSome.wines[0].id,
+  });
+  assert.equal(entered.cash, soldSome.cash - 5580);
+  assert.equal(entered.wines[0].accounts!.promotionCents, 558000);
+  assert.equal(entered.ledger[0].amount, -5580);
+  const parsed = stateSchema.safeParse(entered);
+  assert.ok(parsed.success, JSON.stringify(parsed.error?.issues));
+  valid(entered);
+  const poor = { ...small, cash: 779 };
+  const copy = structuredClone(poor);
+  assert.throws(
+    () => act(poor, { type: 'judgeWine', id: poor.wines[0].id }),
+    /Need/,
+  );
+  assert.deepEqual(poor, copy);
+});
+
+test('legacy judging fees use stock plus tracked sales, preserving already-paid results', () => {
+  let s = listed();
+  s.wines[0].produced = null;
+  s.wines[0].salesSinceTracking = 100;
+  const cost = judgingCost(s.wines[0]);
+  s = tick(s);
+  assert.equal(judgingCost(s.wines[0]), cost);
+  s = act(s, { type: 'judgeWine', id: s.wines[0].id });
+  const saved = deserialize(serialize(s));
+  const score = saved.wines[0].judging!.score;
+  const paid = saved.wines[0].accounts!.promotionCents;
+  const resolved = tick(tick(saved));
+  assert.equal(resolved.wines[0].judging!.score, score);
+  assert.equal(resolved.wines[0].accounts!.promotionCents, paid);
 });

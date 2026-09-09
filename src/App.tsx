@@ -24,6 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import EstateMap from './EstateMap';
+import { EstateFieldwork } from './EstateFieldwork';
 import RegionSetup from './Regions';
 import Research from './Research';
 import type { ResearchTab } from './Research';
@@ -248,6 +249,19 @@ export default function App() {
     setModal(null);
     setPendingImport(null);
   }, []);
+  const selectParcel = (id: number) => {
+    setSelected(id);
+    if (window.matchMedia('(max-width: 620px)').matches)
+      requestAnimationFrame(() =>
+        document.getElementById('parcel-inspector')?.scrollIntoView({
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)')
+            .matches
+            ? 'instant'
+            : 'smooth',
+          block: 'start',
+        }),
+      );
+  };
   const navigate = useCallback((next: View, study?: ResearchId) => {
     setResearchFocus(study);
     setPlantingTarget(null);
@@ -794,27 +808,18 @@ export default function App() {
                     navigate('improvements');
                   }}
                 />
+                <EstateFieldwork
+                  state={state}
+                  dispatch={dispatch}
+                  selected={selected}
+                  onSelect={selectParcel}
+                />
                 <div className="estate-workspace">
                   <EstateMap
                     key={`${state.activeEstate}-${Math.floor((selected - 1) / 6)}`}
                     state={state}
                     selected={selected}
-                    onSelect={(id) => {
-                      setSelected(id);
-                      if (window.matchMedia('(max-width: 620px)').matches)
-                        requestAnimationFrame(() =>
-                          document
-                            .getElementById('parcel-inspector')
-                            ?.scrollIntoView({
-                              behavior: window.matchMedia(
-                                '(prefers-reduced-motion: reduce)',
-                              ).matches
-                                ? 'instant'
-                                : 'smooth',
-                              block: 'start',
-                            }),
-                        );
-                    }}
+                    onSelect={selectParcel}
                     onCellar={() => navigate('cellar')}
                   />
                   <PlotInspector
@@ -1159,7 +1164,7 @@ export default function App() {
                 'trend',
                 '04',
                 'Grow at your own pace',
-                'Advance one week at a time, or press 1×, 2×, or 4×. Build offers facilities and teams with substantial weekly costs. Visitor income depends on Prestige and season. Suspend investments to cut their bills to 25%; their benefits stop. Check your journal to track revenue and estate expenses.',
+                'Advance one week at a time, or press 1×, 2×, or 4×. Build offers facilities and teams with substantial weekly costs. Visitor income depends on Prestige and season. Suspending stops benefits immediately; this week’s full bill remains, then maintenance falls to 25%. Check your journal to track revenue and estate expenses.',
               ],
             ].map(([icon, number, title, text]) => (
               <div className="guide-step" key={number}>

@@ -1,0 +1,115 @@
+.estate-fieldwork {
+  padding: 18px 24px;
+  border-block: 1px solid var(--line);
+}
+.fieldwork-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 20px;
+  margin-bottom: 12px;
+}
+.fieldwork-heading h2 {
+  font: 400 23px var(--serif);
+  margin: 0 0 5px;
+}
+.fieldwork-heading p,
+.fieldwork-actions small,
+.fieldwork-name small {
+  font-size: 11px;
+  color: var(--ink);
+  margin: 0;
+}
+.fieldwork-actions {
+  display: flex;
+  gap: 12px;
+}
+.fieldwork-actions > div {
+  max-width: 240px;
+}
+.fieldwork-actions .button {
+  min-height: 44px;
+  width: 100%;
+}
+.fieldwork-actions small {
+  display: block;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+.fieldwork-parcel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 24px;
+  padding: 12px 10px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  width: 100%;
+  text-align: left;
+  color: var(--ink);
+  background: transparent;
+  font-size: 12px;
+}
+.fieldwork-parcel[aria-pressed='true'] {
+  background: var(--paper);
+  box-shadow: inset 3px 0 var(--wine);
+}
+.fieldwork-parcel:hover {
+  background: var(--paper);
+}
+.fieldwork-name strong,
+.fieldwork-name small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.fieldwork-name small {
+  margin-top: 4px;
+}
+.fieldwork-meter > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.fieldwork-meter strong {
+  font-variant-numeric: tabular-nums;
+}
+.estate-fieldwork > .fine-print {
+  margin: 8px 0 0;
+  line-height: 1.6;
+  font-size: 11px;
+  text-align: left;
+}
+@media (max-width: 780px) {
+  .fieldwork-heading {
+    flex-direction: column;
+  }
+  .fieldwork-actions {
+    width: 100%;
+  }
+  .fieldwork-actions > div {
+    flex: 1;
+    max-width: none;
+  }
+  .fieldwork-parcel {
+    gap: 14px;
+  }
+}
+@media (max-width: 620px) {
+  .estate-fieldwork {
+    padding: 18px 16px;
+  }
+  .fieldwork-actions {
+    flex-wrap: wrap;
+  }
+  .fieldwork-actions > div {
+    flex-basis: 145px;
+  }
+  .fieldwork-parcel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .fieldwork-name {
+    grid-column: 1 / -1;
+  }
+}

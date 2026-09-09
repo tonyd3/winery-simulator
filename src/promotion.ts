@@ -6,7 +6,19 @@ export const MARKETING = {
   priceBonus: 2,
   demandBonus: 0.4,
 };
-export const JUDGING = { cost: 180, weeks: 2, variation: 5 };
+export const JUDGING = { cost: 180, perBottle: 3, weeks: 2, variation: 5 };
+
+// Charge against the whole release, so selling stock before entering cannot
+// lower the fee. Legacy releases use all bottles recorded since tracking began.
+export function judgingBottles(wine: {
+  produced: number | null;
+  bottles: number;
+  salesSinceTracking: number;
+}) {
+  return wine.produced ?? wine.bottles + wine.salesSinceTracking;
+}
+export const judgingCost = (wine: Parameters<typeof judgingBottles>[0]) =>
+  JUDGING.cost + JUDGING.perBottle * judgingBottles(wine);
 
 export const judgingSchema = z
   .object({

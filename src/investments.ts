@@ -102,11 +102,11 @@ export const UPGRADES: Record<Upgrade, Investment> = {
   tasting: {
     research: 'tourism',
     name: 'Tasting terrace',
-    cost: 12000,
+    cost: 8000,
     upkeep: 280,
     category: 'hospitality',
     kind: 'facility',
-    text: '24 visitor places, $14 admission, and +12 base shoppers per grape and vintage customer group. Visitor attendance varies with Prestige and season.',
+    text: '24 visitor places, $18 admission, and +12 base shoppers per grape and vintage customer group. Visitor attendance varies with Prestige and season.',
   },
   lab: {
     research: 'cellar_control',
@@ -120,17 +120,17 @@ export const UPGRADES: Record<Upgrade, Investment> = {
   visitorCenter: {
     research: 'visitor_services',
     name: 'Visitor center',
-    cost: 35000,
-    upkeep: 600,
+    cost: 24000,
+    upkeep: 450,
     category: 'hospitality',
     kind: 'facility',
-    text: '60 visitor places, $12 admission, and 25% more potential visitors. Opens the way to larger hospitality facilities.',
+    text: '60 visitor places, $18 admission, and 25% more potential visitors. Opens the way to larger hospitality facilities.',
   },
   tastingRoom: {
     research: 'hospitality',
     name: 'Tasting room',
-    cost: 50000,
-    upkeep: 1600,
+    cost: 40000,
+    upkeep: 1400,
     category: 'hospitality',
     kind: 'facility',
     requires: 'visitorCenter',
@@ -269,7 +269,10 @@ export function harvestInvestmentEffects(s: GameState, p: Plot) {
   return { quality, yieldMultiplier };
 }
 export const investmentBill = (s: GameState, id: Upgrade) =>
-  Math.ceil(UPGRADES[id].upkeep * (upgradeActive(s, id) ? 1 : 0.25));
+  Math.ceil(
+    UPGRADES[id].upkeep *
+      (upgradeActive(s, id) || s.operatedUpgrades?.includes(id) ? 1 : 0.25),
+  );
 export const investmentUpkeep = (s: GameState) =>
   s.upgrades.reduce((sum, id) => sum + investmentBill(s, id), 0);
 export function upgradeBlocked(s: GameState, id: Upgrade) {
@@ -312,7 +315,7 @@ export function hospitalityForecast(s: GameState) {
     (active('tastingRoom') ? 80 : 0);
   const visitors = Math.min(capacity, potential);
   const admission =
-    (active('tasting') ? 14 : active('visitorCenter') ? 12 : 0) +
+    (active('tasting') || active('visitorCenter') ? 18 : 0) +
     (active('tastingRoom') ? 8 : 0) +
     (active('sommelier') ? 12 : 0);
   const dining = active('restaurant') ? Math.min(100, visitors) * 20 : 0;
@@ -342,7 +345,11 @@ export const studyWeeks = (s: GameState, remaining: number) =>
 // A full game year covers every season; Prestige and facilities stay fixed.
 export function annualHospitalityForecast(s: GameState) {
   const weeks = Array.from({ length: 12 }, (_, i) =>
-    hospitalityForecast({ ...s, week: s.week + i }),
+    hospitalityForecast({
+      ...s,
+      week: s.week + i,
+      operatedUpgrades: i === 0 ? s.operatedUpgrades : [],
+    }),
   );
   return {
     revenue: weeks.reduce((n, w) => n + w.revenue, 0),

@@ -11,6 +11,8 @@ import type { Dispatch } from './Panels';
 import {
   AWARDS,
   JUDGING,
+  judgingCost,
+  judgingBottles,
   MARKETING,
   wineAward,
   judgingOutlook,
@@ -131,8 +133,16 @@ export default function WinePromotion({
               disabled={Boolean(judgingReason)}
               onClick={() => dispatch({ type: 'judgeWine', id: wine.id })}
             >
-              Send for judging · {money(JUDGING.cost)}
+              Send for judging · {money(judgingCost(wine))}
             </button>
+            <p>
+              {money(JUDGING.cost)} entry + {money(JUDGING.perBottle)} ×{' '}
+              {judgingBottles(wine).toLocaleString('en-US')} bottles in this
+              release
+              {wine.produced === null ? ' recorded since tracking began' : ''}.
+              Selling stock does not reduce the fee. Only bottles remaining when
+              results arrive benefit from a medal.
+            </p>
             {judgingReason && <small>{judgingReason}.</small>}
           </>
         )}

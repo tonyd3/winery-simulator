@@ -82,6 +82,7 @@ import {
 import type { CellarTechnique } from './cellarTechniques';
 import {
   JUDGING,
+  judgingCost,
   MARKETING,
   judgingSchema,
   judgingOutlook,
@@ -490,6 +491,11 @@ export const stateSchema = z
       .array(z.enum(UPGRADE_IDS))
       .max(UPGRADE_IDS.length)
       .default([]),
+    // Investments operated during this week still owe one full bill.
+    operatedUpgrades: z
+      .array(z.enum(UPGRADE_IDS))
+      .max(UPGRADE_IDS.length)
+      .default([]),
     deliveries: z
       .array(
         z
@@ -714,6 +720,11 @@ export const stateSchema = z
     )
       fail('Invalid suspended investments.');
     if (
+      new Set(s.operatedUpgrades).size !== s.operatedUpgrades.length ||
+      s.operatedUpgrades.some((id) => !s.upgrades.includes(id))
+    )
+      fail('Invalid operated investments.');
+    if (
       s.upgrades.some(
         (id) =>
           UPGRADES[id].requires && !s.upgrades.includes(UPGRADES[id].requires!),
@@ -929,6 +940,7 @@ export type Action =
   | { type: 'uproot'; id: number }
   | { type: 'tend'; id: number }
   | { type: 'harvest'; id: number }
+  | { type: 'harvestAll' | 'tendAll' }
   | { type: 'buyPlot'; id: number }
   | { type: 'expandPlot'; id: number }
   | { type: 'plant'; id: number; variety: Variety }
@@ -1044,6 +1056,7 @@ export function newGame(
     finance: startFinance(6, 12500),
     upgrades: [],
     suspendedUpgrades: [],
+    operatedUpgrades: [],
     deliveries: [],
     events: [],
     pendingEvents: 0,
@@ -1377,7 +1390,8 @@ export function judgingBlocked(s: GameState, wine: Wine) {
   if (!wine.bottles) return 'This release is sold out';
   if (!judgingOutlook(wine.quality).medalPossible)
     return 'This rating cannot reach the 80-point medal threshold';
-  if (s.cash < JUDGING.cost) return `Need ${money(JUDGING.cost - s.cash)} more`;
+  const cost = judgingCost(wine);
+  if (s.cash < cost) return `Need ${money(cost - s.cash)} more`;
   return null;
 }
 function demandOutlook(wine: Wine, s: GameState) {
@@ -1529,6 +1543,34 @@ export const readyToHarvest = (p: Plot, week: number) =>
   p.growth >= 80 &&
   p.harvestedYear !== calendar(week).year &&
   calendar(week).season !== 'Winter';
+export const readyToTend = (p: Plot, week: number) =>
+  p.owned &&
+  Boolean(p.variety) &&
+  p.health < 100 &&
+  p.tended !== week &&
+  p.harvestedYear !== calendar(week).year &&
+  calendar(week).season !== 'Winter';
+
+export function fieldWorkPlan(s: GameState, type: 'harvestAll' | 'tendAll') {
+  const harvesting = type === 'harvestAll';
+  const plots = estatePlots(s).filter((p) =>
+    harvesting ? readyToHarvest(p, s.week) : readyToTend(p, s.week),
+  );
+  const cost = plots.reduce(
+    (sum, p) => sum + (harvesting ? plotHarvestCost(p) : plotTendCost(p)),
+    0,
+  );
+  const blocked = !plots.length
+    ? harvesting
+      ? 'No parcels are ready to harvest.'
+      : 'No vines need tending this week.'
+    : harvesting && s.grapes.length + plots.length > 576
+      ? 'Process or sell fresh grapes to make room for every harvest.'
+      : s.cash < cost
+        ? `Need ${money(cost - s.cash)} more for all parcels.`
+        : null;
+  return { plots, cost, blocked };
+}
 export function harvestAdvice(plot: Plot, week: number) {
   if (readyToHarvest(plot, week)) {
     if (calendar(week).week === 9)
@@ -1672,6 +1714,7 @@ export function act(current: GameState, action: Action): GameState {
   s.experimentCredits ??= [];
   s.introCrossId ??= null;
   s.blendTrials ??= [];
+  s.operatedUpgrades ??= [];
   const setStudies = (projects: z.infer<typeof researchProjectSchema>[]) => {
     s.researchProject = projects[0] ?? null;
     s.additionalResearchProjects = projects.slice(1);
@@ -2157,6 +2200,7 @@ export function act(current: GameState, action: Action): GameState {
         break;
       }
       transaction(s, 'Weekly estate upkeep', -bill);
+      s.operatedUpgrades = [];
       break;
     }
     case 'planResearch': {
@@ -2393,12 +2437,30 @@ export function act(current: GameState, action: Action): GameState {
       note(s, `${getLand(s, p.id).name} cleared. Choose new vines to plant.`);
       break;
     }
+    case 'harvestAll':
+    case 'tendAll': {
+      const plan = fieldWorkPlan(s, action.type);
+      if (plan.blocked) throw new Error(plan.blocked);
+      const type = action.type === 'harvestAll' ? 'harvest' : 'tend';
+      // Each action uses the normal accounting and provenance path. No partial
+      // result reaches the caller if any parcel fails validation.
+      let result = s;
+      for (const p of plan.plots) result = act(result, { type, id: p.id });
+      note(
+        result,
+        `${plan.plots.length} ${plan.plots.length === 1 ? 'parcel' : 'parcels'} ${type === 'harvest' ? 'harvested' : 'tended'} at ${getEstate(s).name} for ${money(plan.cost)}.`,
+        'good',
+      );
+      return result;
+    }
     case 'tend': {
       const p = getPlot(action.id);
       if (!p.owned || !p.variety || calendar(s.week).season === 'Winter')
         throw new Error('Choose a planted parcel during the growing season.');
       if (p.tended === s.week)
         throw new Error('These vines have already been tended this week.');
+      if (!readyToTend(p, s.week))
+        throw new Error('These vines are resting or already at full health.');
       spend(s, 'Vine care', plotTendCost(p));
       p.health = Math.min(100, p.health + 16);
       p.tended = s.week;
@@ -2962,6 +3024,7 @@ export function act(current: GameState, action: Action): GameState {
       const u = UPGRADES[action.upgrade];
       spend(s, u.name, u.cost);
       s.upgrades.push(action.upgrade);
+      s.operatedUpgrades.push(action.upgrade);
       note(
         s,
         `${u.name} is operating. Running cost ${money(u.upkeep)} per week.`,
@@ -2985,9 +3048,16 @@ export function act(current: GameState, action: Action): GameState {
           throw new Error(
             'Keep enough funds for one full week of estate upkeep before resuming.',
           );
+        if (!s.operatedUpgrades.includes(id)) s.operatedUpgrades.push(id);
       } else {
         if (suspended.includes(id))
           throw new Error('This investment is already suspended.');
+        // Preserve the current full bill for the facility and any operating
+        // dependents before their benefits are switched off.
+        for (const other of s.upgrades) {
+          if (upgradeActive(s, other) && !s.operatedUpgrades.includes(other))
+            s.operatedUpgrades.push(other);
+        }
         s.suspendedUpgrades = [...suspended, id];
         // Explicitly suspend dependents too; reopening the parent never silently
         // restarts expensive facilities or salaries.
@@ -3002,7 +3072,7 @@ export function act(current: GameState, action: Action): GameState {
       }
       note(
         s,
-        `${u.name} ${action.active ? 'resumed' : 'suspended'}. ${action.active ? 'Full running costs and benefits apply.' : 'Benefits stop; 25% maintenance remains. Dependent investments also suspend.'}`,
+        `${u.name} ${action.active ? 'resumed' : 'suspended'}. ${action.active ? 'Full running costs and benefits apply.' : 'Benefits stop. This week’s full bill remains; 25% maintenance starts after it. Dependent investments also suspend.'}`,
       );
       break;
     }
@@ -3079,8 +3149,9 @@ export function act(current: GameState, action: Action): GameState {
       const w = getWine(action.id);
       const blocked = judgingBlocked(s, w);
       if (blocked) throw new Error(blocked);
-      spend(s, `${w.label} judging entry`, JUDGING.cost);
-      (w.accounts ??= newAccounts()).promotionCents += JUDGING.cost * 100;
+      const cost = judgingCost(w);
+      spend(s, `${w.label} judging entry`, cost);
+      (w.accounts ??= newAccounts()).promotionCents += cost * 100;
       w.judging = {
         remaining: JUDGING.weeks,
         score: Math.max(

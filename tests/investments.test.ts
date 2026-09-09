@@ -28,7 +28,10 @@ import {
   investmentUpkeep,
   investmentDemand,
   studyWeeks,
+  investmentBill,
 } from '../src/investments.ts';
+import { RESEARCH } from '../src/catalog.ts';
+import { unpaidInvestmentResearch } from '../src/researchPlanning.ts';
 import type { Upgrade } from '../src/investments.ts';
 import { bottleBatch } from './helpers.ts';
 
@@ -159,13 +162,15 @@ test('suspension stops benefits, retains 25 percent costs, and cascades without 
     assert.ok(s.suspendedUpgrades.includes(id));
     assert.equal(upgradeActive(s, id), false);
   }
-  assert.equal(investmentUpkeep(s), 900);
+  assert.equal(investmentUpkeep(s), 3250); // Current full bill survives suspension.
+  const settled = tick(deserialize(serialize(s)));
+  assert.equal(investmentUpkeep(settled), 813); // Rounded maintenance thereafter.
   assert.equal(hospitalityForecast(s).revenue, 0);
   assert.throws(() => resume(s, 'sommelier'), /Resume Tasting room/);
   s = resume(deserialize(serialize(s)), 'visitorCenter');
   assert.equal(upgradeActive(s, 'tastingRoom'), false);
   s = resume(resume(s, 'tastingRoom'), 'sommelier');
-  assert.equal(investmentUpkeep(s), 3600);
+  assert.equal(investmentUpkeep(s), 3250);
   assert.equal(s.cash, cash);
   valid(s);
 });
@@ -348,7 +353,7 @@ test('entry hospitality can cover full-capacity upkeep while winter still carrie
     const full = hospitalityForecast(s);
     assert.equal(full.visitors, full.capacity);
     assert.ok(full.net > 0);
-    s.reputation = 12;
+    s.reputation = 0;
     s.week = 10;
     assert.ok(hospitalityForecast(s).net < 0);
   }
@@ -366,4 +371,106 @@ test('annual hospitality estimates reconcile with twelve fixed-Prestige weekly f
   );
   assert.equal(annual.upkeep, 12 * investmentUpkeep(s));
   assert.deepEqual(annualHospitalityForecast({ ...s, week: 10 }), annual);
+});
+
+test('resume, ferment and suspend retains one full bill across reload without charging twice', () => {
+  let s = tick(pause(buy(funded(), 'lab'), 'lab'));
+  assert.equal(investmentBill(s, 'lab'), 138);
+  s.plots[0].growth = 100;
+  s = act(s, { type: 'harvest', id: 1 });
+  const rawQuality = s.grapes[0].quality;
+  s = resume(s, 'lab');
+  s = act(s, { type: 'ferment', id: s.grapes[0].id, oak: false });
+  s = pause(s, 'lab');
+  assert.equal(s.batches[0].quality, rawQuality + 3);
+  for (let i = 0; i < 3; i++) s = pause(resume(s, 'lab'), 'lab');
+  s = deserialize(serialize(s));
+  assert.deepEqual(s.operatedUpgrades, ['lab']);
+  assert.equal(investmentBill(s, 'lab'), 550);
+  const cash = s.cash;
+  const billed = tick(s);
+  assert.equal(billed.cash, cash - 160 - 550);
+  assert.equal(investmentBill(billed, 'lab'), 138);
+  assert.deepEqual(billed.operatedUpgrades, []);
+  assert.equal(tick(billed).cash, billed.cash - 160 - 138);
+  valid(billed);
+});
+
+test('suspending an older operating asset also retains its bill and validates the saved obligation', () => {
+  const s = funded();
+  s.upgrades = ['lab'];
+  const raw = JSON.parse(serialize(s));
+  delete raw.state.operatedUpgrades;
+  const loaded = deserialize(JSON.stringify(raw));
+  assert.deepEqual(loaded.operatedUpgrades, []);
+  assert.equal(investmentBill(pause(loaded, 'lab'), 'lab'), 550);
+  for (const operatedUpgrades of [['sorting'], ['lab', 'lab']]) {
+    assert.equal(
+      stateSchema.safeParse({ ...loaded, operatedUpgrades }).success,
+      false,
+    );
+  }
+});
+
+test('harvest bonuses cannot avoid a full weekly bill by suspending their prerequisite', () => {
+  let s = buy(buy(funded(), 'irrigation'), 'precisionIrrigation');
+  s.plots[0].growth = 100;
+  const quality = harvestQuality(s, s.plots[0]);
+  s = act(s, { type: 'harvest', id: 1 });
+  s = pause(s, 'irrigation');
+  assert.equal(s.grapes[0].quality, quality);
+  assert.equal(investmentUpkeep(s), 780);
+  assert.equal(investmentUpkeep(tick(deserialize(serialize(s)))), 195);
+});
+
+test('annual forecasts include the outstanding operating bill only once', () => {
+  let s = pause(buy(funded(), 'visitorCenter'), 'visitorCenter');
+  const annual = annualHospitalityForecast(s);
+  assert.equal(annual.upkeep, 450 + 11 * 113);
+  assert.equal(annual.revenue, 0);
+  const cash = s.cash;
+  s = tick(s, 12);
+  assert.equal(s.cash, cash - annual.upkeep - 12 * 160);
+});
+
+test('entry hospitality has bounded seasonal returns and a shorter study-to-payback path', () => {
+  const s = funded();
+  s.reputation = 1000;
+  const terrace = buy(s, 'tasting');
+  // Full occupancy is still capacity-capped, even at extreme Prestige.
+  assert.equal(annualHospitalityForecast(terrace).net, 1824);
+  const center = buy(terrace, 'visitorCenter');
+  const extra =
+    annualHospitalityForecast(center).net -
+    annualHospitalityForecast(terrace).net;
+  assert.equal(extra, 7560);
+  assert.ok(
+    (UPGRADES.visitorCenter.cost + RESEARCH.visitor_services.cost) / extra < 5,
+  );
+  const room = buy(center, 'tastingRoom');
+  const extraRoom =
+    annualHospitalityForecast(room).net - annualHospitalityForecast(center).net;
+  assert.ok(
+    (UPGRADES.tastingRoom.cost + RESEARCH.hospitality.cost) / extraRoom < 5,
+  );
+  assert.equal(
+    RESEARCH.tourism.weeks +
+      RESEARCH.visitor_services.weeks +
+      RESEARCH.hospitality.weeks,
+    32,
+  );
+  const early = newGame();
+  assert.equal(unpaidInvestmentResearch(early, 'tastingRoom'), 40500);
+  learn(early, 'tourism');
+  early.cash = 100000;
+  early.knowledge = 1000;
+  const studying = act(early, { type: 'research', id: 'visitor_services' });
+  assert.equal(unpaidInvestmentResearch(studying, 'tastingRoom'), 24000);
+  // A previously paid study keeps its agreed remaining time.
+  studying.researchProject!.duration = 22;
+  studying.researchProject!.remaining = 20;
+  assert.equal(
+    tick(deserialize(serialize(studying))).researchProject!.remaining,
+    19,
+  );
 });

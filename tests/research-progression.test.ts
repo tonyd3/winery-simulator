@@ -174,7 +174,7 @@ test('tourism discoveries unlock purchases separately and a tasting room still n
     s = tick(s, RESEARCH[id].weeks);
   }
   assert.deepEqual(s.upgrades, []);
-  assert.ok(s.cash < cash - 8500 - 22000 - 45000);
+  assert.ok(s.cash < cash - 4500 - 12000 - 24000);
   assert.throws(
     () => act(s, { type: 'upgrade', upgrade: 'tastingRoom' }),
     /operating/,
@@ -182,7 +182,7 @@ test('tourism discoveries unlock purchases separately and a tasting room still n
   s = act(s, { type: 'upgrade', upgrade: 'visitorCenter' });
   const before = s.cash;
   s = act(s, { type: 'upgrade', upgrade: 'tastingRoom' });
-  assert.equal(s.cash, before - 50000);
+  assert.equal(s.cash, before - 40000);
   assert.ok(upgradeActive(s, 'tastingRoom'));
   valid(s);
 });

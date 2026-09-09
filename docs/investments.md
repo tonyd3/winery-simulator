@@ -10,10 +10,10 @@ Open **Build → Buildings & equipment**. Department filters cover vineyard/cell
 | Compost program | $8,000 | $180 | $45 | None |
 | Canopy management team | $14,000 | $320 | $80 | None |
 | Precision irrigation controls | $26,000 | $600 | $150 | Drip irrigation |
-| Tasting terrace | $12,000 | $280 | $70 | None |
+| Tasting terrace | $8,000 | $280 | $70 | None |
 | Winemaker’s bench | $18,000 | $550 | $138 | None |
-| Visitor center | $35,000 | $600 | $150 | None |
-| Tasting room | $50,000 | $1,600 | $400 | Visitor center |
+| Visitor center | $24,000 | $450 | $113 | None |
+| Tasting room | $40,000 | $1,400 | $350 | Visitor center |
 | Sommelier team | $24,000 | $1,400 | $350 | Tasting room |
 | Estate restaurant | $95,000 | $2,800 | $700 | Visitor center |
 | Vineyard guesthouse | $180,000 | $3,000 | $750 | Visitor center |
@@ -46,7 +46,7 @@ The parcel inspector shows estimated grape quality and kilograms at current cond
 
 Prestige influence equals the score up to 100, then `100 + 25 × log2(Prestige / 100)` above it; this preserves early balance and tapers later growth. Potential weekly visitors equal floor((20 + Prestige influence × 1.3) × season factor × attraction factor). Spring is 0.85, summer 1.15, autumn 1.35, and winter 0.45. An operating visitor center multiplies attraction by 1.25. Attendance is capped by the sum of operating terrace (24), center (60), and tasting-room (80) places. This is one shared hospitality business, not a duplicate income stream for every estate.
 
-Admission is $14 with the terrace, otherwise $12 with the center. The tasting room adds $8 and sommeliers add $12 per visitor. A restaurant adds $20 per visitor for at most 100 visitors, plus 20% shop demand. A guesthouse fills min(24, floor(potential visitors × 0.14)) bookings at $220 each. Hospitality pays money, records lifetime revenue, and does not consume bottles or increment bottle sales. Wine sales remain separate.
+Admission is $18 with either the terrace or center. The tasting room adds $8 and sommeliers add $12 per visitor. A restaurant adds $20 per visitor for at most 100 visitors, plus 20% shop demand. A guesthouse fills min(24, floor(potential visitors × 0.14)) bookings at $220 each. Hospitality pays money, records lifetime revenue, and does not consume bottles or increment bottle sales. Wine sales remain separate.
 
 Forecasts use the starting week's Prestige, season, and active facilities, matching the following weekly transaction. The displayed hospitality net subtracts hospitality operating and suspended bills, but excludes wine sales and non-hospitality estate overhead. Prospective purchases show incremental hospitality income minus the new facility's bill. Quiet facilities can lose money even when they cost a great deal to build.
 
@@ -61,10 +61,24 @@ Forecasts use the starting week's Prestige, season, and active facilities, match
 
 ## Suspension, failure, and saves
 
-Suspend preserves ownership, removes benefits, and charges 25% of the listed weekly bill, rounded up. Suspending a prerequisite explicitly suspends its dependents. Reopening the prerequisite does not automatically restart their bills; resume each investment individually. Resuming is free but requires enough cash for one full week of total estate upkeep after the change.
+Suspend preserves ownership and removes benefits immediately. Any investment operated during the current week still owes one full operating bill, including after purchase, resume, or immediate suspension. After that bill is paid, suspended maintenance is 25% of the listed weekly cost, rounded up. Repeated toggles do not add duplicate bills. Suspending a prerequisite explicitly suspends its dependents. Reopening the prerequisite does not automatically restart their bills; resume each investment individually. Resuming is free but requires enough cash for one full week of total estate upkeep after the change.
 
-If available cash after that week's revenue cannot cover its bill, bankruptcy ends the estate and requires a new game. The remaining cash pays part of the final bill and the closure records the unpaid amount. Suspend investments before advancing to reduce future bills. There is no automatic rescue, sale, demolition, or refund.
+If available cash after that week's revenue cannot cover its bill, bankruptcy ends the estate and requires a new game. The remaining cash pays part of the final bill and the closure records the unpaid amount. Suspend investments to reduce bills after the current operating week. There is no automatic rescue, sale, demolition, or refund.
 
 Version-five saves add a default-empty suspendedUpgrades list and accept the expanded catalog. Older owned irrigation, terrace, bench, and legacy cellar assets remain owned; funds, crop state, stored wine, and scores are preserved. Existing facilities adopt the new operating prices. The old cellar extension retains its $15 upkeep and cannot be suspended, since its tanks remain usable. Prerequisite ownership, enum values, duplicate entries, and valid owned suspension IDs are validated on import. No storage key change is required.
 
-Entry hospitality can cover its operating bill at full attendance: the terrace earns $336 against $280 upkeep; the visitor center earns $720 against $600. Quiet seasons can still lose money. Build shows a 12-week estimate at fixed current Prestige, including every season, and the incremental hospitality return before buying. Wine sales, general estate overhead and upfront costs are separate.
+Entry hospitality can cover its operating bill at full attendance: the terrace earns $432 against $280 upkeep; the visitor center earns $1,080 against $450. Quiet seasons can still lose money. Build shows a 12-week estimate at fixed current Prestige, including every season, and the incremental hospitality return before buying. Wine sales, general estate overhead and upfront costs are separate.
+
+## Entry hospitality pacing
+
+| Study | Cash | Knowledge | Weeks | Separate building |
+| --- | ---: | ---: | ---: | ---: |
+| Wine tourism | $4,500 | 90 | 6 | Terrace: $8,000 |
+| Visitor services | $12,000 | 180 | 10 | Center: $24,000 |
+| Hosted tastings | $24,000 | 280 | 16 | Tasting room: $40,000 |
+
+The three-study path takes 32 weeks at normal research speed, before any waiting for resources. Previously paid studies retain their agreed durations and costs. At full attendance throughout the year, adding a center to a terrace yields $7,560 extra hospitality net per year: about 4.8 years to recover its $24,000 building and $12,000 study. Adding a tasting room then yields $16,224 extra net per year, recovering its $64,000 building and study in about 3.9 years. These examples exclude prerequisite purchases, research time, wine-sales benefits and estate overhead; low Prestige and winter can make returns much slower or negative.
+
+Build shows the additional annual hospitality net and payback on the building plus all unpaid prerequisite studies at current Prestige. Already-paid studies are excluded from the remaining outlay; research time is stated separately. The estimate appears only when the facility's operating prerequisites are active.
+
+Saves now also keep a default-empty `operatedUpgrades` list of outstanding full weekly bills. Owned IDs and duplicates are validated. Reloading does not forgive these bills. Annual hospitality forecasts include a suspended facility's outstanding full bill once, followed by maintenance, rather than projecting that full bill for every week.
