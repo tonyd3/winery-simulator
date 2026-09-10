@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { ArrowUpRight, LayoutGrid, List } from 'lucide-react';
 import { WineBottle } from './WinePresentation';
-import { getVariety } from './game';
+import { demandContext, getVariety } from './game';
 import type { GameState, Wine } from './game';
 import type { Dispatch } from './Panels';
 import { WineQuickControls } from './WineQuickControls';
+import { JudgingStatus } from './WinePromotion';
 import { vintage } from './winemaking';
 import { privateStock, saleStock, shelfStock } from './bottleStorage';
 
@@ -24,6 +25,8 @@ export function WineCollection({
   const [view, setView] = useState<'collection' | 'ledger'>('collection');
   const [query, setQuery] = useState('');
   const [limit, setLimit] = useState(24);
+  const verdictId = useId();
+  const demandGroups = demandContext(state);
   const filtered = [...wines]
     .reverse()
     .filter((wine) =>
@@ -77,6 +80,11 @@ export function WineCollection({
             <button
               className="collection-select"
               aria-label={`View ${wine.label} release ${wine.release}`}
+              aria-describedby={
+                view === 'collection' && wine.judging
+                  ? `${verdictId}-${wine.id}`
+                  : undefined
+              }
               onClick={() => onSelect(wine.id)}
             >
               <div className="collection-bottle">
@@ -92,6 +100,14 @@ export function WineCollection({
                 <span className="collection-score">
                   {wine.quality}
                   <small>points</small>
+                  {wine.judging && (
+                    <span
+                      className="collection-verdict"
+                      id={`${verdictId}-${wine.id}`}
+                    >
+                      <JudgingStatus wine={wine} compact />
+                    </span>
+                  )}
                 </span>
               </div>
               <div className="collection-identity">
@@ -132,6 +148,7 @@ export function WineCollection({
                 wine={wine}
                 state={state}
                 dispatch={dispatch}
+                demandGroups={demandGroups}
               />
             )}
           </article>

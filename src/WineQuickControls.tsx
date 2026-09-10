@@ -1,7 +1,13 @@
 import { useId, useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
-import { BOTTLE_PRICE, bottlePriceLimit, money, retailPrice } from './game';
-import type { GameState, Wine } from './game';
+import {
+  BOTTLE_PRICE,
+  bottlePriceLimit,
+  demandForecast,
+  money,
+  retailPrice,
+} from './game';
+import type { DemandContext, GameState, Wine } from './game';
 import type { Dispatch } from './Panels';
 import { ShelfAllocation } from './ShelfAllocation';
 
@@ -9,16 +15,19 @@ export function WineQuickControls({
   wine,
   state,
   dispatch,
+  demandGroups,
 }: {
   wine: Wine;
   state: GameState;
   dispatch: Dispatch;
+  demandGroups: DemandContext;
 }) {
   const priceId = useId();
   const [draft, setDraft] = useState<string | null>(null);
   const release = `${wine.label} release ${wine.release}`;
   const suggested = retailPrice(wine, state);
   const priceLimit = bottlePriceLimit(state);
+  const forecast = demandForecast(wine, state, demandGroups);
   const setPrice = (price: number) => {
     if (dispatch({ type: 'price', id: wine.id, price })) setDraft(null);
   };
@@ -48,6 +57,7 @@ export function WineQuickControls({
             step={1}
             required
             aria-label={`Price per bottle for ${release}`}
+            aria-describedby={`${priceId}-forecast`}
             value={draft ?? String(wine.price)}
             onChange={(e) => {
               setDraft(e.target.value);
@@ -89,6 +99,21 @@ export function WineQuickControls({
         </button>
       </div>
       <ShelfAllocation wine={wine} state={state} dispatch={dispatch} compact />
+      <p className="quick-sales-forecast" id={`${priceId}-forecast`}>
+        {wine.listed ? (
+          <>
+            Est. sales next week:{' '}
+            <strong>
+              {forecast.low === forecast.high
+                ? forecast.low.toLocaleString()
+                : `${forecast.low.toLocaleString()}–${forecast.high.toLocaleString()}`}{' '}
+              {forecast.high === 1 ? 'bottle' : 'bottles'}
+            </strong>
+          </>
+        ) : (
+          'Not listed · No shop sales'
+        )}
+      </p>
     </div>
   );
 }

@@ -428,6 +428,27 @@
     sans-serif;
   color: var(--muted);
 }
+.collection-verdict {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: max-content;
+  max-width: 100px;
+  padding-top: 10px;
+}
+.collection-verdict .judging-status.compact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  font: 400 11px/1.45 'DM Sans', sans-serif;
+  text-align: right;
+}
+.collection-verdict .judging-status.compact > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
 .collection-identity {
   margin: 20px 0 15px;
 }
@@ -588,6 +609,18 @@
 .quick-price,
 .quick-shelf {
   min-width: 0;
+}
+.quick-sales-forecast {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.quick-sales-forecast strong {
+  color: var(--ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 .quick-price label,
 .quick-shelf label {

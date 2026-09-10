@@ -19,10 +19,40 @@ import {
   judgingOutlook,
 } from './promotion';
 
-export function JudgingStatus({ wine }: { wine: Wine }) {
+export function JudgingStatus({
+  wine,
+  compact = false,
+}: {
+  wine: Wine;
+  compact?: boolean;
+}) {
   const judging = wine.judging;
   if (!judging) return null;
   const award = wineAward(wine);
+  if (compact)
+    return (
+      <span
+        className={`judging-status compact ${award?.name.toLowerCase() ?? ''}`}
+      >
+        <span>
+          {judging.remaining > 0 ? (
+            <Clock3 size={12} aria-hidden="true" />
+          ) : (
+            <Trophy size={12} aria-hidden="true" />
+          )}
+          {judging.remaining > 0
+            ? 'With judges'
+            : award
+              ? `${award.name} medal`
+              : 'No medal'}
+        </span>{' '}
+        <span>
+          {judging.remaining > 0
+            ? `${judging.remaining} ${judging.remaining === 1 ? 'week' : 'weeks'} left`
+            : `${judging.score} panel points`}
+        </span>
+      </span>
+    );
   return (
     <span className={`judging-status ${award?.name.toLowerCase() ?? ''}`}>
       {judging.remaining > 0 ? <Clock3 size={14} /> : <Trophy size={14} />}

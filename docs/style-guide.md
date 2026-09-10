@@ -39,6 +39,10 @@ Before the first 98+ point bottling, show one short Collector pricing hint above
 
 The house identity editor is accessible from the top-bar crest and settings. Three emblems, three ink colors and up to three initials are cosmetic choices shared by the gate, cellar cases, journal and future bottlings. Snapshot the mark into each bottled release; changing the house must not repaint previous releases. See [IdentityEditor.tsx](../src/IdentityEditor.tsx), [HouseCrest.tsx](../src/HouseCrest.tsx) and [houseIdentity.ts](../src/houseIdentity.ts).
 
+Show a compact **Est. sales next week** bottle range beneath each release's price and shelf controls in both Collection and Ledger. Use the existing sales forecast with all shop listings, even when search hides competing wines; recompute when price or shelf allocation changes. Keep the range within available shelf stock, label unlisted releases as having no shop sales, and keep this selling information out of Private Collection.
+
+In the illustrated Collection view, place the independent verdict directly below the bottle's main points: a small trophy and medal name, then the panel points. Keep the original quality score prominent and distinguish it from the panel result. Reuse the compact `JudgingStatus` in [WinePromotion.tsx](../src/WinePromotion.tsx), including pending judging time and completed reviews without a medal. Wines never entered for judging show no verdict. Include the verdict in the bottle button's accessible description, and retain the full result and benefits in Wine details.
+
 ### Bottling supplies
 
 Keep the bottling-supplies strip directly beneath the Cellar department navigation, visible in every department, including Reserves & blending. Group stock, incoming deliveries, and the explicit order action with its price and next-week delivery timing. On narrow screens, place a full-width order button beneath the supply details. See `Cellar` in [Panels.tsx](../src/Panels.tsx) and `.supply-strip` in [styles.css](../src/styles.css).
