@@ -41,6 +41,7 @@ import { Icon, Modal } from './components';
 import { PrestigeDetails, PrestigeResource } from './EstatePrestige';
 import {
   act,
+  bottlePriceLimit,
   getEstate,
   REGIONS,
   BACKUP_KEY,
@@ -155,7 +156,10 @@ export default function App() {
       modalTrigger.current = null;
     }
   }, [modal]);
-  const [reveal, setReveal] = useState<Wine | null>(null);
+  const [reveal, setReveal] = useState<{
+    wine: Wine;
+    unlockedPricing: boolean;
+  } | null>(null);
   const closeReveal = useCallback(() => setReveal(null), []);
   const [notice, setNotice] = useState(initial.warning);
   const [saved, setSaved] = useState(!initial.warning);
@@ -206,6 +210,7 @@ export default function App() {
   const dispatch = useCallback(
     (action: Action) => {
       try {
+        const previousPriceLimit = bottlePriceLimit(current.current);
         const next = act(current.current, action);
         replace(next);
         if (action.type === 'expandEstate')
@@ -215,7 +220,10 @@ export default function App() {
         if (action.type === 'bottle') {
           setSpeed(0);
           setToast(null);
-          setReveal(next.wines.at(-1)!);
+          setReveal({
+            wine: next.wines.at(-1)!,
+            unlockedPricing: bottlePriceLimit(next) > previousPriceLimit,
+          });
         }
         if (['advance', 'collectWine', 'returnWine'].includes(action.type))
           setToast(null);
@@ -985,7 +993,8 @@ export default function App() {
       )}
       {reveal && (
         <ReleaseReveal
-          wine={reveal}
+          wine={reveal.wine}
+          unlockedPricing={reveal.unlockedPricing}
           state={state}
           onClose={closeReveal}
           onShop={() => {

@@ -50,6 +50,8 @@ import {
   demandForecast,
   retailPrice,
   BOTTLE_PRICE,
+  bottlePriceLimit,
+  PRICE_UNLOCK_HINT,
   wholesalePrice,
   money,
   quality,
@@ -858,6 +860,7 @@ function WineCard({
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(w.label);
   const [priceDraft, setPriceDraft] = useState<string | null>(null);
+  const priceLimit = bottlePriceLimit(state);
   const forecast = demandForecast({ ...w, listed: true }, state, demandGroups);
   const available = saleStock(w);
   const kept = privateStock(w);
@@ -963,7 +966,7 @@ function WineCard({
                     id={`price-${w.id}`}
                     type="number"
                     min={BOTTLE_PRICE.min}
-                    max={BOTTLE_PRICE.max}
+                    max={priceLimit}
                     step="1"
                     required
                     aria-label={`Price per bottle for ${w.label} release ${w.release}`}
@@ -994,7 +997,7 @@ function WineCard({
                 aria-label={`Adjust price for ${w.label} release ${w.release}`}
                 type="range"
                 min={BOTTLE_PRICE.min}
-                max={BOTTLE_PRICE.max}
+                max={priceLimit}
                 step="1"
                 value={w.price}
                 aria-valuetext={money(w.price)}
@@ -1009,8 +1012,11 @@ function WineCard({
               />
               <div className="price-limits" id={`price-limits-${w.id}`}>
                 <span>{money(BOTTLE_PRICE.min)}</span>
-                <span>{money(BOTTLE_PRICE.max)}</span>
+                <span>{money(priceLimit)}</span>
               </div>
+              {priceLimit < BOTTLE_PRICE.max && (
+                <p className="fine-print">{PRICE_UNLOCK_HINT}</p>
+              )}
               <div className="price-guide">
                 <button
                   className="text-button"
@@ -1182,6 +1188,9 @@ export function Market({ state, dispatch, navigate }: Props) {
                 {state.stats.sold.toLocaleString()} bottles sold
               </span>
             </div>
+            {bottlePriceLimit(state) < BOTTLE_PRICE.max && (
+              <p className="pricing-unlock-note">{PRICE_UNLOCK_HINT}</p>
+            )}
             <BottleStoragePanel state={state} dispatch={dispatch} shop />
             {stock.length ? (
               <WineCollection

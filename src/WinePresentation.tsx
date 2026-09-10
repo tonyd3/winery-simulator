@@ -361,11 +361,13 @@ export function BottleView(props: WineBottleProps) {
 
 export function ReleaseReveal({
   wine,
+  unlockedPricing = false,
   state,
   onClose,
   onShop,
 }: {
   wine: Wine;
+  unlockedPricing?: boolean;
   state: GameState;
   onClose: () => void;
   onShop: () => void;
@@ -436,6 +438,12 @@ export function ReleaseReveal({
             <TastingNotes profile={releaseTasting(wine, state)} />
           </div>
         </div>
+        {complete && unlockedPricing && (
+          <p className="pricing-unlock-note" role="status">
+            <strong>Collector pricing unlocked.</strong> Your first 98+ point
+            release opens prices up to $10,000 for every wine.
+          </p>
+        )}
         <p className="fine-print">
           <Check size={13} /> Added to your wine line. This tasting score is
           final.

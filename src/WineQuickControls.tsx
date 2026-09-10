@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
-import { BOTTLE_PRICE, money, retailPrice } from './game';
+import { BOTTLE_PRICE, bottlePriceLimit, money, retailPrice } from './game';
 import type { GameState, Wine } from './game';
 import type { Dispatch } from './Panels';
 import { ShelfAllocation } from './ShelfAllocation';
@@ -18,6 +18,7 @@ export function WineQuickControls({
   const [draft, setDraft] = useState<string | null>(null);
   const release = `${wine.label} release ${wine.release}`;
   const suggested = retailPrice(wine, state);
+  const priceLimit = bottlePriceLimit(state);
   const setPrice = (price: number) => {
     if (dispatch({ type: 'price', id: wine.id, price })) setDraft(null);
   };
@@ -43,7 +44,7 @@ export function WineQuickControls({
             id={priceId}
             type="number"
             min={BOTTLE_PRICE.min}
-            max={BOTTLE_PRICE.max}
+            max={priceLimit}
             step={1}
             required
             aria-label={`Price per bottle for ${release}`}
@@ -72,7 +73,7 @@ export function WineQuickControls({
           <button
             type="button"
             aria-label={`Increase price by $1 for ${release}`}
-            disabled={wine.price >= BOTTLE_PRICE.max}
+            disabled={wine.price >= priceLimit}
             onClick={() => setPrice(wine.price + 1)}
           >
             <Plus size={15} />

@@ -51,7 +51,7 @@ Prestige > 100:  influence = 100 + 25 × log2(Prestige / 100)
 
 This preserves the previous economy through 100. Afterward, each doubling adds 25 influence: 200 gives 125, 400 gives 150, and 800 gives 175. Suggested wine prices, retail demand, and hospitality attendance use this influence. The score itself is never replaced by the reduced value.
 
-The existing $1–$1,000 shelf-price range, remaining bottle stock, hospitality capacity, seasonal effects, and operating bills still apply. Higher Prestige does not change saved wine quality or automatically change a player's chosen shelf price.
+Shelf prices start at $1–$1,000. The first actual 98+ point bottling permanently unlocks Collector pricing up to $10,000 for every release, including wines made earlier. Existing lifetime best bottling scores count; reserve estimates and judging scores do not. Higher Prestige alone cannot unlock the ceiling, change saved wine quality, or automatically change a player's chosen shelf price. Remaining bottle stock, hospitality capacity, seasonal effects, and operating bills still apply.
 
 ## Saves and implementation
 

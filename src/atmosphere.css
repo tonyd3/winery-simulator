@@ -1268,3 +1268,10 @@
     animation: none;
   }
 }
+
+.pricing-unlock-note {
+  color: var(--wine);
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 0 0 20px;
+}

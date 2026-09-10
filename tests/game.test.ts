@@ -154,6 +154,7 @@ test('pricing affects demand; unlisted bottles do not sell; wholesale cannot dou
 });
 test('expanded bottle prices survive saves and reject invalid changes without side effects', () => {
   const before = bottle();
+  before.stats.best = 98; // This test exercises the already-unlocked price range.
   const copy = structuredClone(before);
   for (const price of [1, 5, 6, 50, 75, 250, 1000, 1001, 5000, 10_000]) {
     const changed = act(before, {
@@ -180,6 +181,7 @@ test('expanded bottle prices survive saves and reject invalid changes without si
 });
 test('wide pricing keeps demand bounded and weekly sales use the chosen amount', () => {
   let base = bottle();
+  base.stats.best = 98;
   base = act(base, { type: 'list', id: base.wines[0].id });
   const prices = [1, 5, 25, 50, 75, 250, 1000, 5000, 10_000];
   let previousDemand = base.wines[0].bottles;
@@ -200,6 +202,7 @@ test('99-point wines can earn retail revenue above $1,000 at high Prestige', () 
   let s = bottle();
   s.reputation = 4000;
   s.wines[0].quality = 99;
+  s.stats.best = 99;
   const price = fairPrice(s.wines[0], s.reputation);
   assert.ok(price > 1000);
   s = act(s, { type: 'price', id: s.wines[0].id, price });

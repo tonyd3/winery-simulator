@@ -61,7 +61,7 @@ Forecasts use the starting week's Prestige, season, and active facilities, match
 ## Wine, production, and research benefits
 
 - An operating tasting terrace adds 12 base shoppers per listed release. Tasting room demand multiplies by 1.15; the restaurant by 1.20.
-- Sommeliers multiply demand by 1.20 for 80+ wines and suggested retail value by 1.08. The chosen shelf price and recorded wine score remain unchanged. Retail suggestions cap at $1,000.
+- Sommeliers multiply demand by 1.20 for 80+ wines and suggested retail value by 1.08. The chosen shelf price and recorded wine score remain unchanged. Retail suggestions cap at $1,000 until the first 98+ point bottling permanently unlocks the $10,000 Collector pricing ceiling.
 - The wine club multiplies demand by 1.35 for releases aged at least 12 game weeks. Export staff multiply demand by 1.45 and wholesale value by 1.08 for wines rated 85+. These benefits compound with the existing market, price, release-age, marketing, and judging formulas; sales remain capped by stock.
 - Irrigation retains its +3 growth and dry-spell protection. Viticulture staff add +2 growth and reduce health loss by one on every growing parcel, including offscreen estates. Sorting adds +2 to new harvest quality; temperature control retains +3 on new fermentations. Historical wine and batch scores do not change.
 - Refrigeration extends freshness from three to five weeks. Suspension restores the three-week limit at the next spoilage check. Already old grapes are marked for immediate processing in the cellar.

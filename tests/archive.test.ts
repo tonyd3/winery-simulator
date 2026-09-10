@@ -6,6 +6,7 @@ import {
   serialize,
   deserialize,
   releaseCount,
+  bottlePriceLimit,
   wineSales,
 } from '../src/game.ts';
 import { portion } from '../src/winemaking.ts';
@@ -38,6 +39,7 @@ function archiveEstate() {
 }
 test('a 1000-release save can keep bottling without losing totals or reusing release numbers', () => {
   let s = archiveEstate();
+  s.stats.best = s.wines[0].quality = 98;
   s.wines[2].produced = null;
   s.wines[2].salesSinceTracking = 1;
   s.wines[5].bottles = 1; // Unsold stock must never be compacted.
@@ -51,6 +53,8 @@ test('a 1000-release save can keep bottling without losing totals or reusing rel
     line: { id: s.lines[0].id },
   });
   assert.equal(releaseCount(next), 1001);
+  assert.equal(next.lines[0].archive!.best, 98);
+  assert.equal(bottlePriceLimit(deserialize(serialize(next))), 10000);
   assert.equal(next.wines.at(-1)!.release, 1001);
   assert.ok(next.wines.some((w) => w.id === retained));
   assert.equal(next.wines.find((w) => w.id === retained)!.privateBottles, 1);

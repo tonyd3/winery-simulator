@@ -149,7 +149,28 @@ import type { MaturationVessel } from './maturation';
 
 export const SAVE_KEY = 'terroir.save.v1';
 export const BACKUP_KEY = 'terroir.backup.v1';
-export const BOTTLE_PRICE = { min: 1, max: 10_000 };
+export const BOTTLE_PRICE = {
+  min: 1,
+  initialMax: 1_000,
+  max: 10_000,
+  unlockQuality: 98,
+};
+export const PRICE_UNLOCK_HINT =
+  'Bottle a 98+ point wine to unlock prices above $1,000.';
+export const bottlePriceLimit = (s: { stats: { best: number } }) =>
+  s.stats.best >= BOTTLE_PRICE.unlockQuality
+    ? BOTTLE_PRICE.max
+    : BOTTLE_PRICE.initialMax;
+
+// Honor the lifetime bottling record, including sold-out and archived wines.
+// Older saves without the milestone retain their wine at the new retail cap.
+function initializeBottlePrices<
+  T extends { stats: { best: number }; wines: { price: number }[] },
+>(s: T): T {
+  const limit = bottlePriceLimit(s);
+  for (const wine of s.wines) wine.price = Math.min(wine.price, limit);
+  return s;
+}
 export const PLOT_EXPANSION = {
   max: 4,
   step: 0.5,
@@ -572,6 +593,7 @@ export const stateSchema = z
   })
   .strict()
   .transform(initializeBottleStorage)
+  .transform(initializeBottlePrices)
   .superRefine((s, ctx) => {
     const fail = (message: string) =>
       ctx.addIssue({ code: z.ZodIssueCode.custom, message });
@@ -1389,7 +1411,7 @@ export const retailPrice = (
   s: GameState,
 ) =>
   Math.min(
-    BOTTLE_PRICE.max,
+    bottlePriceLimit(s),
     Math.round(
       fairPrice(wine, s.reputation) *
         (upgradeActive(s, 'sommelier') && wine.quality >= 80 ? 1.08 : 1),
@@ -1734,6 +1756,7 @@ export function act(current: GameState, action: Action): GameState {
     current.wines.some((w) => w.shelfSpace == null)
       ? deserialize(serialize(current))
       : structuredClone(current);
+  initializeBottlePrices(s);
   s.researchSlots ??= 1;
   s.additionalResearchProjects ??= [];
   s.researchGoal ??= null;
@@ -2937,6 +2960,10 @@ export function act(current: GameState, action: Action): GameState {
       }
       // Assess once per stored lot; partial bottlings and reloads keep that score.
       const q = scoreReserve(s, r);
+      const unlockedPricing =
+        s.stats.best < BOTTLE_PRICE.unlockQuality &&
+        q >= BOTTLE_PRICE.unlockQuality;
+      s.stats.best = Math.max(s.stats.best, q);
       const components = combine(take(r, count * 750));
       const release =
         Math.max(
@@ -3001,10 +3028,9 @@ export function act(current: GameState, action: Action): GameState {
         Math.floor(s.stats.bottled / 40);
       s.stats.bottled += count;
       s.knowledge = Math.min(1e9, s.knowledge + knowledge);
-      s.stats.best = Math.max(s.stats.best, q);
       note(
         s,
-        `${count} bottles of ${line.name}, release ${release}, rated ${q}/100. Set your price in the wine shop.`,
+        `${count} bottles of ${line.name}, release ${release}, rated ${q}/100. ${unlockedPricing ? 'Collector pricing unlocked: set prices up to $10,000 in the wine shop.' : 'Set your price in the wine shop.'}`,
         'good',
       );
       break;
@@ -3156,13 +3182,14 @@ export function act(current: GameState, action: Action): GameState {
     }
     case 'price': {
       const w = getWine(action.id);
+      const limit = bottlePriceLimit(s);
       if (
         !Number.isInteger(action.price) ||
         action.price < BOTTLE_PRICE.min ||
-        action.price > BOTTLE_PRICE.max
+        action.price > limit
       )
         throw new Error(
-          `Choose a whole-dollar price between ${money(BOTTLE_PRICE.min)} and ${money(BOTTLE_PRICE.max)}.`,
+          `Choose a whole-dollar price between ${money(BOTTLE_PRICE.min)} and ${money(limit)}.${limit < BOTTLE_PRICE.max ? ` ${PRICE_UNLOCK_HINT}` : ''}`,
         );
       w.price = action.price;
       break;
