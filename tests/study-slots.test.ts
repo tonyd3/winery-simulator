@@ -20,6 +20,7 @@ import {
   researchComplete,
 } from '../src/researchProgression.ts';
 import { learn } from './helpers.ts';
+import { unpaidInvestmentResearch } from '../src/researchPlanning.ts';
 
 const funded = () => ({ ...newGame(), cash: 10000000, knowledge: 100000 });
 const valid = (s: GameState) => assert.deepEqual(deserialize(serialize(s)), s);
@@ -28,15 +29,51 @@ const tick = (s: GameState, weeks = 1) => {
   return s;
 };
 
+test('an established winery keeps paid slots, equipment and active research through repricing', () => {
+  const existing = learn(funded(), 'cellar_control', 'breeding');
+  existing.researchSlots = 7;
+  existing.upgrades = ['lab'];
+  existing.researchProject = {
+    id: 'research_methods',
+    duration: 48,
+    remaining: 20,
+    paused: false,
+  };
+  // This project and these seven slots were already paid for in an older save.
+  let s = deserialize(serialize(existing));
+  assert.deepEqual(s, existing);
+  assert.equal(unpaidInvestmentResearch(s, 'researchLab'), 0);
+  s = act(s, { type: 'buyStudySlot' });
+  assert.equal(s.cash, existing.cash - 1715000);
+  assert.deepEqual(s.researchProject, existing.researchProject);
+  assert.deepEqual(s.upgrades, existing.upgrades);
+  s = tick(s, 20);
+  assert.ok(s.research.includes('research_methods'));
+  assert.equal(s.cash, existing.cash - 1715000 - 20 * upkeep(existing));
+  const before = structuredClone(s);
+  s = act(s, { type: 'upgrade', upgrade: 'researchLab' });
+  assert.equal(s.cash, before.cash - 350000);
+  assert.deepEqual(s.batches, existing.batches);
+  assert.deepEqual(s.wines, existing.wines);
+  valid(s);
+});
+
 test('study slots are permanent purchases with escalating prices and no weekly upkeep', () => {
   let s = act(funded(), { type: 'research', id: 'ampelography' });
   const original = structuredClone(s);
   assert.equal(studySlotCount(s), 1);
+  const prices = [5000, 40000, 135000, 320000, 625000, 1080000, 1715000];
   for (let slots = 2; slots <= STUDY_SLOTS.max; slots++) {
     const before = s.cash;
-    assert.equal(studySlotCost(s), (slots - 1) * 5000);
+    const cost = prices[slots - 2];
+    assert.equal(studySlotCost(s), cost);
+    const poor = { ...s, cash: cost - 1 };
+    const snapshot = structuredClone(poor);
+    assert.throws(() => act(poor, { type: 'buyStudySlot' }), /need.*more/i);
+    assert.deepEqual(poor, snapshot);
+    assert.equal(act({ ...s, cash: cost }, { type: 'buyStudySlot' }).cash, 0);
     s = act(s, { type: 'buyStudySlot' });
-    assert.equal(s.cash, before - (slots - 1) * 5000);
+    assert.equal(s.cash, before - cost);
     assert.equal(s.researchSlots, slots);
     assert.deepEqual(activeStudies(s), activeStudies(original));
     assert.equal(upkeep(s), upkeep(original));
@@ -45,6 +82,7 @@ test('study slots are permanent purchases with escalating prices and no weekly u
     assert.equal(s.seed, original.seed);
     valid(s);
   }
+  assert.equal(original.cash - s.cash, 3920000);
   const maxed = structuredClone(s);
   assert.throws(() => act(s, { type: 'buyStudySlot' }), /maximum/);
   assert.deepEqual(s, maxed);

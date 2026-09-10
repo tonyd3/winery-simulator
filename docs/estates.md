@@ -7,12 +7,11 @@ The wine business now owns a portfolio of estates, sharing funds, research, equi
 | Purchase | Cost | Land included | Shared tank capacity | Added weekly upkeep |
 | --- | ---: | --- | ---: | ---: |
 | First additional estate | $250,000 | 3 empty parcels / 3.0 ha | Purchased separately | $175 |
-| Later estates | Prior acquisition price + $100,000 | 3 empty parcels / 3.0 ha | Purchased separately | $175 |
-| Second district at an estate | $75,000 | None; unlocks 6 parcels for separate purchase | Purchased separately | $35 |
-| Third district | $100,000 | None; unlocks 6 parcels for separate purchase | Purchased separately | $35 |
-| Fourth district | $125,000 | None; unlocks 6 parcels for separate purchase | Purchased separately | $35 |
+| Later estates | $1M, $2.25M, $4M, $6.25M, $9M, $12.25M | 3 empty parcels / 3.0 ha | Purchased separately | $175 |
+| First added district in the portfolio | $75,000 | None; unlocks 6 parcels for separate purchase | Purchased separately | $35 |
+| Later added districts across all estates | $300,000, $675,000, $1.2M, $1.875M, $2.7M, … | None; unlocks 6 parcels for separate purchase | Purchased separately | $35 |
 
-Buying a district unlocks its map and six parcels totaling 6.8 ha, but adds no owned acreage. Every parcel must be bought before planting or enlargement: South slope $16,800, Limestone terrace $14,000, Orchard field $14,000, Hilltop parcel $16,800, River meadow $14,000, and Old stone field $19,200. All six cost $94,800 in addition to the district price. Each parcel adds $25 weekly upkeep only when purchased; the district alone adds $35. Vines and cellar equipment cost extra. Districts cost several times as much as a parcel, and the first new estate costs twice the most expensive district.
+Buying a district unlocks its map and six parcels totaling 6.8 ha, but adds no owned acreage. Every parcel must be bought before planting or enlargement: South slope $16,800, Limestone terrace $14,000, Orchard field $14,000, Hilltop parcel $16,800, River meadow $14,000, and Old stone field $19,200. All six cost $94,800 in addition to the district price. Each parcel adds $25 weekly upkeep only when purchased; the district alone adds $35. Vines and cellar equipment cost extra. Acquisition prices equal $250,000 × the square of the number of estates already owned. District prices equal $75,000 × the square of the next added-district number across the whole portfolio. Original vineyards included with an estate do not count as added districts; switching or acquiring regions does not reset the district curve. The first purchases keep their entry prices while later expansion becomes a use for millions of dollars. All seven acquisitions total $35M; the 24th added district costs $43.2M. Build quotes the current cost and the following acquisition price before purchase.
 
 Each original vineyard has three neighboring parcels for sale: River meadow costs $14,000, Hilltop parcel $16,800, and Old stone field $19,200. Each costs more than the $12,500 starting balance, encouraging production on the three founding parcels before buying land. Each purchase adds $25 weekly upkeep. New vines cost extra. Buying land never grants ripe grapes, research points, supplies, or starting capital. All purchases are atomic and reject invalid, duplicate, unaffordable, or over-limit requests.
 

@@ -9,11 +9,11 @@ import type { ResearchId } from './catalog';
 import type { GameState } from './game';
 import type { WineComponent } from './winemaking';
 
-export const STUDY_SLOTS = { max: 8, costStep: 5000 };
+export const STUDY_SLOTS = { max: 8, baseCost: 5000 };
 export const studySlotCount = (s: Pick<GameState, 'researchSlots'>) =>
   s.researchSlots ?? 1;
 export const studySlotCost = (s: Pick<GameState, 'researchSlots'>) =>
-  studySlotCount(s) * STUDY_SLOTS.costStep;
+  STUDY_SLOTS.baseCost * studySlotCount(s) ** 3;
 export const activeStudies = (
   s: Pick<GameState, 'researchProject' | 'additionalResearchProjects'>,
 ) => [

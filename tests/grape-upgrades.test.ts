@@ -22,7 +22,7 @@ const additions = [
 ] as const;
 function funded() {
   const s = learn(newGame(), 'precision_viticulture', 'fruit_selection');
-  s.cash = 1000000;
+  s.cash = 2000000;
   return s;
 }
 const buy = (s: GameState, upgrade: Upgrade) =>

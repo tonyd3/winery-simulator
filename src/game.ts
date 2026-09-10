@@ -1958,11 +1958,7 @@ export function act(current: GameState, action: Action): GameState {
         throw new Error(
           'This estate has all four vineyard districts. Acquire an estate in another region to grow further.',
         );
-      spend(
-        s,
-        `${estate.name} vineyard expansion`,
-        districtCost(estate.districts),
-      );
+      spend(s, `${estate.name} vineyard expansion`, districtCost(s.estates));
       s.plots.push(...newDistrict(estate.id, estate.districts));
       estate.districts++;
       s.activeEstate = estate.id;

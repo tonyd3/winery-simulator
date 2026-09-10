@@ -38,7 +38,7 @@ import { bottleBatch } from './helpers.ts';
 function funded() {
   const s = allGrapes(newGame());
   for (const u of Object.values(UPGRADES)) if (u.research) learn(s, u.research);
-  s.cash = 2000000;
+  s.cash = 3000000;
   s.knowledge = 1000;
   return s;
 }
@@ -85,7 +85,7 @@ test('18 substantial investments charge once, enforce prerequisites and retain e
     operating += UPGRADES[id].upkeep;
     s = buy(s, id);
     assert.deepEqual(before, copy);
-    assert.equal(s.cash, 2000000 - capital);
+    assert.equal(s.cash, 3000000 - capital);
     assert.equal(investmentUpkeep(s), operating);
     assert.equal(upkeep(s), 160 + operating);
     assert.equal(s.week, 6);

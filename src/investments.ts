@@ -62,7 +62,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
   compost: {
     research: 'ampelography',
     name: 'Compost program',
-    cost: 8000,
+    cost: 12000,
     upkeep: 180,
     category: 'vineyard',
     kind: 'facility',
@@ -72,7 +72,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
   canopy: {
     research: 'soil_mapping',
     name: 'Canopy management team',
-    cost: 14000,
+    cost: 30000,
     upkeep: 320,
     category: 'vineyard',
     kind: 'team',
@@ -82,7 +82,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
   precisionIrrigation: {
     research: 'precision_viticulture',
     name: 'Precision irrigation controls',
-    cost: 26000,
+    cost: 250000,
     upkeep: 600,
     category: 'vineyard',
     kind: 'facility',
@@ -111,7 +111,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
   lab: {
     research: 'cellar_control',
     name: 'Winemaker’s bench',
-    cost: 18000,
+    cost: 60000,
     upkeep: 550,
     category: 'vineyard',
     kind: 'facility',
@@ -188,7 +188,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
   sorting: {
     research: 'fruit_selection',
     name: 'Optical sorting line',
-    cost: 32000,
+    cost: 150000,
     upkeep: 700,
     category: 'vineyard',
     kind: 'facility',
@@ -198,7 +198,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
   selectiveHarvest: {
     research: 'fruit_selection',
     name: 'Selective harvest crew',
-    cost: 38000,
+    cost: 400000,
     upkeep: 1000,
     category: 'vineyard',
     kind: 'team',
@@ -208,7 +208,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
   viticulturist: {
     research: 'precision_viticulture',
     name: 'Viticulture team',
-    cost: 28000,
+    cost: 120000,
     upkeep: 1600,
     category: 'vineyard',
     kind: 'team',
@@ -217,7 +217,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
   researchLab: {
     research: 'research_methods',
     name: 'Research & nursery lab',
-    cost: 65000,
+    cost: 350000,
     upkeep: 1400,
     category: 'research',
     kind: 'facility',
@@ -227,7 +227,7 @@ export const UPGRADES: Record<Upgrade, Investment> = {
   coldStorage: {
     research: 'cold_chain',
     name: 'Refrigerated grape store',
-    cost: 42000,
+    cost: 90000,
     upkeep: 900,
     category: 'vineyard',
     kind: 'facility',

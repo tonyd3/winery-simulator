@@ -156,7 +156,7 @@ test('district purchases unlock six unowned parcels and preserve existing holdin
     for (let districts = 1; districts < 4; districts++) {
       const before = structuredClone(s);
       s = act(s, { type: 'expandEstate', id: estate });
-      assert.equal(s.cash, before.cash - districtCost(districts));
+      assert.equal(s.cash, before.cash - districtCost(before.estates));
       assert.equal(upkeep(s) - upkeep(before), 35);
       assert.equal(tankCount(s), tankCount(before));
       assert.equal(s.plots.length, before.plots.length + 6);
@@ -228,16 +228,13 @@ test('every new district parcel requires a paid purchase before planting or enla
   }
 });
 
-test('districts cost several parcels and new estates cost at least twice the largest district', () => {
+test('regional acquisitions scale into millions and charge exactly the quoted price', () => {
   let s = funded();
-  const mostExpensiveParcel = Math.max(
-    ...s.plots.map((p) => getLand(s, p.id).cost),
-  );
-  assert.deepEqual([1, 2, 3].map(districtCost), [75000, 100000, 125000]);
-  assert.ok(districtCost(1) >= mostExpensiveParcel * 3);
-  assert.ok(acquisitionCost(1) >= districtCost(3) * 2);
+  const prices = [
+    250000, 1000000, 2250000, 4000000, 6250000, 9000000, 12250000,
+  ];
   for (const region of REGION_IDS.filter((r) => r !== s.region)) {
-    const price = 250000 + (s.estates.length - 1) * 100000;
+    const price = prices[s.estates.length - 1];
     assert.equal(acquisitionCost(s.estates.length), price);
     const short = { ...s, cash: price - 1 };
     const before = structuredClone(short);
@@ -251,7 +248,7 @@ test('districts cost several parcels and new estates cost at least twice the lar
   for (const estate of [1, 2]) {
     s = estate === 1 ? funded() : acquire(funded());
     for (let district = 1; district < 4; district++) {
-      const price = districtCost(district);
+      const price = districtCost(s.estates);
       const short = { ...s, cash: price - 1 };
       const before = structuredClone(short);
       assert.throws(
@@ -272,7 +269,7 @@ test('existing saves retain district parcels that were included at their histori
   old.plots.slice(-6).forEach((p) => {
     p.owned = true;
   });
-  old.cash += districtCost(1) - 36000;
+  old.cash += 75000 - 36000;
   old.ledger[0].amount = -36000;
   old = act(old, { type: 'plant', id: plotId(1, 1), variety: 'merlot' });
   old = act(old, { type: 'expandPlot', id: plotId(1, 1) });
@@ -280,10 +277,65 @@ test('existing saves retain district parcels that were included at their histori
   assert.deepEqual(loaded, old);
   assert.equal(loaded.plots.filter((p) => p.owned).length, 9);
   assert.equal(estateArea(loaded).toFixed(1), '10.4');
+  assert.equal(
+    loaded.ledger.find((entry) => entry.label.includes('vineyard expansion'))!
+      .amount,
+    -36000,
+  );
+  assert.equal(districtCost(loaded.estates), 300000);
   const expanded = act(loaded, { type: 'expandEstate', id: 1 });
   assert.deepEqual(expanded.plots.slice(0, -6), old.plots);
   assert.ok(expanded.plots.slice(-6).every((p) => !p.owned));
   valid(expanded);
+});
+
+test('district prices follow purchases across estates and do not reset in a new region', () => {
+  let s = acquire(funded());
+  const prices = [75000, 300000, 675000, 1200000, 1875000, 2700000];
+  const destinations = [1, 2, 3, 1, 2, 3];
+  for (const [i, price] of prices.entries()) {
+    if (i === 2) {
+      s = acquire({ ...s, cash: acquisitionCost(s.estates.length) }, 'napa');
+      assert.equal(districtCost(s.estates), price);
+    }
+    assert.equal(districtCost(s.estates), price);
+    const short = { ...s, cash: price - 1 };
+    const before = structuredClone(short);
+    assert.throws(
+      () => act(short, { type: 'expandEstate', id: destinations[i] }),
+      /more/,
+    );
+    assert.deepEqual(short, before);
+    s = act(
+      { ...s, cash: price },
+      { type: 'expandEstate', id: destinations[i] },
+    );
+    assert.equal(s.cash, 0);
+    assert.equal(s.ledger[0].amount, -price);
+    assert.equal(estateArea(s, destinations[i]), 3);
+    s = deserialize(serialize(s));
+    valid(s);
+  }
+  assert.equal(districtCost(s.estates), 3675000);
+});
+
+test('a ten-million-dollar existing portfolio has substantial later purchases without retroactive charges', () => {
+  let s = acquire(acquire(funded()), 'napa');
+  s = act(s, { type: 'expandEstate', id: 1 });
+  s.cash = 10000000;
+  const before = structuredClone(s);
+  s = deserialize(serialize(s));
+  assert.deepEqual(s, before);
+  assert.equal(acquisitionCost(s.estates.length), 2250000);
+  assert.equal(districtCost(s.estates), 300000);
+  s = acquire(s, 'rioja');
+  s = acquire(s, 'barossa');
+  assert.equal(s.cash, 3750000);
+  assert.equal(acquisitionCost(s.estates.length), 6250000);
+  const limited = structuredClone(s);
+  assert.throws(() => acquire(s, 'mendoza'), /more/);
+  assert.deepEqual(s, limited);
+  valid(s);
 });
 
 test('invalid or unaffordable purchases never consume money or partially create an estate', () => {
@@ -401,7 +453,7 @@ test('estate origins survive fermentation, reserves, cross-estate blending, part
 
 test('the full portfolio supports 192 parcels while processing capacity is purchased independently', () => {
   let s = funded();
-  s.cash = 15000000; // Capacity coverage funds estates, districts, every parcel and equipment.
+  s.cash = 500000000; // Capacity coverage funds the full scaled portfolio, parcels and equipment.
   for (const region of REGION_IDS.filter((r) => r !== s.region))
     s = acquire(s, region);
   for (const e of [...s.estates]) {

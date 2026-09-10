@@ -154,14 +154,15 @@ export function Holdings({
       <p className="holdings-scope">
         One wine business. All estates share funds, research, equipment,
         reserves, and wine lines. Every vineyard grows each week, with its own
-        regional climate and soil.
+        regional climate and soil. New estates get progressively more expensive.
+        District prices rise with every district added across all your estates.
       </p>
       <div className="holdings-list">
         {state.estates.map((estate) => {
           const plots = estatePlots(state, estate.id),
             ready = plots.filter((p) => readyToHarvest(p, state.week)).length;
           const full = estate.districts === ESTATE_LIMITS.districts,
-            price = districtCost(estate.districts);
+            price = districtCost(state.estates);
           return (
             <article className="holding-row" key={estate.id}>
               <div className="holding-landscape">
@@ -209,8 +210,8 @@ export function Holdings({
                 </p>
                 {!full && (
                   <small>
-                    +{money(35)} / week, plus {money(25)} per parcel purchased.
-                    {' '}Land and vines cost extra.
+                    +{money(35)} / week, plus {money(25)} per parcel purchased.{' '}
+                    Land and vines cost extra.
                     {state.cash < price &&
                       ` · Need ${money(price - state.cash)} more`}
                   </small>
@@ -284,6 +285,12 @@ export function Holdings({
               <strong>{money(cost)}</strong>
               <span>+{money(175)} weekly upkeep</span>
             </div>
+            {available.length > 1 && (
+              <p>
+                After this purchase, the following estate will cost{' '}
+                {money(acquisitionCost(state.estates.length + 1))}.
+              </p>
+            )}
             <button
               className="button primary wide"
               disabled={state.cash < cost || Boolean(nameError)}

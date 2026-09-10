@@ -238,7 +238,7 @@ test('builds and land purchases cannot be duplicated; upgrades affect production
     () => act(s, { type: 'plant', id: 4, variety: 'merlot' }),
     /empty/,
   );
-  s.cash = 30000; // The production test funds the higher capital cost.
+  s.cash = 100000; // Fund the bench and subsequent harvest/fermentation.
   s = act(s, { type: 'upgrade', upgrade: 'lab' });
   assert.throws(() => act(s, { type: 'upgrade', upgrade: 'lab' }), /already/);
   s = act(s, { type: 'harvest', id: 1 });

@@ -88,7 +88,7 @@ test('97 studies form an acyclic graph and every capital investment has a resear
   for (const upgrade of Object.values(UPGRADES).filter((u) => !u.legacy))
     assert.ok(upgrade.research && RESEARCH[upgrade.research]);
   assert.equal(RESEARCH.genomics.weeks, 72);
-  assert.equal(RESEARCH.genomics.cost, 180000);
+  assert.equal(RESEARCH.genomics.cost, 750000);
 });
 
 test('new estates begin with only their two founders and acquisition does not bypass individual studies', () => {

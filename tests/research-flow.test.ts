@@ -98,7 +98,7 @@ test('plans exclude paid studies and owned purchases, retaining contracted remai
   assert.equal(p.researchCash, 0);
   assert.equal(p.knowledge, 0);
   assert.equal(p.sequentialWeeks, 10);
-  assert.equal(p.cash, 18000);
+  assert.equal(p.cash, 60000);
   s.upgrades = ['lab', 'researchLab'];
   p = researchPlan(s, 'fermentation');
   assert.equal(p.sequentialWeeks, 5);
@@ -113,6 +113,31 @@ test('the introductory route requires 3000 cash, 80 knowledge, and 14 base weeks
   assert.equal(p.knowledge, 80);
   assert.equal(p.sequentialWeeks, 6);
   assert.equal(p.trial?.weeks, 8);
+});
+
+test('quality plans budget the complete repriced path and exclude every paid step', () => {
+  let s = newGame();
+  const fermentation = researchPlan(s, 'fermentation');
+  assert.equal(fermentation.researchCash, 19500);
+  assert.equal(fermentation.investmentCash, 60000);
+  assert.equal(fermentation.cash, 79500);
+  const finesse = researchPlan(s, 'fine_grapes');
+  assert.equal(finesse.researchCash, 1182700);
+  assert.equal(finesse.cash, 1190200);
+
+  s = learn({ ...s, cash: 750000, knowledge: 900 }, 'backcrossing');
+  const poor = { ...s, cash: 749999 };
+  const before = structuredClone(poor);
+  assert.throws(() => act(poor, { type: 'research', id: 'genomics' }), /Need/);
+  assert.deepEqual(poor, before);
+  s = act(s, { type: 'research', id: 'genomics' });
+  assert.equal(s.cash, 0);
+  assert.equal(s.knowledge, 0);
+  s = roundtrip(s);
+  const paid = researchPlan(s, 'fine_grapes');
+  assert.equal(paid.researchCash, 0);
+  assert.equal(paid.cash, 7500); // Only the future field trial remains unpaid.
+  assert.equal(paid.sequentialWeeks, 72);
 });
 
 test('quality-breeding plans include the full trial and recognize paid and completed trials', () => {

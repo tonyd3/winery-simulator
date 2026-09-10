@@ -7,11 +7,11 @@ Open **Build → Buildings & equipment**. Department filters cover vineyard/cell
 | Investment | Purchase | Weekly operating | Weekly suspended | Operating prerequisite |
 | --- | ---: | ---: | ---: | --- |
 | Drip irrigation | $6,000 | $180 | $45 | None |
-| Compost program | $8,000 | $180 | $45 | None |
-| Canopy management team | $14,000 | $320 | $80 | None |
-| Precision irrigation controls | $26,000 | $600 | $150 | Drip irrigation |
+| Compost program | $12,000 | $180 | $45 | None |
+| Canopy management team | $30,000 | $320 | $80 | None |
+| Precision irrigation controls | $250,000 | $600 | $150 | Drip irrigation |
 | Tasting terrace | $8,000 | $280 | $70 | None |
-| Winemaker’s bench | $18,000 | $550 | $138 | None |
+| Winemaker’s bench | $60,000 | $550 | $138 | None |
 | Visitor center | $24,000 | $450 | $113 | None |
 | Tasting room | $40,000 | $1,400 | $350 | Visitor center |
 | Sommelier team | $24,000 | $1,400 | $350 | Tasting room |
@@ -19,13 +19,21 @@ Open **Build → Buildings & equipment**. Department filters cover vineyard/cell
 | Vineyard guesthouse | $180,000 | $3,000 | $750 | Visitor center |
 | Wine club team | $45,000 | $1,200 | $300 | Tasting terrace |
 | Export sales team | $85,000 | $2,200 | $550 | None |
-| Optical sorting line | $32,000 | $700 | $175 | None |
-| Selective harvest crew | $38,000 | $1,000 | $250 | None |
-| Viticulture team | $28,000 | $1,600 | $400 | None |
-| Research & nursery lab | $65,000 | $1,400 | $350 | Winemaker’s bench |
-| Refrigerated grape store | $42,000 | $900 | $225 | None |
+| Optical sorting line | $150,000 | $700 | $175 | None |
+| Selective harvest crew | $400,000 | $1,000 | $250 | None |
+| Viticulture team | $120,000 | $1,600 | $400 | None |
+| Research & nursery lab | $350,000 | $1,400 | $350 | Winemaker’s bench |
+| Refrigerated grape store | $90,000 | $900 | $225 | None |
 
 These are fictional game balance values. Each investment also requires its corresponding [research project](regions-and-research.md#research-progression) before purchase; the table lists additional operating prerequisites. Research costs are separate from the purchase price. Existing owned facilities can continue operating or resume without retroactive research. Each investment is bought once for the shared business and benefits all estates. Upfront cost covers construction or team setup; weekly costs include staffing and maintenance. The eight-week figure is purchase price plus eight operating bills for that investment, excluding research, other facilities, and estate overhead.
+
+## Quality investment pacing
+
+Permanent quality bonuses apply to production across every estate, so advanced equipment has a higher capital cost than early vineyard care. Compost starts at $12,000, canopy management at $30,000 and the winemaker’s bench at $60,000. Sorting, precision irrigation and selective picking cost $150,000, $250,000 and $400,000. Buying all six quality improvements plus their required drip irrigation costs $908,000 before prerequisite studies and upkeep. No extra quality points are added by this price change.
+
+The research lab costs $350,000 after its separate $150,000 Research institute study. Later [research slots and advanced breeding studies](regions-and-research.md#research-progression) provide larger investments for an established winery. Costs are fixed per catalog item; cash on hand, purchase order and acquiring a new region do not alter equipment quotes.
+
+These prices apply to future purchases only. Owned equipment, operating bills, paid research, existing wine scores, balances and historical accounts are preserved. Entry irrigation, hospitality, basic blending and introductory breeding retain their previous terms. This is a progression balance pass; a full multi-year economy playthrough remains necessary to judge long-term pacing.
 
 ## Grape quality
 

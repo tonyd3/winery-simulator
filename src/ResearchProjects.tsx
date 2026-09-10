@@ -48,8 +48,9 @@ export function StudyAction({
   const reason = researchBlocked(state, id);
   return (
     <div className="study-purchase">
-      <strong>{done ? 'Learned' : money(r.cost)}</strong>
-      {running && <small>Paid upfront</small>}
+      <strong>
+        {done ? 'Learned' : running ? 'Paid' : money(r.cost)}
+      </strong>
       {!done && (
         <>
           <span>
@@ -131,7 +132,8 @@ export function CurrentStudies({
             <p>
               Cash and knowledge are paid upfront. Studies run in parallel;
               paused studies keep their slots. Nursery trials run separately.
-              Abandoning loses progress with no refund.
+              Abandoning loses progress with no refund. Additional study slots
+              become progressively more expensive.
             </p>
           </details>
         </div>
